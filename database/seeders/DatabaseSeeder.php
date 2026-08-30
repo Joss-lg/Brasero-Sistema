@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB; // <-- Se agregó esta línea
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,12 +16,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Primero creamos todos los Modulos
-        $this->call(ModuloSeeder::class);
+        // 1. Ejecutar directamente tu respaldo SQL
+        // Reemplaza 'nombre_de_tu_archivo.sql' con el nombre exacto de tu archivo
+        DB::unprepared(file_get_contents(database_path('agostadero.sql')));
 
-        $this->call(RoleSeeder::class);
-
-        // 2. Creamos el rol Administrador y al SuperAdmin (ID 1) con acceso total por código.
-        $this->call(UsuarioAdminSeeder::class);
+        // 2. Comentamos temporalmente los otros seeders para evitar errores de duplicidad
+        // $this->call(ModuloSeeder::class);
+        // $this->call(RoleSeeder::class);
+        // $this->call(UsuarioAdminSeeder::class);
     }
 }
