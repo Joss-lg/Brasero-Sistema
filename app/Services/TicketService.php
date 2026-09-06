@@ -21,12 +21,9 @@ class TicketService
      * hora no cambian — igual que un recibo real no cambia de número ni de
      * hora cada vez que lo vuelves a ver.
      */
-    private function obtenerOFolio(?Orden $primeraOrden, ?Mesa $mesa): TicketImpreso
+    private function obtenerOFolio(?Orden $primeraOrden, ?Mesa $mesa, $ordenes = null): TicketImpreso
     {
         if (!$primeraOrden) {
-            // No debería pasar (siempre hay al menos una orden para poder
-            // cobrar), pero por seguridad no se rompe: se crea un folio sin
-            // referencia a ninguna orden real.
             return TicketImpreso::create([
                 'orden_referencia_id' => 0,
                 'mesa_numero'         => $mesa->numero ?? null,
@@ -34,15 +31,30 @@ class TicketService
             ]);
         }
 
-        $existente = TicketImpreso::where('orden_referencia_id', $primeraOrden->id)->first();
-        if ($existente) {
-            return $existente;
+        // Primero: buscar si YA existe un ticket para CUALQUIERA de las órdenes
+        // del grupo. Si existe, reutilizarlo — nunca crear uno nuevo para el
+        // mismo cobro. Esto evita que reimprimir genere folios duplicados.
+        if ($ordenes && $ordenes->isNotEmpty()) {
+            $ids = $ordenes->pluck('id')->filter();
+            $existente = TicketImpreso::whereIn('orden_referencia_id', $ids)
+                ->oldest('id') // el folio original, no el más reciente
+                ->first();
+            if ($existente) {
+                return $existente;
+            }
         }
 
+        // No existe ticket — crear uno nuevo usando la orden con el ID más alto
+        // (la más reciente del turno) para que futuros cobros de la misma mesa
+        // en otro turno no colisionen con este folio.
+        $ordenRef = $ordenes && $ordenes->isNotEmpty()
+            ? $ordenes->sortByDesc('id')->first()
+            : $primeraOrden;
+
         return TicketImpreso::create([
-            'orden_referencia_id' => $primeraOrden->id,
+            'orden_referencia_id' => $ordenRef->id,
             'mesa_numero'         => $mesa->numero ?? null,
-            'mesero_id'           => $primeraOrden->mesero_id,
+            'mesero_id'           => $ordenRef->mesero_id,
             'cajero_id'           => auth()->id(),
             'impreso_en'          => now(),
         ]);
@@ -55,32 +67,43 @@ class TicketService
      * Esta es la misma unidad de agregación que ya usa CajaService::obtenerDesgloseMesa(),
      * así el ticket impreso siempre coincide con lo que se cobró.
      */
+    /**
+     * Genera el ticket a partir de una orden específica (para reimprimir
+     * desde historial de caja). Usa el flujoable_id del FlujoCaja para
+     * identificar exactamente qué órdenes se cobraron en ese pago.
+     */
+    public function obtenerDatosTicketPorOrden(int $ordenId): array
+    {
+        $orden = Orden::withTrashed()
+            ->with(['mesero', 'detalles.producto', 'detalles.promocionAplicada.promocion', 'mesa'])
+            ->findOrFail($ordenId);
+
+        $mesa = Mesa::withTrashed()->findOrFail($orden->mesa_id);
+
+        // Buscar todas las órdenes que se cerraron juntas con este pago
+        // (mismo cerrada_el = mismo lote de cobro de CajaService::liberarMesa)
+        $ordenes = collect([$orden]);
+        if ($orden->cerrada_el) {
+            $ordenes = Orden::withTrashed()
+                ->where('mesa_id', $orden->mesa_id)
+                ->where('cerrada_el', $orden->cerrada_el)
+                ->with(['mesero', 'detalles.producto', 'detalles.promocionAplicada.promocion'])
+                ->get();
+        }
+
+        // Reutilizar la lógica principal pasando las órdenes encontradas
+        return $this->construirDatosTicket($mesa, $ordenes);
+    }
+
     public function obtenerDatosTicketPorMesa(int $mesaId): array
     {
-        // withTrashed() es obligatorio aquí: las mesas de delivery se retiran
-        // (borrado suave) en cuanto se cobran, y el ticket se imprime JUSTO
-        // DESPUÉS del pago. Sin esto, findOrFail lanzaría 404 al imprimir el
-        // ticket de cualquier pedido de Rappi/Uber/DiDi. También permite
-        // reimprimir tickets viejos desde el historial.
         $mesa = Mesa::withTrashed()->findOrFail($mesaId);
 
         $ordenes = $mesa->ordenesActivas()
-            ->with([
-                'mesero',
-                'detalles.producto',
-                'detalles.promocionAplicada.promocion',
-            ])
+            ->with(['mesero', 'detalles.producto', 'detalles.promocionAplicada.promocion'])
             ->get();
 
         if ($ordenes->isEmpty()) {
-            // Fallback: la mesa ya fue liberada (caso normal justo después de
-            // cobrar, ya que procesarPago() libera la mesa ANTES de que el
-            // frontend pida el ticket). Buscamos TODAS las órdenes que se
-            // cerraron juntas en el mismo pago -comparten el mismo
-            // 'cerrada_el', porque CajaService::liberarMesa() las actualiza
-            // a todas de una sola vez con el mismo timestamp- en vez de
-            // tomar solo la última orden (que reintroducía el mismo bug de
-            // productos/total faltantes justo en el momento del cobro).
             $ultimaCerrada = Orden::where('mesa_id', $mesa->id)
                 ->where('estado', Orden::ESTADO_PAGADA)
                 ->latest('cerrada_el')
@@ -95,6 +118,11 @@ class TicketService
                 : collect();
         }
 
+        return $this->construirDatosTicket($mesa, $ordenes);
+    }
+
+    private function construirDatosTicket(Mesa $mesa, $ordenes): array
+    {
 // --- Items: se aplanan los detalles de TODAS las órdenes de la mesa ---
         $items = $ordenes->flatMap(function ($orden) {
             return $orden->detalles
@@ -190,7 +218,7 @@ class TicketService
 
         // Folio correlativo + fecha/hora EXACTA de impresión (no de cierre de
         // la orden): se fijan la primera vez que se pide este ticket.
-        $ticketImpreso = $this->obtenerOFolio($primeraOrden, $mesa);
+        $ticketImpreso = $this->obtenerOFolio($primeraOrden, $mesa, $ordenes);
 
         // --- División de cuenta ---
         $cuentasDivision = CuentaDivision::where('mesa_id', $mesa->id)

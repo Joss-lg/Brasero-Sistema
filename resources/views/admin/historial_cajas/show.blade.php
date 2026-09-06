@@ -236,6 +236,7 @@
                     <thead>
                         <tr class="bg-[var(--input-bg)] text-[var(--text-muted)] font-bold text-[10px] sm:text-xs border-b border-[var(--border-color)] uppercase tracking-wider">
                             <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Hora</th>
+                            <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Folio</th>
                             <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Concepto</th>
                             <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Método(s) de Pago</th>
                             <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Total</th>
@@ -253,6 +254,15 @@
                             <tr class="hover:bg-[var(--input-bg)] transition-colors">
                                 <td class="py-3 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-xs font-medium text-[var(--text-muted)] whitespace-nowrap">
                                     {{ \Carbon\Carbon::parse($primera->fecha)->format('H:i') }} hrs
+                                </td>
+                                <td class="py-3 sm:py-4 px-2 sm:px-4 text-center">
+                                    @if($primera->folio_ticket ?? null)
+                                        <span class="px-2 py-0.5 rounded-lg bg-[var(--input-bg)] border border-[var(--border-color)] text-[11px] font-black text-[var(--text-muted)] font-mono tracking-wider">
+                                            #{{ str_pad($primera->folio_ticket, 3, '0', STR_PAD_LEFT) }}
+                                        </span>
+                                    @else
+                                        <span class="text-[var(--border-color)]">—</span>
+                                    @endif
                                 </td>
                                 <td class="py-3 sm:py-4 px-2 sm:px-4 font-semibold">{{ $primera->concepto }}</td>
                                 <td class="py-3 sm:py-4 px-2 sm:px-4">

@@ -8,6 +8,7 @@ use App\Models\Mesa;
 use App\Models\User;
 use App\Models\PropinaMesero;
 use App\Models\Orden;
+use App\Models\TicketImpreso;
 use App\Services\CajaService;
 use App\Services\TicketService;
 use Illuminate\Http\Request;
@@ -324,6 +325,11 @@ class CajaController extends Controller
         $historicoGastos = FlujoCaja::where('caja_movimiento_id', $cajaActiva->id)
             ->egresos()->where('categoria', '<>', 'Cancelaciones')->ordenado()->get();
 
+        // Precargar folios: flujoable_id -> folio de tickets_impresos
+        $ordenIdsVentas = $historicoVentas->pluck('flujoable_id')->filter()->unique();
+        $foliosPorOrden = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $ordenIdsVentas)
+            ->pluck('id', 'orden_referencia_id');
+
         $propinasPendientes = PropinaMesero::with('mesero:id,nombre')
             ->where('caja_movimiento_id', $cajaActiva->id)
             ->where('pagada', false)
@@ -355,7 +361,7 @@ class CajaController extends Controller
             'totalGastos', 'saldoEstimado', 'historicoVentas', 'historicoGastos',
             'totalCancelaciones', 'historicoCancelaciones',
             'propinasPendientes', 'totalPropinasPendientes',
-            'efectivo', 'efectivoEsperadoAlCierre'
+            'efectivo', 'efectivoEsperadoAlCierre', 'foliosPorOrden'
         ));
     }
 
@@ -380,6 +386,10 @@ class CajaController extends Controller
         $historicoVentas = FlujoCaja::where('caja_movimiento_id', $cajaActiva->id)->ingresos()->porCategoria('Ventas')->ordenado()->get();
         $historicoGastos = FlujoCaja::where('caja_movimiento_id', $cajaActiva->id)
             ->egresos()->where('categoria', '<>', 'Cancelaciones')->ordenado()->get();
+
+        $ordenIdsVentas2 = $historicoVentas->pluck('flujoable_id')->filter()->unique();
+        $foliosPorOrden = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $ordenIdsVentas2)
+            ->pluck('id', 'orden_referencia_id');
 
         // Desglose del efectivo del cajón, con el mismo cálculo del cierre.
         $efectivo = $this->cajaService->calcularEfectivoEsperado($cajaActiva);
@@ -431,8 +441,9 @@ class CajaController extends Controller
      */
     public function imprimirTicketPorOrden(int $ordenId)
     {
-        $orden = \App\Models\Orden::withTrashed()->findOrFail($ordenId);
-        $datos = $this->ticketService->obtenerDatosTicketPorMesa((int) $orden->mesa_id);
+        // Usar el método específico por orden para que el ticket muestre
+        // exactamente los productos y total de ese pago, no los de toda la mesa.
+        $datos = $this->ticketService->obtenerDatosTicketPorOrden((int) $ordenId);
         return view('admin.caja.ticket', $datos);
     }
 

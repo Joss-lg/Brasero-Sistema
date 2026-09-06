@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\CajaMovimiento; 
+use App\Models\CajaMovimiento;
+use App\Models\TicketImpreso; 
 
 class HistorialCajaController extends Controller
 {
@@ -28,6 +29,17 @@ class HistorialCajaController extends Controller
             ->where('categoria', 'Ventas')
             ->sortByDesc('fecha')
             ->values();
+
+        // Cargar folios: mapear flujoable_id -> folio de tickets_impresos
+        $ordenIds = $historicoVentas->pluck('flujoable_id')->filter()->unique();
+        $foliosPorOrden = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $ordenIds)
+            ->pluck('id', 'orden_referencia_id');
+
+        // Adjuntar folio_ticket a cada venta
+        $historicoVentas = $historicoVentas->map(function ($venta) use ($foliosPorOrden) {
+            $venta->folio_ticket = $foliosPorOrden[$venta->flujoable_id] ?? null;
+            return $venta;
+        });
 
         $totalVentas         = $historicoVentas->sum('monto');
         $ventasEfectivo      = $historicoVentas->where('metodo_pago', 'efectivo')->sum('monto');
