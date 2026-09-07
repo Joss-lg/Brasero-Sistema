@@ -123,7 +123,7 @@
             <div class="recibo">
 
                 <div class="centro">
-                    <div class="titulo">Agostadero</div>
+                    <div class="titulo">El Brasero</div>
                     <div class="subtitulo">Pre-cuenta / cuenta informativa</div>
                     <div class="subtitulo">No es un comprobante fiscal</div>
                 </div>

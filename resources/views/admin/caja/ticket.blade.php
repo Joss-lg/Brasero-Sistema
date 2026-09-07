@@ -47,11 +47,13 @@
 
         /* Estilo para el logo en impresión térmica */
         .ticket-logo {
-            width: 140px; 
-            height: auto;
+            width: 160px;
+            height: 60px;
+            object-fit: cover;
+            object-position: center;
             margin: 0 auto 8px auto;
             display: block;
-            filter: grayscale(100%) contrast(1.2); 
+            filter: grayscale(100%) contrast(1.2);
         }
 
         @media print { 
@@ -65,8 +67,8 @@
     <!-- Encabezado (Estilo Pizzetos) -->
     <div class="text-center mb-1">
         
-        <!-- Logo de El Agostadero -->
-        <img src="{{ asset('images/agostadero.png') }}" alt="El Agostadero" class="ticket-logo">
+        <!-- Logo de El brasero -->
+         <img src="{{ asset('images/brasero.webp') }}" alt="El Brasero" class="ticket-logo">
         
         <div style="font-size: 12px; margin-top: 4px;">TICKET</div>
 

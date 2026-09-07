@@ -5,26 +5,14 @@
         #sidebar { transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
         .sidebar-text { transition: opacity 0.2s ease, width 0.3s ease, margin 0.3s ease; white-space: nowrap; overflow: hidden; }
         
-        /* --- ESTADO COLAPSADO (MEMORIA) --- */
         #sidebar.colapsado { width: 88px !important; }
-        
-        /* 1. Textos se esfuman y no empujan las cajas */
         #sidebar.colapsado .sidebar-text { width: 0 !important; opacity: 0 !important; margin: 0 !important; pointer-events: none; }
-        
-        /* 2. Menú de navegación: Centramos los iconos perfectos */
         #sidebar.colapsado .menu-link { padding-left: 0 !important; padding-right: 0 !important; justify-content: center !important; }
-        
-        /* 3. Header: Ocultamos el logo suavemente y centramos la hamburguesa vertical y horizontalmente */
         #sidebar.colapsado .logo-wrapper { opacity: 0; pointer-events: none; position: absolute; }
         #sidebar.colapsado #toggleSidebar { right: 0; left: 0; margin: 0 auto; top: 50%; transform: translateY(-50%); }
-        
-        /* 4. Footer: Modo mini y transparente */
         #sidebar.colapsado .user-footer { padding-left: 0; padding-right: 0; background: transparent; border-color: transparent; box-shadow: none; align-items: center; margin-bottom: 1rem; }
-        
-        /* --- AJUSTE PERFECTO PARA EL BOTÓN ROJO CUADRADO --- */
         #sidebar.colapsado .btn-logout { width: 44px !important; height: 44px !important; padding: 0 !important; justify-content: center !important; }
 
-        /* Modo crema: contraste y fondo limpio en sidebar */
         body.modo-crema #sidebar { background: rgba(255, 255, 255, 0.96); border-color: rgba(15, 23, 42, 0.08); box-shadow: 0 30px 70px rgba(15, 23, 42, 0.08); }
         body.modo-crema #sidebar .logo-wrapper { color: #111827; }
         body.modo-crema #sidebar .logo-wrapper .sidebar-text span:first-child { color: #111827; }
@@ -35,53 +23,34 @@
         body.modo-crema #sidebar .menu-link .menu-icon { background: rgba(248, 250, 252, 0.96); border-color: rgba(15, 23, 42, 0.08); color: #374151; }
         body.modo-crema #sidebar .menu-link.active { background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.18); box-shadow: 0 12px 30px rgba(59, 130, 246, 0.12); }
         body.modo-crema .user-footer { background: #ffffff; border-color: rgba(15, 23, 42, 0.08); box-shadow: 0 25px 50px rgba(15, 23, 42, 0.06); }
-        
-        /* Modificado para que el degradado rojo siga activo en modo crema */
         body.modo-crema .btn-logout { border-color: rgba(15, 23, 42, 0.08); }
 
-        /* =========================================================
-           MODO MÓVIL: el sidebar se convierte en un drawer que se
-           desliza y se oculta, en vez de empujar/tapar el contenido.
-           Solo aplica debajo de 1024px; en desktop no cambia nada.
-        ========================================================= */
         @media (max-width: 1023.98px) {
             #sidebar {
                 position: fixed;
-                top: 0;
-                left: 0;
-                bottom: 0;
+                top: 0; left: 0; bottom: 0;
                 width: 84vw;
                 max-width: 300px;
                 transform: translateX(-100%);
                 transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
             }
-            /* En móvil ignoramos el estado "colapsado" de desktop (88px) */
             #sidebar.colapsado { width: 84vw; max-width: 300px; }
             #sidebar.colapsado .sidebar-text { width: auto !important; opacity: 1 !important; margin: 0 0 0 0.75rem !important; pointer-events: auto; }
             #sidebar.colapsado .logo-wrapper { opacity: 1; pointer-events: auto; position: relative; }
             #sidebar.colapsado .menu-link { padding-left: 0.75rem !important; padding-right: 0.75rem !important; justify-content: flex-start !important; }
-
-            /* Estado abierto del drawer */
             #sidebar.abierto { transform: translateX(0); }
-
             #sidebarOverlay {
-                display: none;
-                position: fixed;
-                inset: 0;
+                display: none; position: fixed; inset: 0;
                 background: rgba(0, 0, 0, 0.5);
-                z-index: 40;
-                opacity: 0;
+                z-index: 40; opacity: 0;
                 transition: opacity 0.3s ease;
             }
             #sidebarOverlay.visible { display: block; opacity: 1; }
         }
     </style>
 
-    {{-- Script en línea para aplicar el estado ANTES de que renderice la página (evita parpadeo) --}}
     <script>
         (function() {
-            // El estado "colapsado" (ancho 88px) solo debe recordarse/aplicarse en desktop.
-            // En móvil el sidebar siempre arranca oculto (drawer cerrado).
             if (window.matchMedia('(min-width: 1024px)').matches && localStorage.getItem('sidebarState') === 'collapsed') {
                 document.getElementById('sidebar').classList.add('colapsado');
             }
@@ -93,27 +62,23 @@
         <div class="absolute top-1/2 left-10 -translate-y-1/2 w-20 h-20 bg-blue-500/10 blur-[30px] rounded-full pointer-events-none"></div>
         
         <div class="logo-wrapper flex items-center relative z-10 w-full transition-opacity duration-300">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-[1px] shadow-[0_0_15px_rgba(59,130,246,0.3)] shrink-0">
-                <div class="w-full h-full bg-[var(--card-color)] rounded-[11px] flex items-center justify-center">
-                    <img src="{{ asset('images/agostadero.png') }}" alt="Logo" class="w-6 h-6 object-contain">
-                </div>
+            <div class="w-10 h-10 rounded-xl overflow-hidden shadow-lg shrink-0">
+                <img src="{{ asset('images/brasero.webp') }}" alt="Logo El Brasero" class="w-full h-full object-cover">
             </div>
             <div class="sidebar-text ml-3 flex flex-col">
                 <span class="font-black tracking-[0.15em] text-[15px] text-[var(--text-color)] leading-none">
-                    Agostadero <span class="text-blue-500"></span>
+                    El Brasero
                 </span>
                 <span class="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-[0.25em] mt-1.5">Sistema Restaurante</span>
             </div>
         </div>
         
-        {{-- SE AGREGÓ top-7 AQUÍ PARA ALINEAR CON EL TÍTULO --}}
-        {{-- En desktop: colapsa/expande. En móvil: cierra el drawer. --}}
         <button id="toggleSidebar" class="absolute right-4 top-7 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--input-bg)] text-[var(--text-muted)] hover:text-[var(--text-color)] transition-all cursor-pointer z-50 shrink-0">
             <i class="fas fa-bars text-sm"></i>
         </button>
     </div>
 
-   {{-- Navegación --}}
+    {{-- Navegación --}}
     <nav class="py-4 px-3 space-y-6 overflow-y-auto overflow-x-hidden max-h-[calc(100vh-14rem)] scrollbar-hide relative z-10 flex-1" id="nav-container">
         
         @php
@@ -149,7 +114,6 @@
             @endphp
 
             @if($mostrarSeccion)
-                {{-- Título de la Sección --}}
                 <div class="px-3 pt-2">
                     <span class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] sidebar-text transition-all duration-300">
                         {{ $titulo }}
@@ -199,7 +163,6 @@
 
         <form method="POST" action="{{ route('logout') }}" class="mt-1 w-full flex justify-center">
             @csrf
-            {{-- BOTÓN ACTUALIZADO PARA FORMAR EL CUADRADO PERFECTO CUANDO COLAPSA --}}
             <button type="submit" class="btn-logout w-full h-[44px] px-3 flex items-center bg-gradient-to-tr from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white rounded-2xl transition-all duration-300 shadow-lg shadow-red-500/30 hover:shadow-red-500/50 active:scale-95 group overflow-hidden">
                 <div class="flex items-center justify-center shrink-0 w-6">
                     <i class="fas fa-sign-out-alt text-[15px] transition-transform group-hover:scale-110"></i>
@@ -210,11 +173,7 @@
     </div>
 </aside>
 
-{{-- Fondo oscuro detrás del drawer en móvil. Tocarlo lo cierra. --}}
 <div id="sidebarOverlay"></div>
-
-{{-- Nota: el botón de menú (#mobileMenuBtn) ahora vive dentro del header
-     en layouts/admin.blade.php, junto al botón de tema (sol/luna). --}}
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -225,13 +184,9 @@
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const esMovil = () => window.matchMedia('(max-width: 1023.98px)').matches;
 
-        // 1. Revisar posición guardada del scroll en el menú
         if (navContainer) {
             const savedScrollPos = localStorage.getItem('sidebarScrollPosition');
-            if (savedScrollPos) {
-                navContainer.scrollTop = savedScrollPos;
-            }
-
+            if (savedScrollPos) navContainer.scrollTop = savedScrollPos;
             navContainer.addEventListener('scroll', () => {
                 localStorage.setItem('sidebarScrollPosition', navContainer.scrollTop);
             });
@@ -249,44 +204,25 @@
             document.body.style.overflow = '';
         }
 
-        // 2. Botón flotante: abre el drawer en móvil
         mobileMenuBtn?.addEventListener('click', abrirDrawerMovil);
-
-        // 3. Tocar el fondo oscuro cierra el drawer
         overlay?.addEventListener('click', cerrarDrawerMovil);
 
-        // 4. Elegir una ruta del menú cierra el drawer automáticamente en móvil
         document.querySelectorAll('#nav-container .menu-link').forEach(link => {
             link.addEventListener('click', () => {
                 if (esMovil()) cerrarDrawerMovil();
             });
         });
 
-        // 5. Click en el botón de hamburguesa (dentro del sidebar)
-        //    - En desktop: colapsa/expande (comportamiento original).
-        //    - En móvil: cierra el drawer.
         if (toggleBtn) {
             toggleBtn.addEventListener('click', () => {
-                if (esMovil()) {
-                    cerrarDrawerMovil();
-                    return;
-                }
+                if (esMovil()) { cerrarDrawerMovil(); return; }
                 sidebar.classList.toggle('colapsado');
-                
-                if (sidebar.classList.contains('colapsado')) {
-                    localStorage.setItem('sidebarState', 'collapsed');
-                } else {
-                    localStorage.setItem('sidebarState', 'expanded');
-                }
+                localStorage.setItem('sidebarState', sidebar.classList.contains('colapsado') ? 'collapsed' : 'expanded');
             });
         }
 
-        // 6. Si el usuario rota el dispositivo o cambia de tamaño de ventana
-        //    y cruza el breakpoint, aseguramos un estado limpio.
         window.addEventListener('resize', () => {
-            if (!esMovil()) {
-                cerrarDrawerMovil();
-            }
+            if (!esMovil()) cerrarDrawerMovil();
         });
     });
 </script>
