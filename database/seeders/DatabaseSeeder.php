@@ -1,24 +1,20 @@
 <?php
-
 namespace Database\Seeders;
-
+use App\Models\User;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
-{
-    public function run(): void
-{
-    $path = database_path('agostadero.sql'); 
-    
-    $host = config('database.connections.mysql.host');
-    $user = config('database.connections.mysql.username');
-    $pass = config('database.connections.mysql.password');
-    $db   = config('database.connections.mysql.database');
 
-    // Solo incluye la bandera -p si existe contraseña configurada
-    $passwordFlag = !empty($pass) ? "-p\"{$pass}\"" : '';
-
-    // Se envuelven las rutas y nombres entre comillas por compatibilidad con Windows
-    exec("mysql -h {$host} -u {$user} {$passwordFlag} {$db} < \"{$path}\"");
-    }
+{
+use WithoutModelEvents;
+public function run(): void
+{
+// 1. Primero creamos todos los Modulos
+$this->call(ModuloSeeder::class);
+$this->call(RoleSeeder::class);
+// 2. Creamos el rol Administrador y al SuperAdmin (ID 1) con acceso total por código.
+$this->call(UsuarioAdminSeeder::class);
 }
+} 
+
