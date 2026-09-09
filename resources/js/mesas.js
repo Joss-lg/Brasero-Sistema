@@ -21,8 +21,6 @@ const ZOOM_MIN = 0.4;
 const ZOOM_MAX = 1.5;
 const ZOOM_STEP = 0.15;
 
-// Permisos del usuario actual sobre el módulo Mesas (inyectados desde
-// plano-espacial.blade.php vía window.permisosMesas antes de cargar este script).
 const permisosMesas = window.permisosMesas || { crear: false, editar: false, eliminar: false };
 
 let dragState = {
@@ -38,13 +36,13 @@ let dragState = {
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
-    // En pantallas pequeñas arrancamos con menos zoom para ver el plano completo
     if (window.innerWidth < 640) {
         estadoGlobal.zoom = 0.6;
     }
     aplicarZoom();
 
     cargarMesas();
+    inicializarArrastrePlano();
 
     setInterval(() => {
         if (!estadoGlobal.modoEdicion && !estadoGlobal.modoFusion) cargarMesas();
@@ -75,6 +73,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// --- DESPLAZAMIENTO DEL PLANO (DRAG-TO-SCROLL) ---
+// --- DESPLAZAMIENTO DEL PLANO (DRAG-TO-SCROLL) ---
+function inicializarArrastrePlano() {
+    const contenedor = document.getElementById('planoContenedor');
+    if (!contenedor) return;
+
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+    let initialScrollLeft = 0;
+    let initialScrollTop = 0;
+    let seHaDesplazado = false;
+
+    contenedor.addEventListener('pointerdown', (e) => {
+        // Si se hace clic sobre una mesa, NO iniciar el paneo del fondo
+        if (e.target.closest('.mesa-elemento')) return;
+
+        isPanning = true;
+        seHaDesplazado = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        initialScrollLeft = contenedor.scrollLeft;
+        initialScrollTop = contenedor.scrollTop;
+    });
+
+    contenedor.addEventListener('pointermove', (e) => {
+        if (!isPanning) return;
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+
+        // Si se mueve más de 3px, se considera arrastre
+        if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+            seHaDesplazado = true;
+            contenedor.style.cursor = 'grabbing';
+            e.preventDefault();
+            contenedor.scrollLeft = initialScrollLeft - deltaX;
+            contenedor.scrollTop = initialScrollTop - deltaY;
+        }
+    });
+
+    const finalizarPaneo = () => {
+        if (!isPanning) return;
+        isPanning = false;
+        contenedor.style.cursor = 'grab';
+    };
+
+    contenedor.addEventListener('pointerup', finalizarPaneo);
+    contenedor.addEventListener('pointercancel', finalizarPaneo);
+    window.addEventListener('pointerup', finalizarPaneo);
+}
+
 // --- ZOOM ---
 function cambiarZoom(delta) {
     const nuevoZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, estadoGlobal.zoom + delta));
@@ -85,7 +134,11 @@ function cambiarZoom(delta) {
 function aplicarZoom() {
     const lienzo = document.getElementById('planoLienzo');
     const label = document.getElementById('zoomLabel');
-    if (lienzo) lienzo.style.transform = `scale(${estadoGlobal.zoom})`;
+    if (lienzo) {
+        lienzo.style.transform = `scale(${estadoGlobal.zoom})`;
+        // Asegura que el contenedor considere el tamaño real escalado
+        lienzo.style.transformOrigin = 'top left';
+    }
     if (label) label.innerText = `${Math.round(estadoGlobal.zoom * 100)}%`;
 }
 
@@ -107,7 +160,6 @@ function renderizarMapaMesas() {
     const lienzo = document.getElementById('planoLienzo');
     if (!lienzo) return;
 
-    // Limpiamos solo las mesas, conservamos el div de estado vacío
     lienzo.querySelectorAll('.mesa-elemento').forEach(el => el.remove());
 
     const mesasFiltradas = estadoGlobal.mesas;
@@ -122,13 +174,6 @@ function renderizarMapaMesas() {
     mesasFiltradas.forEach(mesa => {
         const div = document.createElement('div');
 
-        // --- COLOR SEGUN DE QUIEN ES LA MESA ---
-        // Verde: libre. Amarillo: la atiende el mesero que esta viendo la
-        // pantalla. Rosa: la atiende alguien mas.
-        //
-        // El color se calcula por USUARIO, no es un estado guardado en la base:
-        // la misma mesa se ve amarilla para su mesero y rosa para los demas.
-        // Por eso se compara contra el id del usuario en sesion.
         let clasePropiedad = '';
         if (mesa.estado === 'ocupada') {
             clasePropiedad = (USUARIO_ACTUAL_ID && mesa.mesero_id === USUARIO_ACTUAL_ID)
@@ -136,24 +181,33 @@ function renderizarMapaMesas() {
                 : 'mesa-de-otro';
         }
 
-        div.className = `mesa-elemento mesa-ui absolute rounded-lg cursor-move flex items-center justify-center font-bold border-2 text-[var(--text-color)] border-[var(--text-color)] mesa-${mesa.estado} ${clasePropiedad} select-none`;
+        div.className = `mesa-elemento mesa-ui absolute rounded-lg flex items-center justify-center font-bold border-2 text-[var(--text-color)] border-[var(--text-color)] mesa-${mesa.estado} ${clasePropiedad} select-none transition-shadow duration-150`;
 
         div.dataset.id = mesa.id;
         div.style.left = (mesa.posicion_x || 50) + 'px';
         div.style.top = (mesa.posicion_y || 50) + 'px';
         div.style.width = (mesa.ancho || 80) + 'px';
         div.style.height = (mesa.alto || 80) + 'px';
-        // IMPORTANTE: solo bloqueamos los gestos táctiles nativos (touch-action: none)
-        // cuando estamos en modo edición, que es cuando el usuario arrastra la mesa.
-        // Fuera de modo edición dejamos "pan-x pan-y" para que, si el dedo empieza
-        // el gesto justo sobre una mesa, el navegador SÍ pueda hacer scroll/pan del
-        // contenedor. Antes esto estaba fijo en 'none' y por eso en el teléfono no
-        // se podía deslizar el plano al tocar sobre las mesas.
-        div.style.touchAction = estadoGlobal.modoEdicion ? 'none' : 'pan-x pan-y';
+        div.style.cursor = estadoGlobal.modoEdicion ? 'move' : 'pointer';
+        div.style.touchAction = 'none';
         div.innerHTML = mesa.numero;
 
         div.addEventListener('pointerdown', (e) => {
-            if (estadoGlobal.modoEdicion && permisosMesas.editar) iniciarArrastre(e, div, mesa);
+            // Evita que el contenedor del plano capture el evento
+            e.stopPropagation();
+
+            if (estadoGlobal.modoEdicion && permisosMesas.editar) {
+                iniciarArrastre(e, div, mesa);
+            }
+        });
+
+        div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (estadoGlobal.modoEdicion) {
+                seleccionarMesa(mesa);
+            } else {
+                window.location.href = `/mesero/comanda/${mesa.id}`;
+            }
         });
 
         div.addEventListener('click', (e) => {
@@ -172,17 +226,15 @@ function renderizarMapaMesas() {
     if (total) total.innerText = `Mesas: ${mesasFiltradas.length}`;
 }
 
-// --- LÓGICA DE ARRASTRE ---
-// Nota: dividimos los deltas de movimiento entre estadoGlobal.zoom para que
-// el arrastre se sienta "1 a 1" con el dedo/mouse, incluso con zoom aplicado.
+// --- LÓGICA DE ARRASTRE DE MESAS ---
 function iniciarArrastre(e, el, mesa) {
     if (!estadoGlobal.modoEdicion) return;
     dragState = {
         activo: true,
         elemento: el,
         mesaId: mesa.id,
-        originX: parseInt(el.style.left),
-        originY: parseInt(el.style.top),
+        originX: parseInt(el.style.left, 10) || 0,
+        originY: parseInt(el.style.top, 10) || 0,
         startX: e.clientX,
         startY: e.clientY,
         contenedor: document.getElementById('planoContenedor')
@@ -202,25 +254,27 @@ function manejarArrastre(e) {
     dragState.elemento.style.top = Math.max(0, y) + 'px';
 }
 
-function detenerArrastre() {
+function detenerArrastre(e) {
     if (!dragState.activo) return;
     const mesa = estadoGlobal.mesas.find(m => m.id === dragState.mesaId);
     if (mesa) {
-        mesa.posicion_x = parseInt(dragState.elemento.style.left);
-        mesa.posicion_y = parseInt(dragState.elemento.style.top);
+        mesa.posicion_x = parseInt(dragState.elemento.style.left, 10);
+        mesa.posicion_y = parseInt(dragState.elemento.style.top, 10);
     }
     dragState.elemento?.removeEventListener('pointermove', manejarArrastre);
     dragState.elemento?.removeEventListener('pointerup', detenerArrastre);
     dragState.elemento?.removeEventListener('pointercancel', detenerArrastre);
+    try {
+        dragState.elemento?.releasePointerCapture(e.pointerId);
+    } catch (_) {}
     dragState.activo = false;
 }
 
-// Sincroniza el touch-action de las mesas ya pintadas en pantalla sin tener
-// que esperar al próximo cargarMesas() (que solo corre fuera de modo edición).
-function actualizarTouchActionMesas() {
-    document.querySelectorAll('.mesa-elemento').forEach(el => {
-        el.style.touchAction = estadoGlobal.modoEdicion ? 'none' : 'pan-x pan-y';
-    });
+// Limpia la mesa seleccionada y devuelve el panel al estado vacío
+function deseleccionarMesa() {
+    estadoGlobal.mesaSeleccionada = null;
+    document.getElementById('formularioMesa')?.classList.add('hidden');
+    document.getElementById('panelVacio')?.classList.remove('hidden');
 }
 
 window.toggleModoEdicion = () => {
@@ -228,11 +282,16 @@ window.toggleModoEdicion = () => {
     document.getElementById('modosEdicion')?.classList.toggle('hidden', !estadoGlobal.modoEdicion);
     document.getElementById('btnGuardar')?.classList.toggle('hidden', !estadoGlobal.modoEdicion);
     document.getElementById('btnCancelar')?.classList.toggle('hidden', !estadoGlobal.modoEdicion);
-    actualizarTouchActionMesas();
+    
+    document.querySelectorAll('.mesa-elemento').forEach(el => {
+        el.style.cursor = estadoGlobal.modoEdicion ? 'move' : 'pointer';
+    });
 
-    // Si se sale de modo edición sin haber seleccionado nada, cerramos la hoja
-    // inferior de propiedades en móvil.
-    if (!estadoGlobal.modoEdicion) cerrarPanelPropiedadesMovil();
+    // Si salimos del modo edición, reseteamos a "Selecciona una mesa"
+    if (!estadoGlobal.modoEdicion) {
+        deseleccionarMesa();
+        cerrarPanelPropiedadesMovil();
+    }
 };
 
 window.abrirModalNuevaMesa = () => document.getElementById('modalCrearMesa').classList.remove('hidden');
@@ -288,8 +347,6 @@ function seleccionarMesa(mesa) {
     abrirPanelPropiedadesMovil();
 }
 
-// --- HOJA INFERIOR DE PROPIEDADES (SOLO AFECTA MÓVIL, EN ESCRITORIO EL PANEL
-//     SIEMPRE ES VISIBLE COMO COLUMNA LATERAL GRACIAS A LAS CLASES lg:*) ---
 function abrirPanelPropiedadesMovil() {
     const panel = document.getElementById('panelPropiedades');
     const backdrop = document.getElementById('panelBackdrop');
@@ -306,8 +363,6 @@ function cerrarPanelPropiedadesMovil() {
     backdrop?.classList.add('hidden');
 }
 window.cerrarPanelPropiedadesMovil = cerrarPanelPropiedadesMovil;
-
-// --- ACCIONES DE GUARDADO Y CANCELAR ---
 
 async function guardarPlanoEnServidor() {
     if (!permisosMesas.editar) {
@@ -332,8 +387,6 @@ async function guardarPlanoEnServidor() {
             return;
         }
 
-        const result = await res.json();
-        console.log('Guardado exitoso:', result);
         showToast('Plano guardado correctamente', 'success');
     } catch (e) {
         console.error('Error en la petición:', e);
@@ -347,7 +400,7 @@ function cancelarEdicion() {
         document.getElementById('btnGuardar')?.classList.add('hidden');
         document.getElementById('btnCancelar')?.classList.add('hidden');
         document.getElementById('modosEdicion')?.classList.add('hidden');
-        actualizarTouchActionMesas();
+        deseleccionarMesa();
         cerrarPanelPropiedadesMovil();
         cargarMesas();
     }, { titulo: '¿Descartar cambios?', textoConfirmar: 'Descartar' });
@@ -388,7 +441,6 @@ window.actualizarPropiedadesMesa = async () => {
     }
 };
 
-// --- ELIMINAR MESA ---
 window.eliminarMesaDelPlano = () => {
     if (!estadoGlobal.mesaSeleccionada) return;
 
@@ -408,9 +460,7 @@ window.eliminarMesaDelPlano = () => {
 
             if (res.ok) {
                 showToast('Mesa eliminada correctamente', 'success');
-                estadoGlobal.mesaSeleccionada = null;
-                document.getElementById('formularioMesa')?.classList.add('hidden');
-                document.getElementById('panelVacio')?.classList.remove('hidden');
+                deseleccionarMesa();
                 cerrarPanelPropiedadesMovil();
                 cargarMesas();
             } else {

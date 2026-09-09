@@ -16,7 +16,7 @@
     };
 </script>
 
-{{-- ESTILOS DIRECTOS PARA EL TECLADO VIRTUAL --}}
+{{-- ESTILOS DIRECTOS PARA EL TECLADO VIRTUAL Y PLANO --}}
 <style>
     body.teclado-virtual-abierto #modalCrearMesa {
         align-items: flex-start !important;
@@ -28,9 +28,17 @@
         transform: translateY(0) scale(0.95) !important;
     }
 
-    /* Scroll táctil suave (inercia) en iOS */
+    /* Scroll táctil suave (inercia) */
     #planoContenedor {
         -webkit-overflow-scrolling: touch;
+        touch-action: none !important;
+        cursor: grab;
+        user-select: none;
+    }
+
+    #planoContenedor.is-dragging {
+        cursor: grabbing !important;
+        user-select: none !important;
     }
 
     /* Hoja inferior de propiedades en móvil */
@@ -47,7 +55,7 @@
 
 <div class="py-3 sm:py-6 lg:py-8">
     {{-- CABECERA Y FILTROS --}}
-    <div class="sticky top-0 z-50 bg-[var(--card-color)] border-b border-[var(--border-color)] shadow-sm">
+    <div class="bg-[var(--card-color)] border-b border-[var(--border-color)] shadow-sm rounded-xl mb-4">
         <div class="max-w-full px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
@@ -120,7 +128,6 @@
                     <span id="totalMesas" class="text-sm font-semibold text-[var(--text-color)] bg-[var(--input-bg)] border border-[var(--border-color)] px-3 py-2 rounded-lg shadow-sm">Mesas: 0</span>
                 </div>
 
-                {{-- "Agregar" --}}
                 @if($puedeCrearMesa)
                     <div id="modosEdicion" class="hidden flex gap-2 w-full sm:w-auto sm:ml-auto">
                         <button type="button" id="btnAgregarMesa" class="w-full sm:w-auto justify-center px-4 py-2 bg-[#b74309] hover:bg-[#8f3207] text-white rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow-sm cursor-pointer active:scale-95">
@@ -179,9 +186,9 @@
                         </div>
                     </div>
 
+                    {{-- CONTENEDOR CON SOPORTE DE DESPLAZAMIENTO FLUIDO --}}
                     <div id="planoContenedor"
-                         class="relative w-full h-[380px] sm:h-[480px] lg:h-[600px] bg-[var(--input-bg)] overflow-auto shadow-inner"
-                         style="touch-action: pan-x pan-y;">
+                         class="relative w-full h-[400px] sm:h-[500px] lg:h-[650px] bg-[var(--input-bg)] overflow-auto shadow-inner">
 
                         <div id="planoLienzo" class="relative origin-top-left" style="width:1400px; height:900px; transition: transform 0.15s ease-out;">
                             <div id="planoVacio" class="hidden absolute inset-0 flex flex-col items-center justify-center text-center px-6">
@@ -201,9 +208,9 @@
                 <div id="panelBackdrop" class="hidden lg:hidden fixed inset-0 bg-black/50 z-30"></div>
 
                 <div id="panelPropiedades"
-                     class="fixed inset-x-0 bottom-0 z-40 flex flex-col translate-y-full transition-transform duration-300 ease-out bg-[var(--card-color)] border-t border-[var(--border-color)] rounded-t-2xl shadow-2xl
-                            lg:sticky lg:inset-auto lg:translate-y-0 lg:transition-none lg:z-auto lg:rounded-xl lg:border lg:shadow-lg lg:top-28"
-                     style="max-height: 85dvh;">
+                    class="fixed inset-x-0 bottom-0 z-40 flex flex-col translate-y-full transition-transform duration-300 ease-out bg-[var(--card-color)] border-t border-[var(--border-color)] rounded-t-2xl shadow-2xl
+                    lg:static lg:inset-auto lg:translate-y-0 lg:transition-none lg:z-auto lg:rounded-xl lg:border lg:shadow-lg"
+                    style="max-height: 85dvh;">
 
                     <div class="lg:hidden flex justify-center pt-2 pb-1 shrink-0">
                         <span class="w-10 h-1.5 rounded-full bg-[var(--border-color)]"></span>
@@ -397,6 +404,63 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // --- CONTROL DE ARRASTRE BIDIRECCIONAL EN EL PLANO (PANNING) ---
+    const contenedor = document.getElementById('planoContenedor');
+    if (contenedor) {
+        let isDown = false;
+        let startX, startY, scrollLeft, scrollTop;
+
+        const onStart = (clientX, clientY) => {
+            isDown = true;
+            contenedor.classList.add('is-dragging');
+            startX = clientX - contenedor.offsetLeft;
+            startY = clientY - contenedor.offsetTop;
+            scrollLeft = contenedor.scrollLeft;
+            scrollTop = contenedor.scrollTop;
+        };
+
+        const onMove = (clientX, clientY) => {
+            if (!isDown) return;
+            const x = clientX - contenedor.offsetLeft;
+            const y = clientY - contenedor.offsetTop;
+            const walkX = (x - startX);
+            const walkY = (y - startY);
+            contenedor.scrollLeft = scrollLeft - walkX;
+            contenedor.scrollTop = scrollTop - walkY;
+        };
+
+        const onEnd = () => {
+            isDown = false;
+            contenedor.classList.remove('is-dragging');
+        };
+
+        // Eventos de ratón
+        contenedor.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.mesa-item') && document.body.classList.contains('modo-edicion')) return;
+            onStart(e.pageX, e.pageY);
+        });
+        window.addEventListener('mousemove', (e) => onMove(e.pageX, e.pageY));
+        window.addEventListener('mouseup', onEnd);
+
+        // Eventos táctiles (Móviles / Tablets)
+        contenedor.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                if (e.target.closest('.mesa-item') && document.body.classList.contains('modo-edicion')) return;
+                onStart(e.touches[0].pageX, e.touches[0].pageY);
+            }
+        }, { passive: true });
+
+        contenedor.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && isDown) {
+                onMove(e.touches[0].pageX, e.touches[0].pageY);
+            }
+        }, { passive: true });
+
+        contenedor.addEventListener('touchend', onEnd);
+        contenedor.addEventListener('touchcancel', onEnd);
+    }
+
+    // Modal Mis Mesas
     const modal = document.getElementById('modal-mis-mesas');
     const btn = document.getElementById('btnMisMesas');
     if (!modal || !btn) return;

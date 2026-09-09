@@ -153,56 +153,83 @@ class CajaController extends Controller
      * no trae registrado_por, se cae al usuario que ABRIO el turno y se marca
      * como aproximado, en vez de mostrar un dato que podria ser falso.
      */
-   public function detalleVenta($id): JsonResponse
+ public function detalleVenta($id): JsonResponse
     {
         $venta = FlujoCaja::with(['registradoPor', 'cajaMovimiento.user'])->findOrFail($id);
 
-        $orden = null;
+        $ordenReferencia = null;
+        $detalles = collect();
+        $pagosOrden = collect([$venta]);
+
         if ($venta->flujoable_id) {
-            // Se agrega 'detalles.variante'
-            $orden = Orden::with(['mesero', 'mesa', 'detalles.producto', 'detalles.variante'])->find($venta->flujoable_id);
+            $ordenReferencia = Orden::withTrashed()->with(['mesero', 'mesa'])->find($venta->flujoable_id);
+
+            // Obtenemos todos los pagos registrados para esta misma orden
+            $pagosOrden = FlujoCaja::where('tipo', 'ingreso')
+                ->where('flujoable_id', $venta->flujoable_id)
+                ->get();
+
+            if ($ordenReferencia) {
+                $ordenesHermanas = Orden::withTrashed()
+                    ->where('mesa_id', $ordenReferencia->mesa_id)
+                    ->when($ordenReferencia->cerrada_el, function ($q) use ($ordenReferencia) {
+                        $q->where('cerrada_el', $ordenReferencia->cerrada_el);
+                    }, function ($q) use ($ordenReferencia) {
+                        $q->where('id', $ordenReferencia->id);
+                    })
+                    ->with(['detalles.producto', 'detalles.variante'])
+                    ->get();
+
+                $detalles = $ordenesHermanas->flatMap(fn($o) => $o->detalles);
+            }
         }
 
         $cajeroExacto = $venta->registradoPor;
         $cajeroTurno  = optional($venta->cajaMovimiento)->user;
 
-        $productos = collect();
-        if ($orden) {
-            $productos = $orden->detalles->map(function ($d) {
-                $cancelado = strtolower($d->estado ?? '') === 'cancelado';
-                $nombreBase = optional($d->producto)->nombre ?? 'Producto eliminado';
-                $nombreVariante = optional($d->variante)->nombre;
-                $nombreCompleto = $nombreVariante ? "{$nombreBase} - {$nombreVariante}" : $nombreBase;
+        $productos = $detalles->map(function ($d) {
+            $cancelado = strtolower($d->estado ?? '') === 'cancelado';
+            $nombreBase = optional($d->producto)->nombre ?? 'Producto eliminado';
+            $nombreVariante = optional($d->variante)->nombre;
+            $nombreCompleto = $nombreVariante ? "{$nombreBase} - {$nombreVariante}" : $nombreBase;
 
-                return [
-                    'producto'        => $nombreCompleto,
-                    'cantidad'        => (float) $d->cantidad,
-                    'precio_unitario' => round((float) $d->precio_unitario, 2),
-                    'importe'         => $cancelado ? 0 : round($d->cantidad * $d->precio_unitario, 2),
-                    'cancelado'       => $cancelado,
-                    'notas'           => $d->notas,
-                ];
-            });
-        }
+            return [
+                'producto'        => $nombreCompleto,
+                'cantidad'        => (float) $d->cantidad,
+                'precio_unitario' => round((float) $d->precio_unitario, 2),
+                'importe'         => $cancelado ? 0 : round($d->cantidad * $d->precio_unitario, 2),
+                'cancelado'       => $cancelado,
+                'notas'           => $d->notas,
+            ];
+        });
+
+        $esMixto = $pagosOrden->count() > 1;
+        $totalCobrado = (float) $pagosOrden->sum('monto');
 
         return response()->json([
             'success'           => true,
             'concepto'          => $venta->concepto,
-            'monto'             => round((float) $venta->monto, 2),
+            'monto'             => round($totalCobrado, 2),
             'metodo'            => $venta->metodo_pago,
+            'es_mixto'          => $esMixto,
+            'pagos'             => $pagosOrden->map(fn($p) => [
+                'metodo'     => $p->metodo_pago,
+                'monto'      => (float) $p->monto,
+                'referencia' => $p->referencia,
+            ])->values(),
             'referencia'        => $venta->referencia,
             'hora'              => optional($venta->fecha)->format('d/m/Y H:i'),
-            'mesa'              => optional(optional($orden)->mesa)->numero,
-            'orden'             => optional($orden)->numero_orden,
-            'personas'          => optional($orden)->personas,
-            'mesero'            => optional(optional($orden)->mesero)->nombre ?? 'Sin asignar',
+            'mesa'              => optional(optional($ordenReferencia)->mesa)->numero,
+            'orden'             => optional($ordenReferencia)->numero_orden,
+            'personas'          => optional($ordenReferencia)->personas,
+            'mesero'            => optional(optional($ordenReferencia)->mesero)->nombre ?? 'Sin asignar',
             'cajero'            => $cajeroExacto->nombre ?? $cajeroTurno->nombre ?? 'Sin registrar',
             'cajero_aproximado' => $cajeroExacto === null,
             'productos'         => $productos->values(),
             'consumo'           => round($productos->sum('importe'), 2),
         ]);
     }
-    
+
     public function abrir(Request $request)
     {
         $request->validate([

@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let html = '<div class="p-5 space-y-4">';
 
-                // Quien atendio y quien cobro
+               // Quien atendio y quien cobro
                 html += '<div class="grid grid-cols-2 gap-3">'
                     + '<div class="rounded-xl border p-3" style="border-color: var(--border-color);">'
                     + '<p class="text-[10px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Mesero que atendió</p>'
@@ -400,12 +400,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         : '')
                     + '</div></div>';
 
-                // Cobro
-                html += '<div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 flex items-center justify-between">'
-                    + '<div><p class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">'
-                    + d.metodo + (d.referencia ? ' \u00b7 ref ' + d.referencia : '') + '</p>'
-                    + '<p class="text-[11px]" style="color: var(--text-muted);">' + d.concepto + '</p></div>'
-                    + '<span class="text-xl font-black text-emerald-600 dark:text-emerald-400">' + dinero(d.monto) + '</span></div>';
+                // Cobro: Si es pago mixto muestra el desglose completo, si es simple muestra la pastilla única
+                if (d.es_mixto && d.pagos && d.pagos.length > 1) {
+                    html += '<div class="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 space-y-3">'
+                        + '<div class="flex items-center justify-between pb-2 border-b border-emerald-500/20">'
+                        + '  <div>'
+                        + '    <span class="px-2 py-0.5 rounded text-[9px] font-black bg-amber-500/20 border border-amber-500/30 text-amber-600 dark:text-amber-400 uppercase tracking-wider">Pago Mixto</span>'
+                        + '    <p class="text-[11px] mt-1" style="color: var(--text-muted);">' + d.concepto + '</p>'
+                        + '  </div>'
+                        + '  <span class="text-2xl font-black text-emerald-600 dark:text-emerald-400">' + dinero(d.monto) + '</span>'
+                        + '</div>'
+                        + '<div class="grid grid-cols-1 sm:grid-cols-3 gap-2">';
+
+                    d.pagos.forEach(p => {
+                        let color = p.metodo === 'tarjeta' ? 'sky' : (p.metodo === 'transferencia' ? 'indigo' : 'emerald');
+                        html += '<div class="p-2.5 rounded-xl border flex flex-col justify-center items-center text-center" style="background-color: var(--card-color); border-color: var(--border-color);">'
+                            + '<span class="text-[9px] font-black uppercase tracking-wider text-' + color + '-500">' + p.metodo + '</span>'
+                            + '<span class="text-sm font-black text-[var(--text-color)] mt-0.5">' + dinero(p.monto) + '</span>'
+                            + (p.referencia ? '<span class="text-[8px] font-mono px-1 py-0.5 rounded border mt-1" style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">#' + p.referencia + '</span>' : '')
+                            + '</div>';
+                    });
+
+                    html += '</div></div>';
+                } else {
+                    html += '<div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 flex items-center justify-between">'
+                        + '<div><p class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">'
+                        + d.metodo + (d.referencia ? ' \u00b7 ref ' + d.referencia : '') + '</p>'
+                        + '<p class="text-[11px]" style="color: var(--text-muted);">' + d.concepto + '</p></div>'
+                        + '<span class="text-xl font-black text-emerald-600 dark:text-emerald-400">' + dinero(d.monto) + '</span></div>';
+                }
 
                 // Consumo
                 if (d.productos.length) {
