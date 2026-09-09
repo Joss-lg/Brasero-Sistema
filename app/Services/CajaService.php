@@ -24,6 +24,7 @@ class CajaService
         $ordenesActivas = $mesa->ordenesActivas()
             ->with([
                 'detalles.producto',
+                'detalles.variante', // <-- Carga ansiosa para mostrar variante/proteína
                 'detalles.promocionAplicada.promocion',
                 'promocionesAplicadas.promocion',
                 'promocionesAplicadas.detalleOrden.producto',
@@ -168,7 +169,7 @@ IVA_BLOCK_END */
         $asignacionesPorDetalle = [];
         if ($tipo === 'por_producto') {
             $detalles = $mesa->ordenesActivas()
-                ->with('detalles.divisiones')
+                ->with(['detalles.divisiones', 'detalles.variante', 'detalles.producto'])
                 ->get()
                 ->flatMap(fn($orden) => $orden->detalles->where('estado', '!=', 'cancelado'));
 
@@ -336,7 +337,7 @@ IVA_BLOCK_END */
         $subtotalMesa = $desgloseMesa['subtotal'];
 
         $detalles = $mesa->ordenesActivas()
-            ->with(['detalles.divisiones', 'detalles.promocionAplicada'])
+            ->with(['detalles.divisiones', 'detalles.promocionAplicada', 'detalles.variante', 'detalles.producto'])
             ->get()
             ->flatMap(fn($orden) => $orden->detalles->where('estado', '!=', 'cancelado'));
 

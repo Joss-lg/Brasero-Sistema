@@ -12,6 +12,41 @@
 </style>
 
 {{-- ==========================================
+     13. MODAL SELECCIÓN DE VARIANTE / PROTEÍNA
+     ========================================== --}}
+<div id="modalVariantesProducto" class="modal-overlay hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="modal-sheet w-full sm:max-w-sm max-h-[92vh] overflow-y-auto hide-scroll rounded-t-[28px] sm:rounded-3xl bg-[var(--bg-panel)] border border-[var(--border-color)] p-5 sm:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-6 shadow-2xl ring-1 ring-black/5">
+        <div class="sm:hidden w-10 h-1.5 rounded-full bg-[var(--border-color)] mx-auto mb-4"></div>
+        
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="w-9 h-9 shrink-0 rounded-lg bg-gradient-to-br from-[#b74309]/15 to-[#b74309]/5 border border-[#b74309]/20 flex items-center justify-center">
+                    <i class="fas fa-layer-group text-[#b74309] text-xs"></i>
+                </span>
+                <div class="min-w-0">
+                    <p class="text-[10px] uppercase tracking-widest text-[#b74309] font-bold">Selección</p>
+                    <h2 id="modalVariantesTitulo" class="text-base sm:text-lg font-bold text-[var(--text-main)] leading-tight truncate">Platillo</h2>
+                </div>
+            </div>
+            <button type="button" onclick="cerrarModalVariantes()" class="text-[var(--text-muted)] hover:text-[var(--text-main)] w-9 h-9 -m-1 rounded-full hover:bg-[var(--hover-bg)] flex items-center justify-center transition-all duration-200">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <p class="text-[12px] text-[var(--text-muted)] mb-3">Elige la opción o proteína deseada para este platillo:</p>
+
+        {{-- Contenedor dinámico de las variantes --}}
+        <div id="modalVariantesLista" class="flex flex-col gap-2 max-h-[45vh] sm:max-h-[300px] overflow-y-auto hide-scroll pb-1"></div>
+
+        <div class="mt-5 flex justify-end">
+            <button type="button" onclick="cerrarModalVariantes()" class="w-full sm:w-auto min-h-[44px] px-6 rounded-xl border border-[var(--border-color)] text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--hover-bg)] active:scale-95 transition-all duration-150">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- ==========================================
      1. MODAL NIP CAPITÁN (Teclado Numérico Virtual)
      ========================================== --}}
 <div id="modalNip" class="modal-overlay hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -122,11 +157,6 @@
         </div>
     </div>
 </div>
-{{-- ==========================================
-     4. MODAL DESCUENTO — RETIRADO
-     El descuento se movió al módulo de Caja: ahora lo autoriza quien
-     cobra, no quien levanta el pedido. Ver la pantalla de cobro.
-     ========================================== --}}
 
 {{-- ==========================================
      5. MODAL PERSONAS (Teclado Numérico Virtual)
@@ -315,7 +345,6 @@
 
 {{-- ==========================================
      11. MODAL NIP CANCELACIÓN DE PRODUCTO
-     (Independiente del modalNip de Capitán/Traspaso)
      ========================================== --}}
 <div id="modalNipCancelacion" class="modal-overlay hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
     <div class="modal-sheet w-full sm:max-w-sm max-h-[92vh] overflow-y-auto hide-scroll rounded-t-[28px] sm:rounded-[24px] bg-[var(--bg-panel)] border border-[var(--border-color)] p-5 sm:p-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-6 shadow-2xl ring-1 ring-black/5">
@@ -341,7 +370,6 @@
                class="w-full min-h-[64px] rounded-xl border border-[var(--border-color)] bg-[var(--input-bg)] shadow-inner p-4 text-2xl sm:text-xl font-black text-center text-[var(--text-main)] outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/10 transition-all duration-200 tracking-[0.3em]"
                placeholder="••••">
 
-        {{-- Teclado Numérico (reutiliza escribirNumVirtual/borrarNumVirtual, ya son genéricas por ID) --}}
         <div class="grid grid-cols-3 gap-1.5 mt-4">
             @foreach(['1','2','3','4','5','6','7','8','9'] as $key)
                 <button type="button" onclick="escribirNumVirtual('nipCancelacionInput', '{{ $key }}')" class="min-h-[44px] rounded-lg bg-[var(--input-bg)] border border-[var(--border-color)] hover:border-red-500/30 hover:bg-[var(--hover-bg)] active:scale-90 text-[var(--text-main)] text-lg font-bold shadow-sm transition-all duration-100">{{ $key }}</button>
@@ -380,6 +408,7 @@
         </div>
     </div>
 </div>
+
 {{-- ═══════════════════════════════════════════════════
      TECLADO VIRTUAL — Modal de Nota / Instrucción
      ════════════════════════════════════════════════ --}}
@@ -389,7 +418,6 @@
 
     <div class="absolute bottom-0 inset-x-0 bg-[var(--bg-base)] border-t border-[var(--border-color)] shadow-2xl rounded-t-3xl">
 
-        {{-- Display + cerrar --}}
         <div class="flex items-start gap-3 px-4 pt-4 pb-3 border-b border-[var(--border-color)]">
             <div class="flex-1 bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-xl px-3 py-2.5 min-h-[48px] max-h-24 overflow-y-auto">
                 <span id="tn-display" class="text-sm font-medium text-[var(--text-main)] break-words whitespace-pre-wrap"></span><span class="inline-block w-0.5 h-4 bg-blue-500 animate-pulse rounded-full align-middle ml-0.5"></span>
@@ -400,7 +428,6 @@
             </button>
         </div>
 
-        {{-- Notas rápidas --}}
         <div class="flex gap-2 px-3 pt-2.5 overflow-x-auto hide-scroll pb-1">
             @foreach(['Sin cebolla','Salsa aparte','Bien cocido','Término medio','Para llevar','Sin picante'] as $nota)
                 <button type="button" onclick="tnRapida('{{ $nota }}')"
@@ -410,7 +437,6 @@
             @endforeach
         </div>
 
-        {{-- QWERTY --}}
         <div class="px-2 py-2 space-y-1.5 select-none">
             @php
                 $filasNota = [
@@ -429,7 +455,6 @@
                     @endforeach
                 </div>
             @endforeach
-            {{-- Fila inferior --}}
             <div class="flex justify-center gap-1 mt-1">
                 <button type="button" onclick="tnEscribir(' ')"
                     class="flex-1 h-10 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 font-bold text-xs shadow-sm active:scale-95 transition-all duration-75">
@@ -485,7 +510,6 @@
         display.textContent = tnValor;
     };
 
-    // Las notas rápidas del modal original también deben funcionar
     window.agregarTextoRapidoNota = function (texto) {
         const ta = document.getElementById('notaTextarea');
         if (ta) {
@@ -495,18 +519,15 @@
     };
 })();
 </script>
+
 <script>
-// ── Regla universal teclado nativo vs virtual ─────────────────────────────
-// Se ejecuta cuando el DOM y todos los scripts están listos
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof window.esPantallaTactil !== 'function') return;
 
     const esPantalla = window.esPantallaTactil();
 
-    // Aplicar a todos los inputs marcados con data-teclado-virtual
     document.querySelectorAll('[data-teclado-virtual]').forEach(function (input) {
         if (esPantalla) {
-            // Monitor touch: bloquear teclado del sistema, activar teclado físico
             input.setAttribute('inputmode', 'none');
             input.addEventListener('focus', function () {
                 window.setInputVirtualActivo && window.setInputVirtualActivo(input.id);
@@ -518,22 +539,73 @@ document.addEventListener('DOMContentLoaded', function () {
                 }, 100);
             });
         } else {
-            // Móvil: teclado nativo, quitar restricciones
             input.removeAttribute('inputmode');
             input.removeAttribute('readonly');
         }
     });
 
-    // Mismo comportamiento para el textarea de nota
     const notaTextarea = document.getElementById('notaTextarea');
     if (notaTextarea) {
         if (!esPantalla) {
-            // Móvil: teclado nativo
             notaTextarea.removeAttribute('readonly');
             notaTextarea.removeAttribute('inputmode');
             notaTextarea.removeAttribute('onclick');
         }
-        // Monitor: ya tiene readonly y onclick="abrirTecladoNota()" desde el blade
     }
 });
+
+// Controladores para abrir y cerrar el modal de variantes
+window.abrirModalVariante = function(productoId, nombreProducto, variantes) {
+    const modal = document.getElementById('modalVariantesProducto');
+    if (!modal) return;
+
+    const titulo = modal.querySelector('#modalVariantesTitulo');
+    // Buscamos la lista dentro del propio contenedor del modal
+    const lista = modal.querySelector('#modalVariantesLista');
+
+    if (titulo) titulo.innerText = nombreProducto;
+    if (!lista) return;
+
+    lista.innerHTML = '';
+
+    // Asegurar que variantes sea un array procesable
+    let itemsVariantes = variantes;
+    if (typeof itemsVariantes === 'string') {
+        try { itemsVariantes = JSON.parse(itemsVariantes); } catch (e) { itemsVariantes = []; }
+    }
+
+    if (!itemsVariantes || itemsVariantes.length === 0) {
+        lista.innerHTML = '<p class="text-xs text-center text-[var(--text-muted)] py-4">No hay opciones disponibles.</p>';
+    } else {
+        itemsVariantes.forEach(v => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'w-full flex items-center justify-between p-3.5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-base)] hover:border-[#b74309] hover:bg-[#b74309]/5 active:scale-[0.98] transition-all shadow-sm text-left group cursor-pointer';
+            btn.innerHTML = `
+                <span class="text-sm font-bold text-[var(--text-main)] group-hover:text-[#b74309] transition-colors">${v.nombre}</span>
+                <span class="text-sm font-black text-[#b74309]">$${parseFloat(v.precio).toFixed(2)}</span>
+            `;
+
+            btn.onclick = function() {
+                if (typeof window.agregarProductoConVariante === 'function') {
+                    window.agregarProductoConVariante(productoId, v);
+                }
+                cerrarModalVariantes();
+            };
+
+            lista.appendChild(btn);
+        });
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+};
+
+window.cerrarModalVariantes = function() {
+    const modal = document.getElementById('modalVariantesProducto');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
 </script>

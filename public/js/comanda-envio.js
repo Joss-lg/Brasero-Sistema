@@ -1,4 +1,3 @@
-
 (function () {
     const config = window.ComandaConfig || {};
 
@@ -74,28 +73,23 @@
     // GESTIÓN DE PROPINA (MODAL Y CÁLCULOS CORREGIDOS)
     // ---------------------------------------------------------------
     
-    // Abre el modal y carga el valor actual de la propina si ya tiene una asignada
     window.abrirModalPropina = function () {
         const input = document.getElementById('propinaInput');
         const modal = document.getElementById('modalPropina');
         
-        // Asignación segura del valor si el input existe
         if (input) {
             input.value = window.propinaGlobal > 0 ? window.propinaGlobal.toFixed(2) : '';
         }
         
-        // Muestra el modal de manera segura
         if (modal) {
             modal.classList.remove('hidden');
         }
         
-        // Auto focus al input para agilizar la operación del mesero
         if (input) {
             setTimeout(() => input.focus(), 150);
         }
     };
 
-    // Calcula el porcentaje basándose en el total actual (Subtotal + IVA)
     window.calcularPropinaPorcentaje = function (porcentaje) {
         let total = parseFloat(window.totalComandaSinPropina) || 0; 
         const input = document.getElementById('propinaInput');
@@ -110,7 +104,6 @@
         }
     };
 
-    // Al dar click en aplicar, guarda el valor global y actualiza la pantalla
     window.guardarPropina = function () {
         const input = document.getElementById('propinaInput');
         const montoPropina = input ? (parseFloat(input.value) || 0) : 0;
@@ -122,7 +115,6 @@
 
         window.propinaGlobal = montoPropina;
         
-        // Volvemos a disparar actualizarTotales para que se refresque el total final
         if (typeof window.actualizarTotales === 'function') {
             window.actualizarTotales();
         }
@@ -148,10 +140,19 @@
             const nomEl = item.querySelector('.nombre-platillo');
             const nombre = nomEl ? nomEl.innerText : 'Producto';
             const modsElementos = item.querySelectorAll('.nota-texto-real');
-            const mods = []; modsElementos.forEach(m => mods.push(m.innerText.replace('•', '').trim()));
+            const mods = []; 
+            modsElementos.forEach(m => mods.push(m.innerText.replace('•', '').trim()));
+
+            // Obtener el ID de la variante si existe
+            const varIdRaw = item.dataset.varianteId;
+            const varianteId = (varIdRaw && varIdRaw !== 'sin-variante') ? parseInt(varIdRaw, 10) : null;
+
             platillosData.push({
-                id: parseInt(item.dataset.productoId, 10), nombre: nombre,
-                cantidad: parseInt(item.dataset.cantidad, 10), precio: parseFloat(item.dataset.precio),
+                id: parseInt(item.dataset.productoId, 10),
+                variante_id: varianteId, // <-- Parámetro mapeado al backend
+                nombre: nombre,
+                cantidad: parseInt(item.dataset.cantidad, 10),
+                precio: parseFloat(item.dataset.precio),
                 modificadores: mods,
                 gramaje: item.dataset.gramaje === 'sin-gramaje' ? null : item.dataset.gramaje,
                 tiempo: item.dataset.tiempo
@@ -161,43 +162,55 @@
         const btn = document.getElementById('btn-enviar'); 
         if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true; }
         
-        const txtTotalEl = document.getElementById('txtTotal');
-        const totalParseado = txtTotalEl ? parseFloat(txtTotalEl.innerText.replace('$', '')) : 0;
+        const txtTotalEl = document.getElementById('txtTotal') || document.getElementById('txtTotalComanda');
+        const totalParseado = txtTotalEl ? parseFloat(txtTotalEl.innerText.replace('$', '').replace(',', '')) : 0;
 
         fetch(config.rutas.comandaEnviar, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken() },
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-Requested-With': 'XMLHttpRequest', 
+                'X-CSRF-TOKEN': csrfToken() 
+            },
             body: JSON.stringify({
-                mesa_id: mesaDestinoSeleccionada || (config.mesa && config.mesa.id) || 1,
+                mesa_id: (typeof mesaDestinoSeleccionada !== 'undefined' && mesaDestinoSeleccionada) || (config.mesa && config.mesa.id) || 1,
                 platillos: platillosData,
                 total: totalParseado,
                 personas: numeroPersonas,
                 descuento_porcentaje: descuentoPorcentaje,
-                nota_general: notaGeneral,
+                nota_general: typeof notaGeneral !== 'undefined' ? notaGeneral : '',
                 propina: window.propinaGlobal || 0
             })
         })
-        .then(res => res.json()).then(data => {
+        .then(res => res.json())
+        .then(data => {
             if (data.success) {
                 mostrarExito("¡Enviado a cocina!");
 
                 platillosData.forEach(p => {
-                    platillosEnviadosDB.push({
-                        nombre: p.nombre,
-                        cantidad: p.cantidad,
-                        precio: p.precio,
-                        estado: 'enviado'
-                    });
+                    if (typeof platillosEnviadosDB !== 'undefined') {
+                        platillosEnviadosDB.push({
+                            nombre: p.nombre,
+                            cantidad: p.cantidad,
+                            precio: p.precio,
+                            estado: 'enviado'
+                        });
+                    }
                 });
 
                 if (typeof window.limpiarTicket === 'function') window.limpiarTicket();
 
                 setTimeout(() => window.location.href = (config.rutas && config.rutas.dashboard) || '/', 1000);
+            } else {
+                throw new Error(data.message);
             }
-            else throw new Error(data.message);
-        }).catch(error => { 
+        })
+        .catch(error => { 
             mostrarError(error.message); 
-            if (btn) { btn.innerHTML = '<i class="fas fa-paper-plane text-sm"></i><span>Enviar Orden</span>'; btn.disabled = false; }
+            if (btn) { 
+                btn.innerHTML = '<i class="fas fa-paper-plane text-sm"></i><span>Enviar Orden</span>'; 
+                btn.disabled = false; 
+            }
         });
     };
 })();

@@ -48,48 +48,45 @@
         <form action="{{ route('admin.caja.abrir') }}" method="POST" class="space-y-5">
             @csrf
 
-            {{-- Dropdown Personalizado: Turno --}}
-            <div x-data="{
-                open: false,
-                selected: '{{ old('turno', '') }}',
-                selectedLabel: '{{ old('turno') ? old('turno') : 'Seleccionar turno...' }}',
-                options: [
-                    { value: 'Matutino', label: 'Matutino' },
-                    { value: 'Vespertino', label: 'Vespertino' }
-                ],
-                select(opt) {
-                    this.selected = opt.value;
-                    this.selectedLabel = opt.label;
-                    this.open = false;
-                    const input = document.getElementById('input_turno');
-                    if (input) input.value = opt.value;
-                }
-            }">
-                <label class="block text-xs font-bold uppercase tracking-wider mb-1" style="color: var(--text-muted);">Seleccionar Turno</label>
+            {{-- Dropdown Personalizado: Turno (JavaScript Nativo) --}}
+            <div class="relative" id="custom-dropdown-turno">
+                <label class="block text-xs font-bold uppercase tracking-wider mb-1" style="color: var(--text-muted);">
+                    Seleccionar Turno
+                </label>
                 
-                <input type="hidden" name="turno" id="input_turno" :value="selected" value="{{ old('turno', '') }}" required>
+                {{-- Input oculto que envía el dato en el POST --}}
+                <input type="hidden" name="turno" id="input_turno" value="{{ old('turno', '') }}" required>
 
-                <div class="relative">
-                    <button type="button" @click="open = !open"
-                        class="w-full h-12 px-4 rounded-xl text-sm font-bold border flex items-center justify-between outline-none transition-all focus:border-[#b74309] cursor-pointer"
-                        style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
-                        <span x-text="selectedLabel" :class="{ 'opacity-60 font-normal': !selected }">Seleccionar turno...</span>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }" style="color: var(--text-muted);"></i>
-                    </button>
+                {{-- Botón disparador --}}
+                <button type="button" id="btn-dropdown-turno"
+                    class="w-full h-12 px-4 rounded-xl text-sm font-bold border flex items-center justify-between outline-none transition-all duration-200 focus:border-[#b74309] cursor-pointer select-none"
+                    style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
+                    <span id="label-dropdown-turno" class="{{ old('turno') ? '' : 'opacity-60 font-normal' }}">
+                        {{ old('turno', 'Seleccionar turno...') }}
+                    </span>
+                    <i id="icono-dropdown-turno" class="fas fa-chevron-down text-xs transition-transform duration-200" style="color: var(--text-muted);"></i>
+                </button>
 
-                    <div x-show="open" @click.outside="open = false" x-transition
-                        class="absolute z-50 w-full mt-2 rounded-xl shadow-2xl py-2 border overflow-hidden"
-                        style="background-color: var(--card-color); border-color: var(--border-color); display: none;">
-                        <template x-for="opt in options" :key="opt.value">
-                            <div @click="select(opt)"
-                                class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors hover:bg-[#b74309]/10"
-                                :class="{ 'bg-[#b74309]/15 text-[#b74309]': selected === opt.value }"
-                                style="color: var(--text-color);">
-                                <span x-text="opt.label"></span>
-                            </div>
-                        </template>
+                {{-- Menú desplegable flotante --}}
+                <div id="menu-dropdown-turno"
+                    class="hidden absolute left-0 right-0 z-50 mt-2 rounded-2xl shadow-2xl py-2 border overflow-hidden backdrop-blur-md transition-all duration-200"
+                    style="background-color: var(--card-color); border-color: var(--border-color);">
+                    
+                    <div class="opcion-turno px-4 py-3 text-sm font-bold cursor-pointer transition-all duration-150 flex items-center justify-between hover:bg-[#b74309]/10"
+                         data-value="Matutino"
+                         style="color: var(--text-color);">
+                        <span>Matutino</span>
+                        <i class="fas fa-sun text-xs opacity-50"></i>
+                    </div>
+
+                    <div class="opcion-turno px-4 py-3 text-sm font-bold cursor-pointer transition-all duration-150 flex items-center justify-between hover:bg-[#b74309]/10"
+                         data-value="Vespertino"
+                         style="color: var(--text-color);">
+                        <span>Vespertino</span>
+                        <i class="fas fa-moon text-xs opacity-50"></i>
                     </div>
                 </div>
+
                 @error('turno')
                     <p class="text-rose-500 text-xs mt-1 font-bold">{{ $message }}</p>
                 @enderror
@@ -181,5 +178,62 @@
             TecladoVirtual.attachAll();
         }
     });
+
+    document.addEventListener('DOMContentLoaded', function () {
+    const contenedor = document.getElementById('custom-dropdown-turno');
+    if (!contenedor) return;
+
+    const btn = document.getElementById('btn-dropdown-turno');
+    const menu = document.getElementById('menu-dropdown-turno');
+    const icono = document.getElementById('icono-dropdown-turno');
+    const label = document.getElementById('label-dropdown-turno');
+    const hiddenInput = document.getElementById('input_turno');
+    const opciones = contenedor.querySelectorAll('.opcion-turno');
+
+    function alternarDropdown() {
+        const estaAbierto = !menu.classList.contains('hidden');
+        if (estaAbierto) {
+            cerrarDropdown();
+        } else {
+            menu.classList.remove('hidden');
+            icono.classList.add('rotate-180');
+            btn.style.borderColor = '#b74309';
+        }
+    }
+
+    function cerrarDropdown() {
+        menu.classList.add('hidden');
+        icono.classList.remove('rotate-180');
+        btn.style.borderColor = 'var(--border-color)';
+    }
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        alternarDropdown();
+    });
+
+    opciones.forEach(opcion => {
+        opcion.addEventListener('click', function () {
+            const valor = this.getAttribute('data-value');
+            hiddenInput.value = valor;
+            label.textContent = valor;
+            label.classList.remove('opacity-60', 'font-normal');
+            
+            // Resaltar la opción seleccionada
+            opciones.forEach(el => el.classList.remove('bg-[#b74309]/15', 'text-[#b74309]'));
+            this.classList.add('bg-[#b74309]/15', 'text-[#b74309]');
+
+            cerrarDropdown();
+        });
+    });
+
+    // Cerrar al hacer clic fuera
+    document.addEventListener('click', function (e) {
+        if (!contenedor.contains(e.target)) {
+            cerrarDropdown();
+        }
+    });
+});
+
 </script>
 @endsection

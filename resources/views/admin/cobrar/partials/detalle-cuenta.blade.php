@@ -95,6 +95,10 @@
     <div class="px-4 pb-3 space-y-1 flex-1 min-h-0 overflow-y-auto" id="productos-container">
         @foreach($ordenes as $ordenActual)
             @foreach($ordenActual->detalles->where('estado', '!=', 'cancelado') as $detalle)
+                @php
+                    $nombrePlatillo = $detalle->producto->nombre ?? 'Producto sin nombre';
+                    $varianteNombre = $detalle->variante?->nombre ?? null;
+                @endphp
                 <div class="producto-row py-1.5 px-2 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5">
                     <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2 min-w-0">
@@ -103,7 +107,9 @@
                                 {{ $detalle->cantidad }}x
                             </div>
                             <div class="min-w-0">
-                                <p class="font-bold text-[13px] leading-tight truncate" style="color: var(--text-color);">{{ $detalle->producto->nombre ?? 'Producto sin nombre' }}</p>
+                                <p class="font-bold text-[13px] leading-tight truncate" style="color: var(--text-color);">
+                                    {{ $nombrePlatillo }}@if($varianteNombre) - <span class="text-[#b74309] dark:text-[#e8946a] font-black uppercase">{{ $varianteNombre }}</span>@endif
+                                </p>
                                 <p class="text-[9px] font-semibold leading-tight" style="color: var(--text-muted);">Unit: ${{ number_format($detalle->precio_unitario, 2) }}</p>
 
                                 @if($detalle->notas)

@@ -15,6 +15,7 @@ class DetalleOrden extends Model
         'orden_id',
         'lote_envio',
         'producto_id',
+        'producto_variante_id', // <-- Habilitado para asignación masiva
         'cantidad',
         'precio_unitario',
         'estado',
@@ -34,6 +35,7 @@ class DetalleOrden extends Model
         'precio_unitario' => 'decimal:2',
         'cancelado_en' => 'datetime',
         'cuenta_division_numero' => 'integer',
+        'producto_variante_id' => 'integer',
     ];
 
     // Relación con Orden
@@ -47,10 +49,16 @@ class DetalleOrden extends Model
         return $this->belongsTo(Transaccion::class, 'transaccion_id');
     }
 
-    // Relación con Producto
+    // Relación con Producto base
     public function producto()
     {
         return $this->belongsTo(Producto::class);
+    }
+
+    // Relación con la Variante/Proteína seleccionada
+    public function variante()
+    {
+        return $this->belongsTo(ProductoVariante::class, 'producto_variante_id');
     }
 
     public function promocionAplicada()
@@ -58,26 +66,25 @@ class DetalleOrden extends Model
         return $this->hasOne(OrdenPromocion::class, 'detalle_orden_id');
     }
 
-    // NUEVO: cómo se reparte la cantidad de este producto entre personas
-    // cuando la mesa se divide "por consumo" (una fila por persona)
+    // Cómo se reparte la cantidad de este producto entre personas al dividir cuenta
     public function divisiones()
     {
         return $this->hasMany(DetalleOrdenDivision::class, 'detalle_orden_id');
     }
 
-    // NUEVO: quién autorizó la cancelación (Capitán/Admin)
+    // Quién autorizó la cancelación (Capitán/Admin)
     public function canceladoPor()
     {
         return $this->belongsTo(User::class, 'cancelado_por');
     }
 
-    // NUEVO: scope para excluir cancelados en cualquier consulta
+    // Scope para excluir cancelados en cualquier consulta
     public function scopeActivos($query)
     {
         return $query->where('estado', '!=', 'cancelado');
     }
 
-    // NUEVO: helper de conveniencia
+    // Helper de conveniencia
     public function getEstaCanceladoAttribute(): bool
     {
         return $this->estado === 'cancelado';

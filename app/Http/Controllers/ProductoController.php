@@ -42,66 +42,105 @@ class ProductoController extends Controller
     }
 
     /**
+     * Normaliza las variantes recibidas desde cualquier formato de formulario.
+     */
+    private function normalizarVariantes(Request $request): array
+    {
+        $variantes = [];
+
+        // Caso 1: Vienen como array asociativo directo [['nombre' => ..., 'precio' => ...]]
+        if ($request->has('variantes') && is_array($request->variantes)) {
+            foreach ($request->variantes as $v) {
+                if (is_array($v) && !empty($v['nombre'])) {
+                    $variantes[] = [
+                        'nombre' => trim($v['nombre']),
+                        'precio' => (float)($v['precio'] ?? 0),
+                    ];
+                }
+            }
+        }
+
+        // Caso 2: Vienen en arrays paralelos (ej: variantes_nombres[] y variantes_precios[])
+        $nombres = $request->input('variantes_nombres', $request->input('variante_nombre', []));
+        $precios = $request->input('variantes_precios', $request->input('variante_precio', []));
+
+        if (empty($variantes) && is_array($nombres)) {
+            foreach ($nombres as $idx => $nombre) {
+                if (!empty(trim($nombre))) {
+                    $variantes[] = [
+                        'nombre' => trim($nombre),
+                        'precio' => isset($precios[$idx]) ? (float)$precios[$idx] : 0,
+                    ];
+                }
+            }
+        }
+
+        return $variantes;
+    }
+
+    /**
      * Registra un nuevo platillo y guarda sus variantes o receta.
      */
     public function store(Request $request)
     {
+        $tieneVariantes = filter_var($request->input('tiene_variantes'), FILTER_VALIDATE_BOOLEAN);
+        $sePorPeso = filter_var($request->input('se_vende_por_peso'), FILTER_VALIDATE_BOOLEAN);
+        $variantesNormalizadas = $this->normalizarVariantes($request);
+
         $request->merge([
-            'nombre' => trim($request->nombre)
+            'nombre' => trim($request->nombre ?? ''),
+            'tiene_variantes' => $tieneVariantes,
+            'se_vende_por_peso' => $sePorPeso,
+            'variantes' => $variantesNormalizadas,
         ]);
 
         $request->validate([
             'nombre'               => 'required|string|max:255',
             'descripcion'          => 'nullable|string',
             'categoria_id'         => 'required|exists:categorias,id',
-            'tiene_variantes'      => 'sometimes|boolean',
-            'se_vende_por_peso'    => 'sometimes|boolean',
-            
-            // El precio base es obligatorio solo si no tiene variantes ni se vende por peso
-            'precio'               => 'nullable|required_unless:tiene_variantes,1|numeric|min:0',
-            'precio_por_100g'      => 'nullable|required_if:se_vende_por_peso,1|numeric|min:0',
-            
-            // Validación de las variantes (Bistec, Cecina, etc.)
-            'variantes'            => 'nullable|required_if:tiene_variantes,1|array',
-            'variantes.*.nombre'   => 'required_with:variantes|string|max:255',
-            'variantes.*.precio'   => 'required_with:variantes|numeric|min:0',
-
-            // Insumos / Receta
+            'tiene_variantes'      => 'boolean',
+            'se_vende_por_peso'    => 'boolean',
+            'precio'               => 'nullable|numeric|min:0',
+            'precio_por_100g'      => 'nullable|numeric|min:0',
+            'variantes'            => 'nullable|array',
             'insumos'              => 'nullable|array',
             'insumos.*'            => 'exists:insumos,id',
             'cantidades'           => 'nullable|array',
-            'cantidades.*'         => 'required_with:insumos|numeric|min:0.001',
         ]);
+
+        // Validación condicional de negocio
+        if (!$tieneVariantes && !$sePorPeso && (!isset($request->precio) || $request->precio === '')) {
+            return response()->json(['message' => 'El precio base es obligatorio para productos sin variantes.'], 422);
+        }
+
+        if ($tieneVariantes && empty($variantesNormalizadas)) {
+            return response()->json(['message' => 'Debes registrar al menos una variante con nombre y precio.'], 422);
+        }
 
         try {
             DB::beginTransaction();
 
-            $tieneVariantes = $request->boolean('tiene_variantes');
-            $sePorPeso = $request->boolean('se_vende_por_peso');
+            $precioBase = ($tieneVariantes || $sePorPeso) ? 0 : (float)($request->precio ?? 0);
 
-            $producto = new Producto([
+            $producto = Producto::create([
                 'nombre'            => $request->nombre,
                 'descripcion'       => $request->descripcion,
                 'categoria_id'      => $request->categoria_id,
-                'precio'            => ($tieneVariantes || $sePorPeso) ? 0 : ($request->precio ?? 0),
+                'precio'            => $precioBase,
                 'tiene_variantes'   => $tieneVariantes,
                 'se_vende_por_peso' => $sePorPeso,
-                'precio_por_100g'   => $sePorPeso ? $request->precio_por_100g : null,
-                'esta_disponible'   => $request->boolean('esta_disponible', true),
+                'precio_por_100g'   => $sePorPeso ? (float)$request->precio_por_100g : null,
+                'esta_disponible'   => filter_var($request->input('esta_disponible', true), FILTER_VALIDATE_BOOLEAN),
             ]);
 
-            $producto->save();
-
-            // Guardar variantes si el switch fue activado
-            if ($tieneVariantes && $request->filled('variantes')) {
-                foreach ($request->variantes as $varianteData) {
-                    if (!empty($varianteData['nombre']) && isset($varianteData['precio'])) {
-                        $producto->variantes()->create([
-                            'nombre'          => trim($varianteData['nombre']),
-                            'precio'          => (float)$varianteData['precio'],
-                            'esta_disponible' => true
-                        ]);
-                    }
+            // Guardar variantes
+            if ($tieneVariantes && !empty($variantesNormalizadas)) {
+                foreach ($variantesNormalizadas as $vData) {
+                    $producto->variantes()->create([
+                        'nombre'          => $vData['nombre'],
+                        'precio'          => $vData['precio'],
+                        'esta_disponible' => true,
+                    ]);
                 }
             }
 
@@ -115,7 +154,6 @@ class ProductoController extends Controller
                         ];
                     }
                 }
-
                 if (!empty($receta)) {
                     $producto->insumos()->sync($receta);
                 }
@@ -127,7 +165,7 @@ class ProductoController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error en ProductoController@store: ' . $e->getMessage());
-            return response()->json(['message' => 'Error inesperado al guardar el producto.'], 500);
+            return response()->json(['message' => 'Error al guardar: ' . $e->getMessage()], 500);
         }
     }
 
@@ -136,62 +174,61 @@ class ProductoController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $tieneVariantes = filter_var($request->input('tiene_variantes'), FILTER_VALIDATE_BOOLEAN);
+        $sePorPeso = filter_var($request->input('se_vende_por_peso'), FILTER_VALIDATE_BOOLEAN);
+        $variantesNormalizadas = $this->normalizarVariantes($request);
+
         $request->merge([
-            'nombre' => trim($request->nombre)
+            'nombre' => trim($request->nombre ?? ''),
+            'tiene_variantes' => $tieneVariantes,
+            'se_vende_por_peso' => $sePorPeso,
+            'variantes' => $variantesNormalizadas,
         ]);
 
         $request->validate([
             'nombre'               => 'required|string|max:255',
             'descripcion'          => 'nullable|string',
             'categoria_id'         => 'required|exists:categorias,id',
-            'tiene_variantes'      => 'sometimes|boolean',
-            'se_vende_por_peso'    => 'sometimes|boolean',
-            'precio'               => 'nullable|required_unless:tiene_variantes,1|numeric|min:0',
-            'precio_por_100g'      => 'nullable|required_if:se_vende_por_peso,1|numeric|min:0',
-            
-            'variantes'            => 'nullable|required_if:tiene_variantes,1|array',
-            'variantes.*.nombre'   => 'required_with:variantes|string|max:255',
-            'variantes.*.precio'   => 'required_with:variantes|numeric|min:0',
-
+            'tiene_variantes'      => 'boolean',
+            'se_vende_por_peso'    => 'boolean',
+            'precio'               => 'nullable|numeric|min:0',
+            'precio_por_100g'      => 'nullable|numeric|min:0',
+            'variantes'            => 'nullable|array',
             'insumos'              => 'nullable|array',
             'insumos.*'            => 'exists:insumos,id',
             'cantidades'           => 'nullable|array',
-            'cantidades.*'         => 'required_with:insumos|numeric|min:0.001',
         ]);
 
         try {
             DB::beginTransaction();
 
             $producto = Producto::findOrFail($id);
-            $tieneVariantes = $request->boolean('tiene_variantes');
-            $sePorPeso = $request->boolean('se_vende_por_peso');
+            $precioBase = ($tieneVariantes || $sePorPeso) ? 0 : (float)($request->precio ?? 0);
 
             $producto->update([
                 'nombre'            => $request->nombre,
                 'descripcion'       => $request->descripcion,
                 'categoria_id'      => $request->categoria_id,
-                'precio'            => ($tieneVariantes || $sePorPeso) ? 0 : ($request->precio ?? 0),
+                'precio'            => $precioBase,
                 'tiene_variantes'   => $tieneVariantes,
                 'se_vende_por_peso' => $sePorPeso,
-                'precio_por_100g'   => $sePorPeso ? $request->precio_por_100g : null,
-                'esta_disponible'   => $request->boolean('esta_disponible'),
+                'precio_por_100g'   => $sePorPeso ? (float)$request->precio_por_100g : null,
+                'esta_disponible'   => filter_var($request->input('esta_disponible', true), FILTER_VALIDATE_BOOLEAN),
             ]);
 
-            // Sincronizar variantes: si se desactivó el switch se limpian; si sigue activo se reconstruyen
+            // Sincronizar variantes
             $producto->variantes()->delete();
-            if ($tieneVariantes && $request->filled('variantes')) {
-                foreach ($request->variantes as $varianteData) {
-                    if (!empty($varianteData['nombre']) && isset($varianteData['precio'])) {
-                        $producto->variantes()->create([
-                            'nombre'          => trim($varianteData['nombre']),
-                            'precio'          => (float)$varianteData['precio'],
-                            'esta_disponible' => true
-                        ]);
-                    }
+            if ($tieneVariantes && !empty($variantesNormalizadas)) {
+                foreach ($variantesNormalizadas as $vData) {
+                    $producto->variantes()->create([
+                        'nombre'          => $vData['nombre'],
+                        'precio'          => $vData['precio'],
+                        'esta_disponible' => true,
+                    ]);
                 }
             }
 
-            // Sincronizar receta / insumos
+            // Sincronizar receta
             $receta = [];
             if ($request->filled('insumos') && $request->filled('cantidades')) {
                 foreach ($request->insumos as $index => $insumoId) {
@@ -210,13 +247,10 @@ class ProductoController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error en ProductoController@update: ' . $e->getMessage());
-            return response()->json(['message' => 'Error inesperado al actualizar el producto.'], 500);
+            return response()->json(['message' => 'Error al actualizar: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Elimina un platillo del menú (Soporta Soft Delete nativo).
-     */
     public function destroy($id)
     {
         $producto = Producto::findOrFail($id);
@@ -226,9 +260,6 @@ class ProductoController extends Controller
         return response()->json(['message' => "El producto ({$nombre}) fue eliminado correctamente."]);
     }
 
-    /**
-     * Alterna la disponibilidad instantánea del platillo (Switch de operaciones).
-     */
     public function toggleDisponibilidad($id)
     {
         $producto = Producto::findOrFail($id);
@@ -243,9 +274,6 @@ class ProductoController extends Controller
         ]);
     }
 
-    /**
-     * Devuelve los productos agrupados por categoría, para renderizar las tarjetas.
-     */
     public function getProductos(): JsonResponse
     {
         $productos = Producto::with(['categoria', 'insumos', 'modificadores', 'variantes'])

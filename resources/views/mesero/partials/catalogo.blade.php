@@ -33,7 +33,7 @@
         {{-- Categorías --}}
         <div id="menuCategorias"
              class="mt-3 flex items-center gap-2 overflow-x-auto hide-scroll pb-1 -mx-1 px-1 snap-x snap-mandatory">
-            {{-- Los botones de categoría se inyectan aquí por JavaScript --}}
+            {{-- Los botones de categoría se inyectan dinámicamente --}}
         </div>
     </div>
 
@@ -54,41 +54,60 @@
 
         @forelse($productos ?? [] as $producto)
         @php
-            $precioMostrar = $producto->precio
-                ?? $producto->precio_100g
-                ?? $producto->precio_gramaje
-                ?? $producto->precio_kg
-                ?? $producto->costo
-                ?? 0;
+            $variantesList = $producto->variantes ?? collect();
+            $tieneVariantes = (bool)($producto->tiene_variantes || $variantesList->isNotEmpty());
+            
+            if ($tieneVariantes && $variantesList->isNotEmpty()) {
+                $precioMostrar = $variantesList->min('precio') ?? 0;
+            } else {
+                $precioMostrar = $producto->precio ?? $producto->precio_por_100g ?? 0;
+            }
+
+            $variantesJsonAttr = htmlspecialchars($variantesList->toJson(), ENT_QUOTES, 'UTF-8');
+            $nombreAttr = htmlspecialchars($producto->nombre, ENT_QUOTES, 'UTF-8');
         @endphp
 
         <button type="button"
-            data-producto-id="{{ $producto->id ?? 0 }}"
+            data-producto-id="{{ $producto->id }}"
+            data-producto-nombre="{{ $nombreAttr }}"
+            data-tiene-variantes="{{ $tieneVariantes ? '1' : '0' }}"
+            data-variantes="{{ $variantesJsonAttr }}"
+            onclick="gestionarClickProducto(this)"
             class="btn-producto group relative flex flex-col justify-between text-left rounded-[20px] border border-blue-200/60
-                   bg-white p-4
-                   shadow-sm min-h-[130px]
+                   bg-white p-4 shadow-sm min-h-[130px]
                    hover:border-blue-500 hover:shadow-md hover:-translate-y-0.5
                    active:scale-[0.97] active:translate-y-0
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60
                    transition-all duration-150">
 
-            {{-- Nombre del producto --}}
-            <h3 class="text-[14px] sm:text-[15px] font-black text-slate-900 leading-tight uppercase mb-4 pr-2">
-                {{ $producto->nombre }}
-            </h3>
+            {{-- Nombre del producto y Badge de Variantes --}}
+            <div>
+                <h3 class="text-[14px] sm:text-[15px] font-black text-slate-900 leading-tight uppercase mb-1 pr-2">
+                    {{ $producto->nombre }}
+                </h3>
+                @if($tieneVariantes)
+                    <span class="inline-flex items-center gap-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md uppercase tracking-wider mb-2">
+                        <i class="fas fa-layer-group text-[8px]"></i> Elige proteína
+                    </span>
+                @endif
+            </div>
 
             {{-- Precio y Botón Agregar --}}
             <div class="mt-auto flex items-center justify-between gap-2 w-full">
-                <p class="text-[16px] sm:text-[18px] font-black text-slate-900 leading-none tracking-tight">
-                    ${{ number_format($precioMostrar, 2) }}
-                </p>
+                <div>
+                    @if($tieneVariantes)
+                        <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Desde</span>
+                    @endif
+                    <p class="text-[16px] sm:text-[18px] font-black text-slate-900 leading-none tracking-tight">
+                        ${{ number_format($precioMostrar, 2) }}
+                    </p>
+                </div>
 
                 <span class="flex-shrink-0 w-9 h-9 rounded-full bg-[#3b82f6] text-white
                              flex items-center justify-center text-sm font-bold
-                             shadow-sm
-                             group-hover:bg-blue-600 group-active:scale-90
+                             shadow-sm group-hover:bg-blue-600 group-active:scale-90
                              transition-all duration-150">
-                    <i class="fas fa-plus"></i>
+                    <i class="fas {{ $tieneVariantes ? 'fa-list-ul' : 'fa-plus' }}"></i>
                 </span>
             </div>
         </button>
@@ -122,75 +141,77 @@
         </span>
     </button>
 
-{{-- TECLADO VIRTUAL --}}
-<div id="teclado-virtual-overlay"
-     class="hidden fixed inset-0 z-[9999]"
-     onclick="if(event.target===this) cerrarTecladoVirtual()">
+    {{-- ============================================================
+         TECLADO VIRTUAL INTEGRADO (Touch POS)
+         ============================================================ --}}
+    <div id="teclado-virtual-overlay"
+         class="hidden fixed inset-0 z-[9999]"
+         onclick="if(event.target===this) cerrarTecladoVirtual()">
 
-    <div id="teclado-virtual"
-         class="absolute bottom-0 inset-x-0 bg-[var(--bg-base)] border-t border-[var(--border-color)] shadow-2xl rounded-t-3xl pb-safe">
+        <div id="teclado-virtual"
+             class="absolute bottom-0 inset-x-0 bg-[var(--bg-base)] border-t border-[var(--border-color)] shadow-2xl rounded-t-3xl pb-safe">
 
-        {{-- Barra superior --}}
-        <div class="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-[var(--border-color)]">
-            <div class="flex-1 flex items-center gap-2 bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-xl px-3 py-2.5 min-h-[40px]">
-                <i class="fas fa-magnifying-glass text-[var(--text-muted)] text-xs shrink-0"></i>
-                <span id="tv-display" class="flex-1 text-sm font-semibold text-[var(--text-main)] break-all"></span>
-                <span class="w-0.5 h-4 bg-blue-500 animate-pulse rounded-full"></span>
-            </div>
-            <button type="button" onclick="cerrarTecladoVirtual()"
-                class="w-10 h-10 rounded-xl bg-[var(--bg-panel)] border border-[var(--border-color)] text-[var(--text-muted)] flex items-center justify-center shrink-0 active:scale-95">
-                <i class="fas fa-xmark text-sm"></i>
-            </button>
-        </div>
-
-        {{-- Teclado QWERTY --}}
-        <div class="px-2 py-3 space-y-1.5 select-none">
-            @php
-                $filas = [
-                    ['Q','W','E','R','T','Y','U','I','O','P'],
-                    ['A','S','D','F','G','H','J','K','L'],
-                    ['Z','X','C','V','B','N','M'],
-                ];
-            @endphp
-
-            @foreach($filas as $fila)
-                <div class="flex justify-center gap-1">
-                    @foreach($fila as $letra)
-                        <button type="button"
-                            onclick="tvEscribir('{{ $letra }}')"
-                            class="tv-key flex-1 max-w-[38px] h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 active:bg-blue-100 dark:active:bg-blue-500/20 transition-all duration-75">
-                            {{ $letra }}
-                        </button>
-                    @endforeach
+            {{-- Barra superior del teclado --}}
+            <div class="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-[var(--border-color)]">
+                <div class="flex-1 flex items-center gap-2 bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-xl px-3 py-2.5 min-h-[40px]">
+                    <i class="fas fa-magnifying-glass text-[var(--text-muted)] text-xs shrink-0"></i>
+                    <span id="tv-display" class="flex-1 text-sm font-semibold text-[var(--text-main)] break-all"></span>
+                    <span class="w-0.5 h-4 bg-blue-500 animate-pulse rounded-full"></span>
                 </div>
-            @endforeach
+                <button type="button" onclick="cerrarTecladoVirtual()"
+                    class="w-10 h-10 rounded-xl bg-[var(--bg-panel)] border border-[var(--border-color)] text-[var(--text-muted)] flex items-center justify-center shrink-0 active:scale-95">
+                    <i class="fas fa-xmark text-sm"></i>
+                </button>
+            </div>
 
-            {{-- Fila inferior --}}
-            <div class="flex justify-center gap-1 mt-1">
-                <button type="button" onclick="tvEscribir('1')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">1</button>
-                <button type="button" onclick="tvEscribir('2')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">2</button>
-                <button type="button" onclick="tvEscribir('3')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">3</button>
-                <button type="button" onclick="tvEscribir(' ')"
-                    class="tv-key flex-1 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 font-bold text-xs shadow-sm active:scale-95 transition-all duration-75">
-                    ESPACIO
-                </button>
-                <button type="button" onclick="tvEscribir('4')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">4</button>
-                <button type="button" onclick="tvEscribir('5')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">5</button>
-                <button type="button"
-                    onclick="tvBorrar()"
-                    class="tv-key w-14 h-11 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-500 shadow-sm active:scale-95 flex items-center justify-center transition-all duration-75">
-                    <i class="fas fa-delete-left text-base"></i>
-                </button>
+            {{-- Teclado QWERTY --}}
+            <div class="px-2 py-3 space-y-1.5 select-none">
+                @php
+                    $filas = [
+                        ['Q','W','E','R','T','Y','U','I','O','P'],
+                        ['A','S','D','F','G','H','J','K','L'],
+                        ['Z','X','C','V','B','N','M'],
+                    ];
+                @endphp
+
+                @foreach($filas as $fila)
+                    <div class="flex justify-center gap-1">
+                        @foreach($fila as $letra)
+                            <button type="button"
+                                onclick="tvEscribir('{{ $letra }}')"
+                                class="tv-key flex-1 max-w-[38px] h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 active:bg-blue-100 dark:active:bg-blue-500/20 transition-all duration-75">
+                                {{ $letra }}
+                            </button>
+                        @endforeach
+                    </div>
+                @endforeach
+
+                {{-- Fila numérica e inferior --}}
+                <div class="flex justify-center gap-1 mt-1">
+                    <button type="button" onclick="tvEscribir('1')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">1</button>
+                    <button type="button" onclick="tvEscribir('2')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">2</button>
+                    <button type="button" onclick="tvEscribir('3')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">3</button>
+                    <button type="button" onclick="tvEscribir(' ')"
+                        class="tv-key flex-1 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-500 font-bold text-xs shadow-sm active:scale-95 transition-all duration-75">
+                        ESPACIO
+                    </button>
+                    <button type="button" onclick="tvEscribir('4')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">4</button>
+                    <button type="button" onclick="tvEscribir('5')" class="tv-key w-10 h-11 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-white font-black text-sm shadow-sm active:scale-95 transition-all duration-75">5</button>
+                    <button type="button"
+                        onclick="tvBorrar()"
+                        class="tv-key w-14 h-11 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-500 shadow-sm active:scale-95 flex items-center justify-center transition-all duration-75">
+                        <i class="fas fa-delete-left text-base"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 <script>
 (function () {
     let tvValor = '';
-    const overlay  = document.getElementById('teclado-virtual-overlay');
-    const display  = document.getElementById('tv-display');
+    const overlay   = document.getElementById('teclado-virtual-overlay');
+    const display   = document.getElementById('tv-display');
     const inputReal = document.getElementById('buscadorProductos');
 
     window.abrirTecladoVirtual = function () {
@@ -211,21 +232,23 @@
         return window.innerWidth > 768;
     }
 
-    inputReal.addEventListener('focus', function (e) {
-        if (necesitaTecladoVirtual()) {
-            e.preventDefault();
-            inputReal.blur();
-            abrirTecladoVirtual();
-        }
-    });
+    if (inputReal) {
+        inputReal.addEventListener('focus', function (e) {
+            if (necesitaTecladoVirtual()) {
+                e.preventDefault();
+                inputReal.blur();
+                abrirTecladoVirtual();
+            }
+        });
 
-    inputReal.addEventListener('click', function (e) {
-        if (necesitaTecladoVirtual()) {
-            e.preventDefault();
-            inputReal.blur();
-            abrirTecladoVirtual();
-        }
-    });
+        inputReal.addEventListener('click', function (e) {
+            if (necesitaTecladoVirtual()) {
+                e.preventDefault();
+                inputReal.blur();
+                abrirTecladoVirtual();
+            }
+        });
+    }
 
     window.abrirTecladoVirtual_orig = window.abrirTecladoVirtual;
     window.abrirTecladoVirtual = function () {
@@ -271,5 +294,96 @@
         btnLimpiar.addEventListener('click', () => { tvValor = ''; });
     }
 })();
+
+// ============================================================
+// LÓGICA DE DETECCIÓN Y SELECCIÓN DE VARIANTES EN COMANDAS
+// ============================================================
+function gestionarClickProducto(btn) {
+    const productoId     = btn.getAttribute('data-producto-id');
+    const productoNombre = btn.getAttribute('data-producto-nombre');
+    const variantesRaw   = btn.getAttribute('data-variantes');
+
+    let variantes = [];
+    try {
+        variantes = JSON.parse(variantesRaw || '[]');
+    } catch (e) {
+        variantes = [];
+    }
+
+    const tieneVariantes = btn.getAttribute('data-tiene-variantes') === '1' || variantes.length > 0;
+
+    if (tieneVariantes && variantes.length > 0) {
+        abrirModalVariante(productoId, productoNombre, variantes);
+    } else {
+        if (typeof window.seleccionarItemCatalogo === 'function') {
+            window.seleccionarItemCatalogo(parseInt(productoId, 10));
+        } else if (typeof window.agregarAlTicket === 'function') {
+            window.agregarAlTicket(productoId, productoNombre, 0, '', []);
+        }
+    }
+}
+
+function abrirModalVariante(productoId, nombrePlatillo, variantes) {
+    const modal = document.getElementById('modalVariantesProducto');
+    if (!modal) return;
+
+    const titulo = modal.querySelector('#modalVariantesTitulo');
+    const lista  = modal.querySelector('#modalVariantesLista');
+
+    if (titulo) titulo.textContent = nombrePlatillo;
+    if (!lista) return;
+
+    lista.innerHTML = '';
+
+    let items = variantes;
+    if (typeof items === 'string') {
+        try { items = JSON.parse(items); } catch(e) { items = []; }
+    }
+
+    if (!items || items.length === 0) {
+        lista.innerHTML = '<p class="text-xs text-center text-[var(--text-muted)] py-4">No hay opciones registradas.</p>';
+    } else {
+        items.forEach(variante => {
+            const itemBtn = document.createElement('button');
+            itemBtn.type = 'button';
+            itemBtn.className = 'w-full flex items-center justify-between p-3.5 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-base)] hover:border-[#b74309] hover:bg-[#b74309]/5 active:scale-[0.98] transition-all shadow-sm text-left group cursor-pointer';
+            itemBtn.innerHTML = `
+                <span class="text-sm font-bold text-[var(--text-main)] group-hover:text-[#b74309] transition-colors uppercase">
+                    ${variante.nombre}
+                </span>
+                <span class="text-sm font-black text-[#b74309]">
+                    $${parseFloat(variante.precio).toFixed(2)}
+                </span>
+            `;
+
+            itemBtn.onclick = () => {
+                seleccionarVariante(productoId, variante);
+            };
+
+            lista.appendChild(itemBtn);
+        });
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function cerrarModalVariantes() {
+    const modal = document.getElementById('modalVariantesProducto');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+}
+
+function seleccionarVariante(productoId, variante) {
+    cerrarModalVariantes();
+
+    if (typeof window.agregarProductoConVariante === 'function') {
+        window.agregarProductoConVariante(productoId, variante);
+    } else if (typeof window.agregarAlTicket === 'function') {
+        window.agregarAlTicket(productoId, variante.nombre, parseFloat(variante.precio), '', []);
+    }
+}
 </script>
 </section>

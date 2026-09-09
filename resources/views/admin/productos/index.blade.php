@@ -234,14 +234,26 @@
             ? `<p class="text-[10px] mt-1.5 truncate" style="color: var(--text-muted);"><i class="fas fa-list-ul mr-1 opacity-70"></i> ${producto.modificadores.map(m => m.nombre).join(', ')}</p>`
             : '';
 
-        const esPorPeso = !!producto.se_vende_por_peso;
+        const esPorPeso = Boolean(producto.se_vende_por_peso);
+        const tieneVariantes = Boolean(producto.tiene_variantes);
+
         const badgePorPeso = esPorPeso
             ? `<span class="text-[8px] font-black text-orange-500 bg-orange-500/10 border border-orange-500/20 px-1.5 py-0.5 rounded-md uppercase tracking-widest inline-flex items-center gap-1 mt-1.5"><i class="fas fa-weight-hanging"></i> Por peso</span>`
             : '';
 
-        const precioMostrado = esPorPeso
-            ? `$${parseFloat(producto.precio_por_100g ?? 0).toFixed(2)} <span class="text-[10px] sm:text-[11px] font-bold" style="color: var(--text-muted);">/100g</span>`
-            : `$${parseFloat(producto.precio).toFixed(2)}`;
+        const badgeVariantes = tieneVariantes
+            ? `<span class="text-[8px] font-black text-blue-500 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-md uppercase tracking-widest inline-flex items-center gap-1 mt-1.5"><i class="fas fa-layer-group"></i> Variantes</span>`
+            : '';
+
+        let precioMostrado = `$${parseFloat(producto.precio || 0).toFixed(2)}`;
+        if (esPorPeso) {
+            precioMostrado = `$${parseFloat(producto.precio_por_100g ?? 0).toFixed(2)} <span class="text-[10px] sm:text-[11px] font-bold" style="color: var(--text-muted);">/100g</span>`;
+        } else if (tieneVariantes && producto.variantes && producto.variantes.length > 0) {
+            const precios = producto.variantes.map(v => parseFloat(v.precio));
+            const min = Math.min(...precios);
+            const max = Math.max(...precios);
+            precioMostrado = min === max ? `$${min.toFixed(2)}` : `$${min.toFixed(2)} - $${max.toFixed(2)}`;
+        }
  
         const botonesHTML = [
             tienePermisoEditar   ? `<button class="w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition active:scale-95 hover:text-[#b74309] hover:border-[#b74309]" style="background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-muted);" onclick="editarProducto(${producto.id})" title="Editar"><i class="fas fa-pen text-[11px]"></i></button>` : '',
@@ -259,7 +271,10 @@
                         <h3 class="text-sm sm:text-[15px] font-bold tracking-tight truncate" style="color: var(--text-color);">${producto.nombre}</h3>
                         <p class="text-[11px] sm:text-[12px] mt-1 line-clamp-2" style="color: var(--text-muted);">${producto.descripcion ?? 'Sin descripción'}</p>
                         ${mods}
-                        ${badgePorPeso}
+                        <div class="flex flex-wrap gap-1">
+                            ${badgePorPeso}
+                            ${badgeVariantes}
+                        </div>
                     </div>
                 </div>
                 <div class="flex items-center gap-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity shrink-0">${botonesHTML}</div>
@@ -297,7 +312,7 @@
  
     function toggleDisponibilidad(btn, id) {
         if (!tienePermisoEditar) { mostrarNotificacion('Sin autorización', 'error'); return; }
-        const circulo    = btn.querySelector('div');
+        const circulo     = btn.querySelector('div');
         const estaActivo = btn.classList.contains('bg-green-500');
         const textoEstado = btn.nextElementSibling;
         _setToggleEstado(btn, circulo, textoEstado, !estaActivo);
@@ -472,7 +487,8 @@
         if (!contenedor) {
             contenedor = document.createElement('div');
             contenedor.id = 'toast-ajax-container';
-            contenedor.className = 'fixed top-4 left-4 right-4 sm:left-auto sm:top-6 sm:right-6 z-[200] flex flex-col gap-3 sm:gap-4 items-stretch sm:items-end';
+            contenedor.className = 'fixed top-4 left-4 right-4 sm:left-auto sm:top-6 sm:right-6 flex flex-col gap-3 sm:gap-4 items-stretch sm:items-end pointer-events-none';
+            contenedor.style.zIndex = '999999';
             document.body.appendChild(contenedor);
         }
 
@@ -484,7 +500,7 @@
 
         const toast = document.createElement('div');
         toast.id = id;
-        toast.className = 'relative overflow-hidden bg-white dark:bg-[#0f1015] border border-gray-100 dark:border-white/5 rounded-2xl shadow-2xl p-4 flex gap-3.5 items-start w-full sm:w-[320px] transition-all duration-300 transform translate-x-0 opacity-100';
+        toast.className = 'pointer-events-auto relative overflow-hidden bg-white dark:bg-[#0f1015] border border-gray-100 dark:border-white/5 rounded-2xl shadow-2xl p-4 flex gap-3.5 items-start w-full sm:w-[320px] transition-all duration-300 transform translate-x-0 opacity-100';
         toast.innerHTML = `
             <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${colorBarra}"></div>
             <div class="flex items-center justify-center w-8 h-8 rounded-full border ${colorIcono} flex-shrink-0 mt-1">

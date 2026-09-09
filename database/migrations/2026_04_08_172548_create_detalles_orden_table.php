@@ -6,27 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('detalles_orden', function (Blueprint $table) {
             $table->id();
             $table->foreignId('orden_id')->constrained('ordenes')->onDelete('cascade');
             $table->foreignId('producto_id')->constrained('productos');
+            
+            // Columna simple sin constraint foránea inmediata para evitar el error 150
+            $table->unsignedBigInteger('producto_variante_id')->nullable();
+
+            $table->string('lote_envio')->nullable();
             $table->integer('cantidad');
             $table->decimal('precio_unitario', 10, 2);
-            $table->string('estado'); // Ej: en cocina, entregado
-            $table->text('notas')->nullable(); // Para el "Sin cebolla", etc.
-            $table->string('tiempo')->nullable(); // Tiempo de cocina: sin-tiempo, primer-tiempo, segundo-tiempo, tercer-tiempo
+            $table->string('estado')->default('en cocina');
+            $table->string('estado_preparacion')->default('pendiente');
+            $table->text('notas')->nullable();
+            $table->string('tiempo')->nullable();
+            $table->string('gramaje')->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('detalles_orden');

@@ -143,13 +143,19 @@ public function actualizarEstado(Request $request, $id)
     }
 
         
-    private function construirComandas(string $areaSeleccionada): array
+   private function construirComandas(string $areaSeleccionada): array
     {
-        $ordenes = Orden::with(['mesa:id,id,numero,tipo,plataforma_delivery_id', 'mesa.plataformaDelivery:id,nombre', 'mesero:id,nombre', 'detalles.producto.categoria'])
-            ->whereIn('estado', ['pendiente', 'en proceso'])
-            ->whereHas('detalles')
-            ->orderBy('abierta_el', 'asc')
-            ->get();
+        $ordenes = Orden::with([
+            'mesa:id,id,numero,tipo,plataforma_delivery_id', 
+            'mesa.plataformaDelivery:id,nombre', 
+            'mesero:id,nombre', 
+            'detalles.producto.categoria',
+            'detalles.variante' // <-- Carga de la variante/proteína
+        ])
+        ->whereIn('estado', ['pendiente', 'en proceso'])
+        ->whereHas('detalles')
+        ->orderBy('abierta_el', 'asc')
+        ->get();
 
         $comandasTodas = collect();
         foreach ($ordenes as $orden) {

@@ -153,13 +153,14 @@ class CajaController extends Controller
      * no trae registrado_por, se cae al usuario que ABRIO el turno y se marca
      * como aproximado, en vez de mostrar un dato que podria ser falso.
      */
-    public function detalleVenta($id): JsonResponse
+   public function detalleVenta($id): JsonResponse
     {
         $venta = FlujoCaja::with(['registradoPor', 'cajaMovimiento.user'])->findOrFail($id);
 
         $orden = null;
         if ($venta->flujoable_id) {
-            $orden = Orden::with(['mesero', 'mesa', 'detalles.producto'])->find($venta->flujoable_id);
+            // Se agrega 'detalles.variante'
+            $orden = Orden::with(['mesero', 'mesa', 'detalles.producto', 'detalles.variante'])->find($venta->flujoable_id);
         }
 
         $cajeroExacto = $venta->registradoPor;
@@ -169,9 +170,12 @@ class CajaController extends Controller
         if ($orden) {
             $productos = $orden->detalles->map(function ($d) {
                 $cancelado = strtolower($d->estado ?? '') === 'cancelado';
+                $nombreBase = optional($d->producto)->nombre ?? 'Producto eliminado';
+                $nombreVariante = optional($d->variante)->nombre;
+                $nombreCompleto = $nombreVariante ? "{$nombreBase} - {$nombreVariante}" : $nombreBase;
 
                 return [
-                    'producto'        => optional($d->producto)->nombre ?? 'Producto eliminado',
+                    'producto'        => $nombreCompleto,
                     'cantidad'        => (float) $d->cantidad,
                     'precio_unitario' => round((float) $d->precio_unitario, 2),
                     'importe'         => $cancelado ? 0 : round($d->cantidad * $d->precio_unitario, 2),
@@ -182,23 +186,23 @@ class CajaController extends Controller
         }
 
         return response()->json([
-            'success'  => true,
-            'concepto' => $venta->concepto,
-            'monto'    => round((float) $venta->monto, 2),
-            'metodo'   => $venta->metodo_pago,
-            'referencia' => $venta->referencia,
-            'hora'     => optional($venta->fecha)->format('d/m/Y H:i'),
-            'mesa'     => optional(optional($orden)->mesa)->numero,
-            'orden'    => optional($orden)->numero_orden,
-            'personas' => optional($orden)->personas,
-            'mesero'   => optional(optional($orden)->mesero)->nombre ?? 'Sin asignar',
-            'cajero'   => $cajeroExacto->nombre ?? $cajeroTurno->nombre ?? 'Sin registrar',
+            'success'           => true,
+            'concepto'          => $venta->concepto,
+            'monto'             => round((float) $venta->monto, 2),
+            'metodo'            => $venta->metodo_pago,
+            'referencia'        => $venta->referencia,
+            'hora'              => optional($venta->fecha)->format('d/m/Y H:i'),
+            'mesa'              => optional(optional($orden)->mesa)->numero,
+            'orden'             => optional($orden)->numero_orden,
+            'personas'          => optional($orden)->personas,
+            'mesero'            => optional(optional($orden)->mesero)->nombre ?? 'Sin asignar',
+            'cajero'            => $cajeroExacto->nombre ?? $cajeroTurno->nombre ?? 'Sin registrar',
             'cajero_aproximado' => $cajeroExacto === null,
-            'productos' => $productos->values(),
-            'consumo'   => round($productos->sum('importe'), 2),
+            'productos'         => $productos->values(),
+            'consumo'           => round($productos->sum('importe'), 2),
         ]);
     }
-
+    
     public function abrir(Request $request)
     {
         $request->validate([

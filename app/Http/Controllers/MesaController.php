@@ -50,11 +50,17 @@ class MesaController extends Controller
 
         $categorias = Categoria::all();
 
-        // Consulta limpia sin hacer referencia a la columna 'imagen'
-        $productos = Producto::with(['categoria', 'modificadores'])
+        // Consulta incluyendo soporte para variantes de proteínas/precios
+        $productos = Producto::with([
+                'categoria', 
+                'modificadores',
+                'variantes' => function($q) {
+                    $q->where('esta_disponible', true);
+                }
+            ])
             ->select([
                 'id', 'categoria_id', 'nombre', 'descripcion', 'precio',
-                'se_vende_por_peso', 'precio_por_100g', 'esta_disponible',
+                'tiene_variantes', 'se_vende_por_peso', 'precio_por_100g', 'esta_disponible',
             ])
             ->orderBy('nombre', 'asc')
             ->get();
@@ -139,7 +145,7 @@ class MesaController extends Controller
     public function cancelarProducto(Request $request, $detalleId)
     {
         $request->validate([
-            'nip'              => 'required|string',
+            'nip'               => 'required|string',
             'motivo'           => 'nullable|string|max:255',
             'cantidad_cancelar' => 'nullable|integer|min:1',
         ]);
@@ -280,11 +286,6 @@ class MesaController extends Controller
      * fecha_inicio/fecha_fin y por día de la semana actual usando
      * dias_semana). La usa el modal de Promociones del mesero para
      * pintar las tarjetas y aplicar el descuento automático al ticket.
-     *
-     * AJUSTE: ahora precargamos la relación productos() y mandamos
-     * 'producto_ids' en cada promo. Esto es lo que necesita el JS
-     * para poder automatizar el tipo 'combo': sin saber qué productos
-     * exactos lo componen, no hay forma de detectar cuándo aplica.
      */
     public function promocionesActivas(): JsonResponse
     {
@@ -293,7 +294,7 @@ class MesaController extends Controller
             $hoy = now()->toDateString();
 
             $promos = Promocion::activas()
-                ->with('productos:id') // NUEVO: para poder mandar producto_ids
+                ->with('productos:id')
                 ->where(function ($q) use ($hoy) {
                     $q->whereNull('fecha_inicio')->orWhere('fecha_inicio', '<=', $hoy);
                 })
@@ -302,10 +303,6 @@ class MesaController extends Controller
                 })
                 ->get()
                 ->filter(function ($promo) use ($diaSemana) {
-                    // Defensivo: algunos registros viejos guardan dias_semana
-                    // como JSON doble-codificado (mismo caso que ya manejas
-                    // en admin.promociones.index), así que normalizamos aquí
-                    // también para no truenar con in_array().
                     $dias = $promo->dias_semana;
 
                     if (is_string($dias)) {
@@ -321,8 +318,6 @@ class MesaController extends Controller
                     return empty($dias) || in_array($diaSemana, $dias);
                 })
                 ->map(function ($promo) {
-                    // NUEVO: producto_ids explícito para que el JS pueda
-                    // detectar automáticamente cuándo el ticket cumple el combo.
                     return [
                         'id'              => $promo->id,
                         'nombre'          => $promo->nombre,
@@ -377,7 +372,6 @@ class MesaController extends Controller
             'capacidad' => 'sometimes|integer|min:1',
             'zona' => 'sometimes|string',
             'forma' => 'sometimes|string',
-            // Agrega posición por si quieres editarla manualmente también
             'posicion_x' => 'sometimes|integer',
             'posicion_y' => 'sometimes|integer',
         ]));
@@ -389,13 +383,12 @@ class MesaController extends Controller
         Mesa::findOrFail($id)->delete();
         return response()->json(['success' => true, 'message' => 'Mesa eliminada']);
     }
-    // Método para obtener todas las mesas (para el renderizado inicial de tu JS)
+
     public function apiIndex(): JsonResponse
     {
         return response()->json(Mesa::all());
     }
 
-    // Método para guardar el plano (recibe el array de mesas movidas)
     public function guardarPlano(Request $request): JsonResponse
     {
         $request->validate([
@@ -423,14 +416,12 @@ class MesaController extends Controller
 
         $mesa = Mesa::findOrFail($mesaId);
 
-        // Buscamos la orden activa usando tus estados dinámicos de Orden
         $orden = Orden::where('mesa_id', $mesa->id)
             ->whereIn('estado', Orden::getEstadosActivos())
             ->latest()
             ->first();
 
         if (!$orden) {
-            // Si no hay orden, la creamos igual que en actualizarPersonas pero con la propina
             $orden = Orden::create([
                 'numero_orden'   => 'ORD-' . now()->format('YmdHis') . '-' . rand(100, 999),
                 'mesa_id'        => $mesa->id,
@@ -441,7 +432,6 @@ class MesaController extends Controller
                 'propina'        => $request->propina,
             ]);
         } else {
-            // Si ya existe la orden, solo actualizamos la propina
             $orden->update(['propina' => $request->propina]);
         }
 

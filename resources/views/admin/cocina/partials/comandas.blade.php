@@ -30,11 +30,9 @@
     <div class="grid gap-3 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 mt-4 sm:mt-8 items-start w-full">
         @foreach($comandas as $comanda)
             @php
-                // Parseo seguro de fecha
                 $fechaCarbon = !empty($comanda->creado_en) ? \Carbon\Carbon::parse($comanda->creado_en) : now();
                 $minutosEspera = $fechaCarbon->diffInMinutes(now());
 
-                // Determinamos la clase de parpadeo según los minutos
                 $claseAlerta = '';
                 if ($minutosEspera >= 15) {
                     $claseAlerta = 'alerta-roja';
@@ -42,13 +40,11 @@
                     $claseAlerta = 'alerta-amarilla';
                 }
 
-                // Formateo del número de mesa para evitar "Mesa mesa 45"
                 $numMesa = $comanda->mesa->numero ?? 'S/N';
                 $labelMesa = \Illuminate\Support\Str::startsWith(strtolower($numMesa), 'mesa') 
                     ? $numMesa 
                     : 'Mesa ' . $numMesa;
 
-                // Delivery
                 $esDelivery  = $comanda->mesa && $comanda->mesa->esDelivery();
                 $plataforma  = $esDelivery ? optional($comanda->mesa->plataformaDelivery)->nombre : null;
                 $colorBorde  = $esDelivery ? 'border-t-orange-500' : 'border-t-emerald-500';
@@ -84,40 +80,58 @@
 
                 {{-- Detalles de productos --}}
                 <div class="p-4 flex-1 min-w-0">
-                    <ul class="space-y-2">
+                    <ul class="space-y-3">
                         @foreach($comanda->detalles as $detalle)
                             @php
                                 $tiempoClases = [
-                                    'sin-tiempo'     => ['label' => 'S', 'clase' => 'border text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md', 'style' => 'background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);'],
-                                    'primer-tiempo'  => ['label' => '1', 'clase' => 'text-[#b74309] dark:text-[#e8946a] bg-[#b74309]/10 border border-[#b74309]/30 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md', 'style' => ''],
-                                    'segundo-tiempo' => ['label' => '2', 'clase' => 'text-purple-500 bg-purple-500/10 border border-purple-500/30 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md', 'style' => ''],
-                                    'tercer-tiempo'  => ['label' => '3', 'clase' => 'text-pink-500 bg-pink-500/10 border border-pink-500/30 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md', 'style' => ''],
+                                    'sin-tiempo'     => ['label' => 'S', 'clase' => 'border text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-lg', 'style' => 'background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);'],
+                                    'primer-tiempo'  => ['label' => '1', 'clase' => 'text-[#b74309] dark:text-[#e8946a] bg-[#b74309]/10 border border-[#b74309]/30 text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-lg', 'style' => ''],
+                                    'segundo-tiempo' => ['label' => '2', 'clase' => 'text-purple-500 bg-purple-500/10 border border-purple-500/30 text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-lg', 'style' => ''],
+                                    'tercer-tiempo'  => ['label' => '3', 'clase' => 'text-pink-500 bg-pink-500/10 border border-pink-500/30 text-[10px] font-black uppercase tracking-wide px-2 py-1 rounded-lg', 'style' => ''],
                                 ];
                                 $tInfo = $tiempoClases[$detalle->tiempo] ?? null;
+
+                                $nombrePlatillo = $detalle->producto->nombre ?? 'Producto Eliminado';
+                                $varianteNombre = $detalle->variante?->nombre ?? null;
                             @endphp
-                            <li class="flex flex-col text-sm gap-1.5 detalle-item"
+                            <li class="flex flex-col text-sm gap-2 detalle-item"
                                 data-detalle-id="{{ $detalle->id }}"
                                 data-estado="{{ $detalle->estado_preparacion }}">
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="font-bold break-words flex flex-wrap items-center gap-1.5 nombre-producto transition-all {{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'line-through opacity-40' : '' }}"
-                                          style="{{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'color: var(--text-muted);' : 'color: var(--text-color);' }}">
-                                        {{ $detalle->cantidad }}x {{ $detalle->producto->nombre ?? 'Producto Eliminado' }}
-                                        @if($tInfo)
-                                            <span class="inline-flex items-center gap-1 {{ $tInfo['clase'] }}" style="{{ $tInfo['style'] }}">
-                                                <i class="fas fa-clock"></i>Tiempo {{ $tInfo['label'] }}
-                                            </span>
-                                        @endif
-                                        @if($detalle->gramaje)
-                                            @php
-                                                $gramajeLimpio = rtrim(rtrim(number_format((float) $detalle->gramaje, 2, '.', ''), '0'), '.');
-                                            @endphp
-                                            <span class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide text-orange-500 bg-orange-500/10 border border-orange-500/30 px-1.5 py-0.5 rounded-md">
-                                                <i class="fas fa-weight-hanging"></i>{{ $gramajeLimpio }}g
-                                            </span>
-                                        @endif
-                                    </span>
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex-1 min-w-0">
+                                        {{-- Nombre del platillo --}}
+                                        <p class="font-bold text-[15px] leading-snug break-words nombre-producto transition-all {{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'line-through opacity-40' : '' }}"
+                                           style="{{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'color: var(--text-muted);' : 'color: var(--text-color);' }}">
+                                            {{ $detalle->cantidad }}x {{ $nombrePlatillo }}
+                                        </p>
 
-                                    {{-- Boton de tachar --}}
+                                        {{-- Pastilla de proteína con mayor tamaño y peso visual --}}
+                                        <div class="flex flex-wrap items-center gap-2 mt-2">
+                                            @if($varianteNombre)
+                                                <span class="inline-flex items-center gap-1.5 text-sm font-black tracking-wide text-[#b74309] dark:text-[#f2996d] bg-[#b74309]/15 dark:bg-[#b74309]/25 border-2 border-[#b74309]/40 px-3 py-1 rounded-xl uppercase shadow-sm">
+                                                    <i class="fas fa-layer-group text-xs"></i>
+                                                    {{ $varianteNombre }}
+                                                </span>
+                                            @endif
+
+                                            @if($tInfo)
+                                                <span class="inline-flex items-center gap-1 {{ $tInfo['clase'] }}" style="{{ $tInfo['style'] }}">
+                                                    <i class="fas fa-clock"></i>Tiempo {{ $tInfo['label'] }}
+                                                </span>
+                                            @endif
+
+                                            @if($detalle->gramaje)
+                                                @php
+                                                    $gramajeLimpio = rtrim(rtrim(number_format((float) $detalle->gramaje, 2, '.', ''), '0'), '.');
+                                                @endphp
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide text-orange-500 bg-orange-500/10 border border-orange-500/30 px-2 py-1 rounded-lg">
+                                                    <i class="fas fa-weight-hanging"></i>{{ $gramajeLimpio }}g
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    {{-- Botón de tachar --}}
                                     <button type="button"
                                         class="btn-tachar shrink-0 w-8 h-8 rounded-xl border-2 transition-all flex items-center justify-center cursor-pointer {{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'bg-emerald-500 border-emerald-500 text-white scale-95' : 'hover:border-emerald-500 hover:text-emerald-500 hover:scale-105' }}"
                                         style="{{ !in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'border-color: var(--border-color); color: var(--text-muted);' : '' }}"
@@ -125,6 +139,7 @@
                                         <i class="fas fa-check text-[11px]"></i>
                                     </button>
                                 </div>
+
                                 @if($detalle->notas)
                                     <span class="flex items-start gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold w-full break-words leading-snug">
                                         <i class="fas fa-exclamation-circle mt-0.5 shrink-0"></i>
@@ -136,7 +151,7 @@
                     </ul>
                 </div>
 
-                {{-- Formulario con ÚNICO Botón para finalizar la comanda --}}
+                {{-- Botón finalizar comanda --}}
                 <div class="p-3 sm:p-4 border-t" style="background-color: var(--bg-color); border-top-color: var(--border-color);">
                     <form action="{{ route('admin.cocina.orden.estado', $comanda->orden_id) }}" method="POST" class="form-avanzar-estado">
                         @csrf @method('PATCH')

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{Orden, DetalleOrden, MovimientoInventario, Producto, Mesa, Promocion, OrdenPromocion, PrintJob};
+use App\Models\{Orden, DetalleOrden, MovimientoInventario, Producto, ProductoVariante, Mesa, Promocion, OrdenPromocion, PrintJob};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
@@ -21,9 +21,8 @@ class ComandaService
         float $totalGeneral = 0, 
         int $personas = 4, 
         float $descuentoPorcentaje = 0,
-        bool $permitirSinStock = true // <-- Parámetro con valor por defecto
+        bool $permitirSinStock = true
     ): Orden {
-        // IMPORTANTE: Se agrega $permitirSinStock en el "use" de la transacción
         return DB::transaction(function () use ($mesa, $platillos, $usuario, $personas, $descuentoPorcentaje, $permitirSinStock) {
             
             // 1. Buscar orden activa pendiente o crearla
@@ -50,7 +49,6 @@ class ComandaService
 
             $productosParaTicket = [];
 
-            // Acumuladores para que el backend sea la fuente de verdad del total
             $totalCalculado = 0.0;
             $totalDescuentosPromos = 0.0;
 
@@ -62,15 +60,18 @@ class ComandaService
                 }
                 $notasFinales = !empty($notasArray) ? implode(', ', $notasArray) : null;
 
+                $varianteId = !empty($platillo['variante_id']) ? (int)$platillo['variante_id'] : null;
+
                 $detalleData = [
-                    'orden_id' => $orden->id,
-                    'lote_envio' => $loteEnvio,
-                    'producto_id' => $platillo['id'],
-                    'cantidad' => $platillo['cantidad'],
-                    'precio_unitario' => $platillo['precio'],
-                    'estado' => 'en cocina',
-                    'estado_preparacion' => 'pendiente', // <-- NUEVO: arranca en la cola de Cocina/Barra
-                    'notas' => $notasFinales,
+                    'orden_id'             => $orden->id,
+                    'lote_envio'           => $loteEnvio,
+                    'producto_id'          => $platillo['id'],
+                    'producto_variante_id' => $varianteId,
+                    'cantidad'             => $platillo['cantidad'],
+                    'precio_unitario'      => $platillo['precio'],
+                    'estado'               => 'en cocina',
+                    'estado_preparacion'   => 'pendiente',
+                    'notas'                => $notasFinales,
                 ];
 
                 if ($usaGramaje) $detalleData['gramaje'] = $platillo['gramaje'] ?? null;
@@ -81,7 +82,7 @@ class ComandaService
                 // Subtotal de esta línea
                 $subtotalProducto = $platillo['cantidad'] * $platillo['precio'];
 
-                // Detectar y registrar promociones vigentes para este producto
+                // Detectar promociones vigentes
                 $descuentoProducto = 0.0;
 
                 $promocionesAplicables = Promocion::activas()
@@ -111,7 +112,7 @@ class ComandaService
                 $totalDescuentosPromos += $descuentoProducto;
                 $totalCalculado += ($subtotalProducto - $descuentoProducto);
 
-                // 3. Gestión y Deducción del Inventario (Receta por Insumos)
+                // 3. Inventario y preparación de ticket
                 $producto = Producto::with(['insumos', 'categoria'])->find($platillo['id']);
                 if ($producto) {
                     
@@ -120,31 +121,38 @@ class ComandaService
                         $areaAsignada = 'Cocina';
                     }
 
+                    // Concatenar el nombre de la variante para la comanda de cocina
+                    $nombreCompleto = $producto->nombre;
+                    if ($varianteId) {
+                        $varianteObj = ProductoVariante::find($varianteId);
+                        if ($varianteObj) {
+                            $nombreCompleto .= " ({$varianteObj->nombre})";
+                        }
+                    }
+
                     $productosParaTicket[] = [
-                        'nombre'    => $producto->nombre,
-                        'cantidad'  => $platillo['cantidad'],
-                        'notas'     => $notasFinales,
-                        'area'      => $areaAsignada,
-                        'tiempo'    => $platillo['tiempo'] ?? null
+                        'nombre'   => $nombreCompleto,
+                        'cantidad' => $platillo['cantidad'],
+                        'notas'    => $notasFinales,
+                        'area'     => $areaAsignada,
+                        'tiempo'   => $platillo['tiempo'] ?? null
                     ];
 
                     foreach ($producto->insumos as $insumo) {
                         $cantidadUsada = floatval($insumo->pivot->cantidad_usada) * $platillo['cantidad'];
                         
-                        // --- AJUSTE AQUÍ: Solo valida stock si $permitirSinStock es false ---
                         if (!$permitirSinStock && $insumo->stock_actual < $cantidadUsada) {
                             throw new \Exception("Stock insuficiente en cocina para preparar: {$insumo->nombre}");
                         }
                         
-                        // Si $permitirSinStock es true, pasa de largo y lo descuenta (pudiendo quedar negativo)
                         $insumo->decrement('stock_actual', $cantidadUsada);
                         
                         MovimientoInventario::create([
                             'insumo_id' => $insumo->id, 
-                            'user_id'   => $usuario->id,
+                            'user_id'   => $usuario->id, 
                             'cantidad'  => $cantidadUsada, 
                             'tipo'      => 'salida',
-                            'motivo'    => "Venta POS: {$producto->nombre}"
+                            'motivo'    => "Venta POS: {$nombreCompleto}"
                         ]);
                     }
                 }
@@ -161,12 +169,11 @@ class ComandaService
 
             $mesa->update($mesaUpdateData);
 
-            // Reflejamos también el total acumulado directamente en la Orden
             if (Schema::hasColumn('ordenes', 'total')) {
                 $orden->increment('total', $totalCalculado);
             }
 
-            // Creamos los tickets separados por área
+            // Generar tickets por área
             $this->crearPrintJobs($orden, $loteEnvio, $productosParaTicket, $mesa, $usuario);
 
             return $orden;
@@ -175,8 +182,6 @@ class ComandaService
 
     /**
      * Traspasa productos de una mesa origen a una mesa destino.
-     * - $detalleIds: DetalleOrden ya enviados a cocina (solo se reasignan, sin re-descontar inventario).
-     * - $productosNuevos: platillos del ticket aún no enviados (se crean y sí se descuenta inventario).
      */
     public function transferirProductos(
         Mesa $mesaOrigen,
@@ -188,7 +193,6 @@ class ComandaService
     ): array {
         return DB::transaction(function () use ($mesaOrigen, $mesaDestino, $productosNuevos, $detalleIds, $usuario, $meseroDestino) {
 
-            // 1. Buscar orden activa de la mesa destino, o crear una nueva pendiente
             $ordenDestino = Orden::where('mesa_id', $mesaDestino->id)
                 ->whereIn('estado', Orden::getEstadosActivos())
                 ->latest()
@@ -204,52 +208,48 @@ class ComandaService
                 ]);
             }
 
-            // Si la orden destino ya existe, reasignar el mesero al destino
             if ($meseroDestino && $ordenDestino->wasRecentlyCreated === false) {
                 $ordenDestino->update(['mesero_id' => $meseroDestino->id]);
             }
 
-            // NUEVO: los productos traspasados (tanto los ya enviados como
-            // los nuevos) forman su propia ronda/lote en la orden destino,
-            // para que Cocina los vea como una tarjeta separada.
             $loteEnvio = now()->format('YmdHis') . '-' . rand(1000, 9999);
-
             $montoTransferido = 0;
 
-            // 2. Mover productos ya enviados (sin volver a descontar inventario)
+            // 2. Mover productos ya enviados
             if (!empty($detalleIds)) {
                 $detallesExistentes = DetalleOrden::whereIn('id', $detalleIds)->get();
                 foreach ($detallesExistentes as $detalle) {
                     $montoTransferido += $detalle->cantidad * $detalle->precio_unitario;
                 }
                 DetalleOrden::whereIn('id', $detalleIds)->update([
-                    'orden_id' => $ordenDestino->id,
-                    'lote_envio' => $loteEnvio, // NUEVO
-                    'estado_preparacion' => 'pendiente', // <-- NUEVO: reinicia la cola en la mesa destino
+                    'orden_id'           => $ordenDestino->id,
+                    'lote_envio'         => $loteEnvio,
+                    'estado_preparacion' => 'pendiente',
                 ]);
             }
 
-            // 3. Crear productos nuevos (del ticket) en la orden destino y descontar inventario
+            // 3. Crear productos nuevos en orden destino
             $usaGramaje = Schema::hasColumn('detalles_orden', 'gramaje');
             $usaTiempo  = Schema::hasColumn('detalles_orden', 'tiempo');
 
             foreach ($productosNuevos as $platillo) {
-                // El tiempo YA NO se anexa a 'notas': tiene su propia columna.
                 $notasArray = $platillo['modificadores'] ?? [];
                 if (!empty($platillo['notas'])) {
                     $notasArray[] = $platillo['notas'];
                 }
                 $notasFinales = !empty($notasArray) ? implode(', ', $notasArray) : null;
+                $varianteId = !empty($platillo['variante_id']) ? (int)$platillo['variante_id'] : null;
 
                 $detalleData = [
-                    'orden_id'        => $ordenDestino->id,
-                    'lote_envio'      => $loteEnvio, // NUEVO
-                    'producto_id'     => $platillo['id'],
-                    'cantidad'        => $platillo['cantidad'],
-                    'precio_unitario' => $platillo['precio'],
-                    'estado'          => 'en cocina',
-                    'estado_preparacion' => 'pendiente', // <-- NUEVO
-                    'notas'           => $notasFinales,
+                    'orden_id'             => $ordenDestino->id,
+                    'lote_envio'           => $loteEnvio,
+                    'producto_id'          => $platillo['id'],
+                    'producto_variante_id' => $varianteId,
+                    'cantidad'             => $platillo['cantidad'],
+                    'precio_unitario'      => $platillo['precio'],
+                    'estado'               => 'en cocina',
+                    'estado_preparacion'   => 'pendiente',
+                    'notas'                => $notasFinales,
                 ];
                 if ($usaGramaje) $detalleData['gramaje'] = $platillo['gramaje'] ?? null;
                 if ($usaTiempo)  $detalleData['tiempo']  = $platillo['tiempo'] ?? null;
@@ -276,9 +276,6 @@ class ComandaService
                         OrdenPromocion::create([
                             'orden_id'         => $ordenDestino->id,
                             'promocion_id'     => $promo->id,
-                            // CORRECCIÓN: sin esto, el descuento quedaba huérfano
-                            // (no ligado a ningún producto) y no se reflejaba al
-                            // dividir la cuenta por consumo, ni en el detalle visual.
                             'detalle_orden_id' => $detalle->id,
                             'monto_descuento'  => $montoDescuento,
                         ]);
@@ -309,7 +306,7 @@ class ComandaService
                 }
             }
 
-            // 4. Actualizar mesa destino (la abre automáticamente si estaba disponible)
+            // 4. Actualizar mesa destino
             $destinoUpdate = ['estado' => 'ocupada'];
             if (Schema::hasColumn('mesas', 'mesero_id')) {
                 $destinoUpdate['mesero_id'] = $meseroDestino ? $meseroDestino->id : $usuario->id;
@@ -319,9 +316,7 @@ class ComandaService
             }
             $mesaDestino->update($destinoUpdate);
 
-            // 5. Descontar el monto transferido de la mesa origen
-            // (nota: este monto es sin IVA/descuento; puede haber una pequeña
-            // diferencia frente a total_consumo original, que sí incluye esos ajustes)
+            // 5. Descontar mesa origen
             if (Schema::hasColumn('mesas', 'total_consumo')) {
                 $mesaOrigen->update([
                     'total_consumo' => max(0, ($mesaOrigen->total_consumo ?? 0) - $montoTransferido),
@@ -335,12 +330,6 @@ class ComandaService
         });
     }
 
-    /**
-     * NUEVO: Agrupa los platillos de este envío por área (Cocina/Barra) y
-     * crea un registro pendiente de impresión por cada área. El agente
-     * local en cada PC (Cocina/Barra) va a consultar estos registros vía
-     * la API y los imprimirá en su impresora local.
-     */
     private function crearPrintJobs(
         Orden $orden,
         string $loteEnvio,
@@ -354,24 +343,18 @@ class ComandaService
             $contenido = $this->formatearTicketTexto($area, $mesa, $usuario, $items);
 
             PrintJob::create([
-                'orden_id'    => $orden->id,
-                'lote_envio'  => $loteEnvio,
-                'area'        => $area,
-                'contenido'   => $contenido,
-                'estado'      => 'pendiente',
+                'orden_id'   => $orden->id,
+                'lote_envio' => $loteEnvio,
+                'area'       => $area,
+                'contenido'  => $contenido,
+                'estado'     => 'pendiente',
             ]);
         }
     }
 
-    /**
-     * NUEVO: Genera el texto plano del ticket. Se manda tal cual al agente
-     * local, que a su vez lo imprime por el puerto paralelo (copy /b a la
-     * impresora). Usamos texto plano (no ESC/POS binario) porque es lo más
-     * simple y confiable de mandar por 'copy /b' a una impresora paralela.
-     */
     private function formatearTicketTexto($area, Mesa $mesa, $usuario, $items): string
     {
-        $ancho = 32; // ancho típico de una impresora térmica de 58-80mm en modo texto
+        $ancho = 32;
         $linea = str_repeat('-', $ancho) . "\n";
 
         $texto  = str_pad('', $ancho, '=', STR_PAD_BOTH) . "\n";
@@ -394,7 +377,7 @@ class ComandaService
         }
 
         $texto .= $linea;
-        $texto .= "\n\n\n"; // espacio para el corte manual/avance de papel
+        $texto .= "\n\n\n";
 
         return $texto;
     }
@@ -407,45 +390,34 @@ class ComandaService
         return str_repeat(' ', $espacios) . $texto;
     }
 
-    /**
-     * Lógica interna para conectar con las impresoras Ethernet/IP del restaurante.
-     * NOTA: ya no se usa (tus impresoras son por puerto paralelo, no de red),
-     * se deja aquí sin llamar por si en el futuro cambian a impresoras IP.
-     */
     private function enviarImpresionRed(array $productos, $nombreMesa, $nombreMesero)
     {
-        // ASIGNA AQUÍ LAS DIRECCIONES IP REALES DE TU RESTAURANTE (Parrilla eliminada)
         $impresorasIps = [
-            'Cocina'   => '192.168.1.200',
-            'Barra'    => '192.168.1.201',
+            'Cocina' => '192.168.1.200',
+            'Barra'  => '192.168.1.201',
         ];
 
-        // Agrupamos el array de productos por su área asignada automáticamente
         $comandasAgrupadas = collect($productos)->groupBy('area');
 
         foreach ($comandasAgrupadas as $area => $items) {
             try {
                 $ip = $impresorasIps[$area] ?? $impresorasIps['Cocina'];
                 
-                // Conectamos directo por puerto de red estándar 9100
                 $connector = new NetworkPrintConnector($ip, 9100);
                 $printer = new Printer($connector);
 
-                // --- Cabecera del Ticket ---
                 $printer->setJustification(Printer::JUSTIFY_CENTER);
                 $printer->selectPrintMode(Printer::MODE_DOUBLE_HEIGHT | Printer::MODE_DOUBLE_WIDTH);
                 $printer->text("COMANDA: " . strtoupper($area) . "\n");
                 $printer->selectPrintMode();
                 $printer->text("--------------------------------\n");
                 
-                // --- Datos de Control ---
                 $printer->setJustification(Printer::JUSTIFY_LEFT);
                 $printer->text("Mesa: " . $nombreMesa . "\n");
                 $printer->text("Mesero: " . $nombreMesero . "\n");
                 $printer->text("Fecha: " . now()->format('d/m/Y h:i A') . "\n");
                 $printer->text("--------------------------------\n");
 
-                // --- Cuerpo del Pedido ---
                 $printer->setEmphasis(true);
                 $printer->text(str_pad("Cant.", 6) . "Producto\n");
                 $printer->setEmphasis(false);
@@ -464,13 +436,10 @@ class ComandaService
                 }
 
                 $printer->text("--------------------------------\n\n\n");
-                
-                // Corte de papel e instrucciones finales
                 $printer->cut();
                 $printer->close();
 
             } catch (Exception $e) {
-                // Si la impresora de la Barra está desconectada, se salta y continúa imprimiendo la Cocina
                 \Log::error("No se pudo imprimir en el área {$area} (IP: {$ip}): " . $e->getMessage());
             }
         }

@@ -9,9 +9,6 @@ var itemActivo = null;
 var contadorItems = 0;
 var tiempoGlobal = 'sin-tiempo';
 var gramajePendiente = null;
-// Producto seleccionado desde el menú que se vende por peso, en espera
-// de que el mesero capture el gramaje en el modal antes de agregarse
-// al ticket con el precio ya calculado.
 var productoPorPesoPendiente = null;
 var numeroPersonas = (ComandaConfig_.mesa && ComandaConfig_.mesa.personas) || 4;
 var descuentoPorcentaje = 0;
@@ -37,9 +34,7 @@ var mesaDestinoSeleccionadaNumero = null;
     };
 
     // ---------------------------------------------------------------
-    // Compatibilidad del catálogo: algunos botones del Blade aún
-    // invocan agregarProducto(id), por lo que exponemos un puente que
-    // reenvía al handler real del ticket.
+    // Compatibilidad del catálogo: detecta variantes antes de agregar
     // ---------------------------------------------------------------
     window.agregarProducto = function (productoId) {
         const producto = Array.isArray(productosDB)
@@ -48,6 +43,13 @@ var mesaDestinoSeleccionadaNumero = null;
 
         if (!producto) {
             mostrarError('No se encontró el producto seleccionado.');
+            return;
+        }
+
+        // Si tiene variantes y existen opciones disponibles, abre el modal de variantes
+        const tieneVariantes = Boolean(producto.tiene_variantes && producto.variantes && producto.variantes.length > 0);
+        if (tieneVariantes && typeof abrirModalVariante === 'function') {
+            abrirModalVariante(producto.id, producto.nombre, producto.variantes);
             return;
         }
 
@@ -62,9 +64,89 @@ var mesaDestinoSeleccionadaNumero = null;
             precioNum,
             categoriaNombre,
             modificadores,
-            !!producto.se_vende_por_peso,
+            Boolean(producto.se_vende_por_peso),
             precioPor100g
         );
+    };
+
+    // ---------------------------------------------------------------
+    // ENVÍO DE ORDEN A COCINA (Soporte para variante_id)
+    // ---------------------------------------------------------------
+    window.enviarACocina = async function () {
+        const items = document.querySelectorAll('#listaTicket .ticket-item');
+        if (items.length === 0) {
+            mostrarError('No hay platillos en la orden para enviar.');
+            return;
+        }
+
+        const btnEnviar = document.getElementById('btn-enviar');
+        if (btnEnviar) {
+            btnEnviar.disabled = true;
+            btnEnviar.classList.add('opacity-50', 'pointer-events-none');
+        }
+
+        const platillosPayload = Array.from(items).map(item => {
+            const modsString = item.getAttribute('data-modificadores');
+            let mods = [];
+            try {
+                mods = JSON.parse(modsString || '[]');
+            } catch (e) {
+                mods = [];
+            }
+
+            const varId = item.getAttribute('data-variante-id');
+
+            return {
+                id: parseInt(item.dataset.productoId, 10),
+                variante_id: varId && varId !== '' && varId !== 'null' ? parseInt(varId, 10) : null,
+                cantidad: parseInt(item.dataset.cantidad, 10) || 1,
+                precio: parseFloat(item.dataset.precio) || 0,
+                modificadores: mods,
+                notas: item.dataset.nota || null,
+                gramaje: item.dataset.gramaje !== 'sin-gramaje' ? item.dataset.gramaje : null,
+                tiempo: item.dataset.tiempo || null
+            };
+        });
+
+        const mesaId = config.mesa?.id || document.getElementById('mesa_id')?.value;
+        const rutaEnviar = config.rutas?.enviar || '/mesero/comanda/enviar';
+
+        try {
+            const resp = await fetch(rutaEnviar, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.csrfToken(),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    mesa_id: mesaId,
+                    platillos: platillosPayload,
+                    total: window.totalComandaSinPropina || ticketSubtotal,
+                    personas: numeroPersonas,
+                    descuento_porcentaje: descuentoPorcentaje
+                })
+            });
+
+            const data = await resp.json();
+
+            if (resp.ok && data.success) {
+                mostrarExito(data.message || 'Orden enviada a cocina.');
+                window.location.reload();
+            } else {
+                mostrarError(data.message || 'Error al enviar comanda.');
+                if (btnEnviar) {
+                    btnEnviar.disabled = false;
+                    btnEnviar.classList.remove('opacity-50', 'pointer-events-none');
+                }
+            }
+        } catch (err) {
+            mostrarError('Error de comunicación con el servidor.');
+            if (btnEnviar) {
+                btnEnviar.disabled = false;
+                btnEnviar.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
     };
 
     // ---------------------------------------------------------------
@@ -88,7 +170,6 @@ var mesaDestinoSeleccionadaNumero = null;
 
     // ---------------------------------------------------------------
     // TABS (Orden / Enviado / Total)
-    // Corregido: Se añade validación 'if' para evitar el error 'null' en textTotal
     // ---------------------------------------------------------------
     window.cambiarTab = function (pestana) {
         const slider = document.getElementById('tab-slider');
@@ -111,7 +192,6 @@ var mesaDestinoSeleccionadaNumero = null;
             const vNueva = document.getElementById('vista-nueva-orden');
             if (vNueva) { vNueva.classList.remove('hidden'); vNueva.classList.add('flex'); }
             
-            // Verificación segura del elemento de precio total
             if (txtTotalElement) txtTotalElement.innerText = '$0.00';
 
         } else if (pestana === 'enviados') {
@@ -120,7 +200,6 @@ var mesaDestinoSeleccionadaNumero = null;
             const vEnviados = document.getElementById('vista-enviados');
             if (vEnviados) { vEnviados.classList.remove('hidden'); vEnviados.classList.add('flex'); }
             
-            // Verificación segura del elemento de precio total
             if (txtTotalElement) txtTotalElement.innerText = '$0.00';
 
         } else if (pestana === 'comanda') {
@@ -129,17 +208,12 @@ var mesaDestinoSeleccionadaNumero = null;
             const vComanda = document.getElementById('vista-comanda');
             if (vComanda) { vComanda.classList.remove('hidden'); vComanda.classList.add('flex'); }
             
-            // El total real (enviado + nuevo, con IVA) solo se calcula y se
-            // muestra aquí, en la pestaña "Total". En las otras dos pestañas
-            // se deja en $0.00 a propósito.
             actualizarVistaTotal();
         }
     };
 
     // ---------------------------------------------------------------
-    // Recalcula y pinta el "Total a Pagar". Depende de calcularDescuento2x1Monto
-    // y calcularDescuentoComboMonto, definidas en comanda-ticket.js y
-    // expuestas globalmente (window.calcularDescuento2x1Monto / ...ComboMonto).
+    // Recalcula y pinta el "Total a Pagar"
     // ---------------------------------------------------------------
     window.actualizarVistaTotal = function () {
         const contenedorNuevos = document.getElementById('lista-comanda-total');
@@ -179,7 +253,6 @@ var mesaDestinoSeleccionadaNumero = null;
             }
         }
 
-        // Cálculos de montos y totales seguros
         const totalHistorial = platillosEnviadosDB.reduce((acc, i) => acc + ((i.precio || 0) * (i.cantidad || 1)), 0);
         
         const descuento2x1Monto = typeof window.calcularDescuento2x1Monto === 'function' ? window.calcularDescuento2x1Monto() : 0;
@@ -189,13 +262,9 @@ var mesaDestinoSeleccionadaNumero = null;
         const subtotalTicketConDescuento = Math.max(0, subtotalTicketTras2x1 - (subtotalTicketTras2x1 * (descuentoPorcentaje / 100)));
         const subtotalGeneral = subtotalTicketConDescuento + totalHistorial;
 
-        // --- AJUSTE: IVA habilitable desde configuración global ---
-        const ivaConfig = (window.ComandaConfig && window.ComandaConfig.iva) || { habilitado: true, porcentaje: 16 };
+        const ivaConfig = (window.ComandaConfig && window.ComandaConfig.iva) || { habilitado: false, porcentaje: 0 };
         const ivaGeneral = ivaConfig.habilitado ? subtotalGeneral * (ivaConfig.porcentaje / 100) : 0;
 
-        // --- NUEVO: comisión de delivery sobre el total de la mesa ---
-        // Se calcula sobre TODO lo consumido (lo ya enviado a cocina + lo
-        // pendiente), que es la misma base que usa Caja al cobrar.
         let comisionGeneral = 0;
         const cfgDelivery = (window.ComandaConfig && window.ComandaConfig.delivery) || null;
         if (cfgDelivery && cfgDelivery.esDelivery) {
@@ -211,7 +280,7 @@ var mesaDestinoSeleccionadaNumero = null;
     };
 
     // ---------------------------------------------------------------
-    // NOTIFICACIONES TOAST (compartidas por todos los módulos)
+    // NOTIFICACIONES TOAST
     // ---------------------------------------------------------------
     window.mostrarToast = function (msg, type = 'info') {
         const c = document.getElementById('toastContainer'); if (!c) return;
@@ -226,23 +295,19 @@ var mesaDestinoSeleccionadaNumero = null;
     window.mostrarExito = function (m) { mostrarToast(m, 'success'); };
 
     // ---------------------------------------------------------------
-    // Cierra cualquier modal genérico del POS.
+    // Cierra modal genérico
     // ---------------------------------------------------------------
     window.cerrarModal = function (id) {
         const modal = document.getElementById(id);
         if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
     };
 
-    // ── Teclado numérico virtual (usado en modales de NIP) ────────────────
-    // Se define aquí para que todos los módulos (traspaso, cancelación, etc.)
-    // puedan usarlo sin duplicar código.
+    // ── Teclado numérico virtual ────────────────
     window.escribirNumVirtual = function (inputId, digit) {
         const input = document.getElementById(inputId);
         if (!input) return;
-        // Máximo 6 dígitos para no dejar escribir indefinidamente
         if (input.value.length >= 6) return;
         input.value += digit;
-        // Disparar input/change para que cualquier listener lo detecte
         input.dispatchEvent(new Event('input', { bubbles: true }));
     };
 
@@ -253,17 +318,10 @@ var mesaDestinoSeleccionadaNumero = null;
         input.dispatchEvent(new Event('input', { bubbles: true }));
     };
 
-    // ── Detección de pantalla táctil vs móvil ────────────────────────────
-    // Móvil (≤768px) → teclado nativo del sistema operativo
-    // Pantalla grande / monitor touch (>768px) → teclado virtual + físico
     window.esPantallaTactil = function () {
         return window.innerWidth > 768;
     };
 
-    // ── Teclado físico para inputs virtuales ─────────────────────────────
-    // Cuando estamos en modo pantalla grande, los inputs tienen inputmode="none"
-    // pero igual queremos que el teclado físico funcione si está conectado.
-    // Escuchamos keydown globalmente y redirigimos al input activo.
     let _inputVirtualActivo = null;
 
     window.setInputVirtualActivo = function (inputId) {
@@ -284,12 +342,10 @@ var mesaDestinoSeleccionadaNumero = null;
             input.dispatchEvent(new Event('input', { bubbles: true }));
         } else if (e.key === 'Enter') {
             e.preventDefault();
-            // Disparar confirm del modal activo si existe
             const btnConfirm = document.querySelector('[data-confirm-virtual]:not([disabled])');
             if (btnConfirm) btnConfirm.click();
         } else if (e.key.length === 1) {
             e.preventDefault();
-            // Solo números para inputs numéricos, cualquier char para texto
             const soloNumeros = input.type === 'password' || input.dataset.soloNumeros === 'true';
             if (soloNumeros && !/[0-9]/.test(e.key)) return;
             if (input.maxLength > 0 && input.value.length >= input.maxLength) return;
@@ -298,7 +354,7 @@ var mesaDestinoSeleccionadaNumero = null;
         }
     });
 
-    // ── Panel ticket mobile (col-ticket) ────────────────────────────────
+    // ── Panel ticket mobile ────────────────────────────────
     window.toggleOrdenMobile = function () {
         const panel    = document.getElementById('col-ticket');
         const backdrop = document.getElementById('backdropOrdenMobile');
@@ -307,13 +363,11 @@ var mesaDestinoSeleccionadaNumero = null;
         const estaAbierto = !panel.classList.contains('translate-y-full');
 
         if (estaAbierto) {
-            // Cerrar
             panel.classList.add('translate-y-full');
             panel.classList.remove('translate-y-0');
             if (backdrop) { backdrop.classList.add('hidden'); backdrop.classList.remove('flex'); }
             document.body.style.overflow = '';
         } else {
-            // Abrir
             panel.classList.remove('translate-y-full');
             panel.classList.add('translate-y-0');
             if (backdrop) { backdrop.classList.remove('hidden'); backdrop.classList.add('flex'); }

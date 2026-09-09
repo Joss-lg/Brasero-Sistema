@@ -17,11 +17,6 @@
     const barraModificadores = document.getElementById('barraModificadores');
     const contenedorBotonesModificadores = document.getElementById('contenedorBotonesModificadores');
 
-    // Cada 2 unidades del mismo platillo (mismo producto, mismos mods,
-    // gramaje y tiempo, que es como ya se agrupan en el ticket), la
-    // segunda sale gratis. Se recalcula en cada actualizarTotales(),
-    // así que si el mesero agrega/quita productos después de activar
-    // la promo, el monto se ajusta solo.
     window.calcularDescuento2x1Monto = function () {
         if (!promocion2x1Activa) return 0;
         let monto = 0;
@@ -34,9 +29,6 @@
         return monto;
     };
 
-    // El combo se aplica UNA sola vez (no por sets repetidos) y solo si
-    // el ticket tiene, ahora mismo, al menos 1 unidad de CADA producto
-    // vinculado a la promo.
     window.calcularDescuentoComboMonto = function () {
         if (!comboActivo || comboProductoIds.length === 0) return 0;
         const idsEnTicket = new Set();
@@ -47,10 +39,7 @@
         return completo ? comboMonto : 0;
     };
 
-    // Punto de entrada al hacer clic en una tarjeta del menú. Si el
-    // producto se vende por peso, NO se agrega directo: se abre el modal
-    // de Gramaje (comanda-gramaje.js) y la línea se crea hasta que el
-    // mesero confirma el peso, ya con el precio calculado.
+    // Punto de entrada regular (sin variantes)
     window.agregarAlTicket = function (id, nombre, precio, categoria, arrayModificadores = [], sePorPeso = false, precioPor100g = 0) {
         cambiarTab('nueva-orden', document.getElementById('btn-tab-nueva-orden'));
 
@@ -60,7 +49,9 @@
         }
 
         _insertarItemEnTicket({
-            id, nombre,
+            id: parseInt(id, 10),
+            varianteId: null,
+            nombre,
             precioUnitario: parseFloat(precio),
             categoria,
             arrayModificadores,
@@ -69,20 +60,59 @@
             gramaje: gramajePendiente
         });
 
-        if (gramajePendiente) { gramajePendiente = null; document.getElementById('indicador-gramaje-pendiente').classList.add('hidden'); }
+        if (gramajePendiente) { 
+            gramajePendiente = null; 
+            const indGramaje = document.getElementById('indicador-gramaje-pendiente');
+            if (indGramaje) indGramaje.classList.add('hidden'); 
+        }
     };
 
-    // Inserta (o agrupa) una línea en el ticket. Compartida por el flujo
-    // normal y por el flujo de productos por peso (una vez calculado el
-    // precio a partir del gramaje capturado en comanda-gramaje.js).
-    window._insertarItemEnTicket = function ({ id, nombre, precioUnitario, categoria, arrayModificadores, sePorPeso, precioPor100g, gramaje }) {
+    // Punto de entrada para productos con variantes (proteínas/tamaños)
+    window.agregarProductoConVariante = function (productoId, variante) {
+        cambiarTab('nueva-orden', document.getElementById('btn-tab-nueva-orden'));
+
+        // 1. Obtener el nombre real del producto desde la base de datos cargada en JS
+        let nombreBase = '';
+        const listaProductos = (typeof productosDB !== 'undefined' && productosDB.length > 0)
+            ? productosDB
+            : ((window.ComandaConfig && window.ComandaConfig.productos) || []);
+
+        const prodEncontrado = listaProductos.find(p => p.id === parseInt(productoId, 10));
+        if (prodEncontrado && prodEncontrado.nombre) {
+            nombreBase = prodEncontrado.nombre;
+        } else {
+            const btnElement = document.querySelector(`[data-producto-id="${productoId}"]`);
+            nombreBase = btnElement ? btnElement.getAttribute('data-producto-nombre') : 'VOLCANES';
+        }
+
+        // 2. Formato: VOLCANES "EL BRASERO" (3 PZS) DE BISTEC
+        const nombreCompleto = `${nombreBase} DE ${variante.nombre}`;
+
+        _insertarItemEnTicket({
+            id: parseInt(productoId, 10),
+            varianteId: parseInt(variante.id, 10),
+            nombre: nombreCompleto,
+            precioUnitario: parseFloat(variante.precio),
+            categoria: '',
+            arrayModificadores: [],
+            sePorPeso: false,
+            precioPor100g: 0,
+            gramaje: null
+        });
+    };
+
+    // Inserta o agrupa una línea en el ticket
+    window._insertarItemEnTicket = function ({ id, varianteId = null, nombre, precioUnitario, categoria, arrayModificadores = [], sePorPeso = false, precioPor100g = 0, gramaje = null }) {
         estadoVacio.classList.add('hidden');
 
         const modsString = JSON.stringify(arrayModificadores).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
         const gramajeKey = gramaje ? gramaje.toString() : 'sin-gramaje';
+        const varKey = varianteId ? String(varianteId) : 'sin-variante';
 
+        // Búsqueda de coincidencia incluyendo la variante
         const existingItem = Array.from(listaTicket.querySelectorAll('.ticket-item')).find(item => {
             return parseInt(item.dataset.productoId, 10) === id
+                && (item.dataset.varianteId || 'sin-variante') === varKey
                 && item.dataset.modificadores === modsString
                 && item.dataset.gramaje === gramajeKey
                 && item.dataset.tiempo === tiempoGlobal;
@@ -120,7 +150,18 @@
             : '';
 
         const itemHTML = `
-            <div id="${itemId}" data-producto-id="${id}" data-cantidad="1" data-precio="${precioUnitario}" data-modificadores="${modsString}" data-gramaje="${gramajeKey}" data-tiempo="${tiempoGlobal}" data-se-por-peso="${sePorPeso ? '1' : '0'}" data-precio100g="${precioPor100g}" class="ticket-item animate-item relative w-full rounded-[18px] bg-[var(--bg-panel)] border border-[var(--border-color)] shadow-sm p-4 flex flex-col gap-3 cursor-pointer transition-all duration-300 outline-none" onclick="seleccionarItem('${itemId}')">
+            <div id="${itemId}" 
+                 data-producto-id="${id}" 
+                 data-variante-id="${varianteId ? varianteId : ''}" 
+                 data-cantidad="1" 
+                 data-precio="${precioUnitario}" 
+                 data-modificadores="${modsString}" 
+                 data-gramaje="${gramajeKey}" 
+                 data-tiempo="${tiempoGlobal}" 
+                 data-se-por-peso="${sePorPeso ? '1' : '0'}" 
+                 data-precio100g="${precioPor100g}" 
+                 class="ticket-item animate-item relative w-full rounded-[18px] bg-[var(--bg-panel)] border border-[var(--border-color)] shadow-sm p-4 flex flex-col gap-3 cursor-pointer transition-all duration-300 outline-none" 
+                 onclick="seleccionarItem('${itemId}')">
 
                 <div class="flex justify-between items-start gap-2">
                     <div class="flex-1">
@@ -166,7 +207,7 @@
         deseleccionarTicket();
         itemActivo = document.getElementById(id);
         if (itemActivo) {
-            itemActivo.classList.add('bg-[#3b82f6]/5', 'border-[#3b82f6]/40');
+            itemActivo.classList.add('bg-[#b74309]/5', 'border-[#b74309]/40');
             itemActivo.classList.remove('bg-[var(--bg-panel)]', 'border-[var(--border-color)]');
             itemActivo.querySelector('.btn-control-eliminar').classList.remove('hidden');
             itemActivo.querySelector('.btn-control-eliminar').classList.add('flex');
@@ -179,7 +220,7 @@
             if (modificadoresParaPintar.length > 0) {
                 modificadoresParaPintar.forEach(mod => {
                     const nombreMod = mod.nombre || mod.descripcion || mod;
-                    contenedorBotonesModificadores.insertAdjacentHTML('beforeend', `<button type="button" onclick="agregarModificadorFijo('${nombreMod}')" class="px-5 py-2 rounded-xl bg-[var(--bg-base)] border border-[var(--border-color)] text-[var(--text-main)] text-[10px] font-bold hover:border-[#3b82f6] transition-all shadow-sm">${nombreMod}</button>`);
+                    contenedorBotonesModificadores.insertAdjacentHTML('beforeend', `<button type="button" onclick="agregarModificadorFijo('${nombreMod}')" class="px-5 py-2 rounded-xl bg-[var(--bg-base)] border border-[var(--border-color)] text-[var(--text-main)] text-[10px] font-bold hover:border-[#b74309] transition-all shadow-sm">${nombreMod}</button>`);
                 });
                 if (hint) hint.textContent = 'Selección activa';
             } else {
@@ -190,7 +231,7 @@
 
     window.deseleccionarTicket = function () {
         document.querySelectorAll('.ticket-item').forEach(el => {
-            el.classList.remove('bg-[#3b82f6]/5', 'border-[#3b82f6]/40');
+            el.classList.remove('bg-[#b74309]/5', 'border-[#b74309]/40');
             el.classList.add('bg-[var(--bg-panel)]', 'border-[var(--border-color)]');
             if (el.querySelector('.btn-control-eliminar')) {
                 el.querySelector('.btn-control-eliminar').classList.add('hidden');
@@ -220,7 +261,9 @@
         const separador = list.children.length > 0 ? `<span class="mx-1.5 opacity-50 text-[12px] leading-none text-orange-500">•</span>` : `<i class="fas fa-pen mr-1.5 opacity-70 text-[9px] text-orange-500"></i>`;
         list.insertAdjacentHTML('beforeend', `<span class="inline-flex items-center"><span class="nota-texto-real">${separador}${nota}</span></span>`);
 
-        itemActivo.dataset.nota = nota; notaGeneral = nota; cerrarModal('modalNota');
+        itemActivo.dataset.nota = nota; 
+        notaGeneral = nota; 
+        cerrarModal('modalNota');
     };
 
     window.incrementarCantidad = function (id) {
@@ -261,44 +304,25 @@
         const subtotalTras2x1 = Math.max(0, ticketSubtotal - descuento2x1Monto - descuentoComboMonto);
         const subtotalConDescuento = Math.max(0, subtotalTras2x1 - (subtotalTras2x1 * (descuentoPorcentaje / 100)));
 
-        /* IVA_BLOCK_START — iva_comanda_ticket_js
-        // --- AJUSTE: IVA habilitable desde configuración global ---
-        const ivaConfig = (window.ComandaConfig && window.ComandaConfig.iva) || { habilitado: true, porcentaje: 16 };
-        const iva = ivaConfig.habilitado ? subtotalConDescuento * (ivaConfig.porcentaje / 100) : 0;
-        window.totalComandaSinPropina = subtotalConDescuento + iva;
-        document.getElementById('txtSubtotal').innerText = '$' + subtotalConDescuento.toFixed(2);
-        document.getElementById('txtIva').innerText = '$' + iva.toFixed(2);
-        IVA_BLOCK_END */
         const iva = 0; // IVA desactivado
         window.totalComandaSinPropina = subtotalConDescuento;
-        document.getElementById('txtSubtotal').innerText = '$' + subtotalConDescuento.toFixed(2);
+        const txtSubtotalEl = document.getElementById('txtSubtotal');
+        if (txtSubtotalEl) txtSubtotalEl.innerText = '$' + subtotalConDescuento.toFixed(2);
         const txtIvaEl = document.getElementById('txtIva'); if (txtIvaEl) txtIvaEl.innerText = '$0.00';
 
-        // Si tienes un elemento visual para renderizar el monto de la propina, lo actualizamos aquí:
         const txtPropina = document.getElementById('txtPropina');
         if (txtPropina) {
             txtPropina.innerText = '$' + window.propinaGlobal.toFixed(2);
         }
 
-        // --- NUEVO: comisión de plataforma de delivery (Rappi/Uber/DiDi) ---
-        // Misma fórmula que CajaService en el servidor, para que lo que ve el
-        // mesero coincida con lo que cobra Caja y con el ticket impreso:
-        //   base       = subtotal + IVA del producto
-        //   comisión   = base * %plataforma
-        //   IVA com.   = comisión * %iva
-        // y el total de comisión SE SUMA al total del pedido.
-        /* IVA_BLOCK_START — total_comision_con_iva
-        const totalComision = window.calcularComisionDelivery(subtotalConDescuento + iva);
-        const totalFinal = subtotalConDescuento + iva + window.propinaGlobal + totalComision;
-        IVA_BLOCK_END */
-        const totalComision = window.calcularComisionDelivery(subtotalConDescuento); // IVA desactivado
+        const totalComision = window.calcularComisionDelivery(subtotalConDescuento);
         const totalFinal = subtotalConDescuento + window.propinaGlobal + totalComision;
         const txtTotalComanda = document.getElementById('txtTotalComanda');
         if (txtTotalComanda) {
             txtTotalComanda.innerText = '$' + totalFinal.toFixed(2);
         }
 
-        // ── Sincronizar barra fija inferior (solo móvil) ──────────────────
+        // Sincronizar barra fija inferior (móvil)
         const barraTotal = document.getElementById('barra-mobile-total');
         const barraCount = document.getElementById('barra-mobile-count');
         if (barraTotal) barraTotal.innerText = '$' + totalFinal.toFixed(2);
@@ -307,14 +331,11 @@
             barraCount.innerText = totalItems;
         }
 
-        actualizarVistaTotal();
+        if (typeof actualizarVistaTotal === 'function') {
+            actualizarVistaTotal();
+        }
     };
 
-    /**
-     * Calcula la comisión de la plataforma de delivery sobre una base dada,
-     * pinta el desglose en pantalla y devuelve el total de comisión.
-     * Si la mesa NO es de delivery, oculta el bloque y devuelve 0.
-     */
     window.calcularComisionDelivery = function (base) {
         const bloque = document.getElementById('bloqueComisionDelivery');
         const cfg = (window.ComandaConfig && window.ComandaConfig.delivery) || null;
@@ -349,22 +370,26 @@
     };
 
     window.limpiarTicket = function () {
-        document.getElementById('listaTicket').innerHTML = ''; document.getElementById('estadoVacio').classList.remove('hidden');
-        ticketSubtotal = 0; descuentoPorcentaje = 0; notaGeneral = '';
-        promocion2x1Activa = false; promocion2x1Nombre = '';
-        comboActivo = false; comboNombre = ''; comboProductoIds = []; comboMonto = 0;
-        window.propinaGlobal = 0; // <--- Reseteamos la propina al limpiar el ticket
+        document.getElementById('listaTicket').innerHTML = ''; 
+        document.getElementById('estadoVacio').classList.remove('hidden');
+        ticketSubtotal = 0; 
+        descuentoPorcentaje = 0; 
+        notaGeneral = '';
+        promocion2x1Activa = false; 
+        promocion2x1Nombre = '';
+        comboActivo = false; 
+        comboNombre = ''; 
+        comboProductoIds = []; 
+        comboMonto = 0;
+        window.propinaGlobal = 0;
         
         const txtPropina = document.getElementById('txtPropina');
         if (txtPropina) txtPropina.innerText = '$0.00';
 
-        actualizarTotales(); deseleccionarTicket();
+        actualizarTotales(); 
+        deseleccionarTicket();
     };
 
-    // ---------------------------------------------------------------
-    // Tiempos de cocina (S / 1 / 2 / 3) que se etiquetan en cada línea
-    // del ticket al agregarla.
-    // ---------------------------------------------------------------
     window.cambiarTiempoGlobal = function (tiempo) {
         tiempoGlobal = tiempo;
         const mapas = ['sin-tiempo', 'primer-tiempo', 'segundo-tiempo', 'tercer-tiempo'];
