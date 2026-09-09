@@ -30,10 +30,37 @@ class HistorialCajaController extends Controller
             ->sortByDesc('fecha')
             ->values();
 
-        // Cargar folios: mapear flujoable_id -> folio de tickets_impresos
+        // Cargar folios — match directo primero
         $ordenIds = $historicoVentas->pluck('flujoable_id')->filter()->unique();
-        $foliosPorOrden = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $ordenIds)
+        $foliosDirectos = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $ordenIds)
             ->pluck('id', 'orden_referencia_id');
+
+        // Folios indirectos: órdenes hermanas con mismo cerrada_el
+        $sinFolio = $ordenIds->diff($foliosDirectos->keys());
+        $foliosIndirectos = collect();
+        if ($sinFolio->isNotEmpty()) {
+            $ordenesSinFolio = \App\Models\Orden::withTrashed()
+                ->whereIn('id', $sinFolio)
+                ->whereNotNull('cerrada_el')
+                ->get(['id', 'mesa_id', 'cerrada_el']);
+
+            foreach ($ordenesSinFolio as $ord) {
+                $hermanasIds = \App\Models\Orden::withTrashed()
+                    ->where('mesa_id', $ord->mesa_id)
+                    ->where('cerrada_el', $ord->cerrada_el)
+                    ->pluck('id');
+
+                $ticket = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $hermanasIds)
+                    ->oldest('id')
+                    ->first();
+
+                if ($ticket) {
+                    $foliosIndirectos[$ord->id] = $ticket->id;
+                }
+            }
+        }
+
+        $foliosPorOrden = $foliosDirectos->union($foliosIndirectos);
 
         // Adjuntar folio_ticket a cada venta
         $historicoVentas = $historicoVentas->map(function ($venta) use ($foliosPorOrden) {
