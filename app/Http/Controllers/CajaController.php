@@ -327,8 +327,39 @@ class CajaController extends Controller
 
         // Precargar folios: flujoable_id -> folio de tickets_impresos
         $ordenIdsVentas = $historicoVentas->pluck('flujoable_id')->filter()->unique();
-        $foliosPorOrden = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $ordenIdsVentas)
+
+        // Match directo: flujoable_id = orden_referencia_id
+        $foliosDirectos = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $ordenIdsVentas)
             ->pluck('id', 'orden_referencia_id');
+
+        // Para los flujos sin folio directo (la mesa tenía múltiples órdenes y el
+        // ticket se registró con otra orden del grupo), buscar via cerrada_el.
+        $sinFolio = $ordenIdsVentas->diff($foliosDirectos->keys());
+        $foliosIndirectos = collect();
+        if ($sinFolio->isNotEmpty()) {
+            $ordenesSinFolio = \App\Models\Orden::withTrashed()
+                ->whereIn('id', $sinFolio)
+                ->whereNotNull('cerrada_el')
+                ->get(['id', 'mesa_id', 'cerrada_el']);
+
+            foreach ($ordenesSinFolio as $ord) {
+                // Buscar todas las órdenes hermanas (mismo mesa_id + cerrada_el)
+                $hermanasIds = \App\Models\Orden::withTrashed()
+                    ->where('mesa_id', $ord->mesa_id)
+                    ->where('cerrada_el', $ord->cerrada_el)
+                    ->pluck('id');
+
+                $ticket = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $hermanasIds)
+                    ->oldest('id')
+                    ->first();
+
+                if ($ticket) {
+                    $foliosIndirectos[$ord->id] = $ticket->id;
+                }
+            }
+        }
+
+        $foliosPorOrden = $foliosDirectos->union($foliosIndirectos);
 
         $propinasPendientes = PropinaMesero::with('mesero:id,nombre')
             ->where('caja_movimiento_id', $cajaActiva->id)
@@ -388,8 +419,35 @@ class CajaController extends Controller
             ->egresos()->where('categoria', '<>', 'Cancelaciones')->ordenado()->get();
 
         $ordenIdsVentas2 = $historicoVentas->pluck('flujoable_id')->filter()->unique();
-        $foliosPorOrden = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $ordenIdsVentas2)
+
+        $foliosDirectos2 = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $ordenIdsVentas2)
             ->pluck('id', 'orden_referencia_id');
+
+        $sinFolio2 = $ordenIdsVentas2->diff($foliosDirectos2->keys());
+        $foliosIndirectos2 = collect();
+        if ($sinFolio2->isNotEmpty()) {
+            $ordenesSinFolio2 = \App\Models\Orden::withTrashed()
+                ->whereIn('id', $sinFolio2)
+                ->whereNotNull('cerrada_el')
+                ->get(['id', 'mesa_id', 'cerrada_el']);
+
+            foreach ($ordenesSinFolio2 as $ord) {
+                $hermanasIds = \App\Models\Orden::withTrashed()
+                    ->where('mesa_id', $ord->mesa_id)
+                    ->where('cerrada_el', $ord->cerrada_el)
+                    ->pluck('id');
+
+                $ticket = \App\Models\TicketImpreso::whereIn('orden_referencia_id', $hermanasIds)
+                    ->oldest('id')
+                    ->first();
+
+                if ($ticket) {
+                    $foliosIndirectos2[$ord->id] = $ticket->id;
+                }
+            }
+        }
+
+        $foliosPorOrden = $foliosDirectos2->union($foliosIndirectos2);
 
         // Desglose del efectivo del cajón, con el mismo cálculo del cierre.
         $efectivo = $this->cajaService->calcularEfectivoEsperado($cajaActiva);

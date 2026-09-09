@@ -41,6 +41,65 @@
         </div>
     </div>
 
+    {{-- ── RESUMEN POR ÁREA ──────────────────────────────────────────────── --}}
+    @if(isset($resumenPorArea) && $resumenPorArea->isNotEmpty())
+    <div class="bg-[var(--card-color)] border border-zinc-200/60 dark:border-zinc-800/60 rounded-2xl shadow-sm p-4 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xs font-black text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-2">
+                <i class="fas fa-chart-pie text-blue-500"></i> Resumen por Área
+            </h3>
+            <div class="text-right">
+                <p class="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">Total general</p>
+                <p class="text-lg font-black text-[var(--text-color)]">${{ number_format($totalVentas, 2) }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-{{ $resumenPorArea->count() }} gap-3">
+            @foreach($resumenPorArea as $area)
+                @php
+                    $colorBase = match(strtolower($area->area)) {
+                        'barra'  => 'indigo',
+                        'cocina' => 'orange',
+                        default  => 'emerald',
+                    };
+                    $icono = match(strtolower($area->area)) {
+                        'barra'  => 'fa-glass-martini-alt',
+                        'cocina' => 'fa-utensils',
+                        default  => 'fa-tag',
+                    };
+                @endphp
+                <div class="rounded-2xl border border-{{ $colorBase }}-200 dark:border-{{ $colorBase }}-500/20 bg-{{ $colorBase }}-50 dark:bg-{{ $colorBase }}-500/5 p-4">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-8 h-8 rounded-xl bg-{{ $colorBase }}-500/15 flex items-center justify-center">
+                            <i class="fas {{ $icono }} text-{{ $colorBase }}-500 text-xs"></i>
+                        </div>
+                        <span class="text-sm font-black text-[var(--text-color)] uppercase">{{ $area->area }}</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <span class="text-[11px] text-[var(--text-muted)]">Monto</span>
+                            <span class="text-base font-black text-{{ $colorBase }}-600 dark:text-{{ $colorBase }}-400">${{ number_format($area->total_monto, 2) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-[11px] text-[var(--text-muted)]">Piezas vendidas</span>
+                            <span class="text-sm font-bold text-[var(--text-color)]">{{ number_format($area->total_piezas) }}</span>
+                        </div>
+                        <div class="mt-2">
+                            <div class="flex justify-between text-[10px] text-[var(--text-muted)] mb-1">
+                                <span>% del total</span>
+                                <span class="font-black text-{{ $colorBase }}-500">{{ $area->porcentaje }}%</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded-full bg-{{ $colorBase }}-200 dark:bg-{{ $colorBase }}-500/20">
+                                <div class="h-full rounded-full bg-{{ $colorBase }}-500" style="width: {{ $area->porcentaje }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     {{-- ── BOTONES DE ÁREA ─────────────────────────────────────────────── --}}
     <div class="flex flex-wrap items-center gap-2">
 
