@@ -15,8 +15,8 @@
 
         @if(auth()->user()->tienePermiso('empleados.crear'))
             <div class="relative group w-full sm:w-auto">
-                <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-500 pointer-events-none"></div>
-                <button type="button" onclick="abrirModalCrear()" class="relative flex items-center justify-center gap-2.5 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white px-6 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 outline-none w-full sm:w-auto shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]">
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-[#b74309] to-[#8f3207] rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-500 pointer-events-none"></div>
+                <button type="button" onclick="abrirModalCrear()" class="relative flex items-center justify-center gap-2.5 bg-gradient-to-b from-[#b74309] to-[#8f3207] hover:from-[#c94d0a] hover:to-[#a03808] text-white px-6 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 outline-none w-full sm:w-auto shadow-lg shadow-[#b74309]/20 hover:shadow-[#b74309]/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]">
                     <i class="fas fa-plus"></i> 
                     <span>Agregar Empleado</span>
                 </button>
@@ -29,7 +29,6 @@
         $totalAdmin = 0; $totalCapitan = 0; $totalMesero = 0; $totalCocinero = 0; $totalCajero = 0;
         
         foreach($empleados ?? [] as $emp) {
-            // Usamos mb_strtolower para leer correctamente los acentos (UTF-8)
             $rolStr = mb_strtolower($emp->rol?->nombre ?? '', 'UTF-8');
             
             if(str_contains($rolStr, 'admin')) $totalAdmin++;
@@ -49,10 +48,10 @@
             ],
             [
                 'titulo' => 'Capitanes', 'valor' => $totalCapitan, 'icono' => 'clipboard-list',
-                'bgIcono' => 'bg-blue-50 text-blue-600 border border-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-400',
-                'bgGlow' => 'bg-blue-500/[0.04] dark:bg-blue-500/10',
-                'barra' => 'bg-blue-500',
-                'bordeClases' => 'border border-gray-200/70 dark:border-white/5 hover:border-blue-300 dark:hover:border-blue-500/40 hover:shadow-[0_8px_30px_-8px_rgba(59,130,246,0.25)]'
+                'bgIcono' => 'bg-[#b74309]/10 text-[#b74309] border border-[#b74309]/20 dark:border-[#b74309]/20 dark:bg-[#b74309]/10 dark:text-[#e8946a]',
+                'bgGlow' => 'bg-[#b74309]/[0.04] dark:bg-[#b74309]/10',
+                'barra' => 'bg-[#b74309]',
+                'bordeClases' => 'border border-gray-200/70 dark:border-white/5 hover:border-[#b74309]/40 dark:hover:border-[#b74309]/40 hover:shadow-[0_8px_30px_-8px_rgba(183,67,9,0.25)]'
             ],
             [
                 'titulo' => 'Meseros', 'valor' => $totalMesero, 'icono' => 'concierge-bell',
@@ -82,7 +81,6 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-5 relative z-10">
         @foreach($tarjetasStats as $stat)
         <div class="bg-white dark:bg-[#121318] {{ $stat['bordeClases'] }} rounded-xl md:rounded-[1.5rem] p-3 md:p-6 flex flex-col justify-between h-20 sm:h-24 md:h-36 relative group overflow-hidden transition-all duration-300 last:col-span-2 sm:last:col-span-1">
-            {{-- Barra de acento superior --}}
             <span class="absolute top-0 left-0 right-0 h-[3px] {{ $stat['barra'] }} opacity-70 group-hover:opacity-100 transition-opacity"></span>
 
             <div class="flex justify-between items-start w-full relative z-10">
@@ -100,7 +98,6 @@
     {{-- CONTENEDOR PRINCIPAL DE EMPLEADOS --}}
     <div class="bg-white dark:bg-[#121318] border border-gray-200/70 dark:border-white/5 rounded-2xl md:rounded-3xl p-3 sm:p-4 md:p-8 w-full flex-1 flex flex-col shadow-sm dark:shadow-2xl dark:shadow-black/40 relative z-20">
         
-        {{-- Cabecera de Tabla y Buscador Adaptado --}}
         <div class="mb-4 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 relative z-30 pb-4 md:pb-6 border-b border-gray-100 dark:border-white/5">
             <div>
                 <h2 class="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white tracking-tight">Lista de Empleados</h2>
@@ -108,11 +105,9 @@
             </div>
             <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <div class="relative flex-1 sm:flex-none sm:w-72 group">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm group-focus-within:text-blue-500 transition-colors"></i>
-                    
-                    {{-- AQUÍ AGREGAMOS data-teclado="texto" --}}
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm group-focus-within:text-[#b74309] transition-colors"></i>
                     <input type="text" id="buscadorEmpleados" data-teclado="texto" placeholder="Buscar empleado..." 
-                        class="w-full h-11 bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-full pl-11 pr-4 text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-black/60 outline-none transition-all">
+                        class="w-full h-11 bg-gray-50 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-full pl-11 pr-4 text-xs font-semibold text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#b74309] focus:ring-2 focus:ring-[#b74309]/10 focus:bg-white dark:focus:bg-black/60 outline-none transition-all">
                 </div>
                 
                 <a href="{{ request()->has('ver_inactivos') ? route('admin.empleados.index') : route('admin.empleados.index', ['ver_inactivos' => 1]) }}" 
@@ -123,7 +118,7 @@
             </div>
         </div>
 
-        {{-- ===================== VISTA MÓVIL: TARJETAS (solo < sm) ===================== --}}
+        {{-- VISTA MÓVIL --}}
         <div id="listaEmpleadosMovil" class="flex flex-col gap-3 sm:hidden relative z-20">
             @forelse($empleados ?? [] as $empleado)
                 @php
@@ -133,18 +128,16 @@
                     if (str_contains($rolStr, 'admin')) { $colorClass = 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'; $dotClass = 'bg-rose-500'; }
                     elseif (str_contains($rolStr, 'cajero')) { $colorClass = 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400'; $dotClass = 'bg-purple-500'; }
                     elseif (str_contains($rolStr, 'mesero')) { $colorClass = 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'; $dotClass = 'bg-emerald-500'; }
-                    elseif (str_contains($rolStr, 'capitan') || str_contains($rolStr, 'capitán')) { $colorClass = 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'; $dotClass = 'bg-blue-500'; }
+                    elseif (str_contains($rolStr, 'capitan') || str_contains($rolStr, 'capitán')) { $colorClass = 'bg-[#b74309]/10 text-[#b74309] dark:bg-[#b74309]/10 dark:text-[#e8946a]'; $dotClass = 'bg-[#b74309]'; }
                     elseif (str_contains($rolStr, 'cocinero')) { $colorClass = 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400'; $dotClass = 'bg-orange-500'; }
                 @endphp
-                {{-- La clase .fila-empleado-movil ya la tienes, es perfecta para el filtro --}}
                 <div class="fila-empleado-movil border border-gray-100 dark:border-white/5 rounded-2xl p-3.5 bg-gray-50/60 dark:bg-white/[0.025] transition-all {{ !$empleado->esta_activo ? 'opacity-40 grayscale' : 'hover:border-gray-200 dark:hover:border-white/10' }}">
                     <div class="flex items-start justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200/60 dark:from-[#1e2028] dark:to-[#15171e] dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-sm flex-shrink-0 ring-2 ring-white dark:ring-[#121318]">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200/60 dark:from-[#1e2028] dark:to-[#15171e] dark:border-white/10 flex items-center justify-center text-[#b74309] dark:text-[#e8946a] font-black text-sm flex-shrink-0 ring-2 ring-white dark:ring-[#121318]">
                                 {{ strtoupper(substr($empleado->nombre, 0, 1)) }}
                             </div>
                             <div class="flex flex-col min-w-0">
-                                {{-- AQUÍ TIENES LA CLASE .nombre-empleado (le agregaré una auxiliar por si acaso el DOM es complejo) --}}
                                 <span class="nombre-empleado-txt font-bold text-sm text-gray-900 dark:text-gray-100 truncate">{{ $empleado->nombre }}</span>
                                 <span class="text-[10px] font-bold text-gray-400 dark:text-gray-600 mt-0.5">ID: EMP-{{ str_pad($empleado->id, 3, '0', STR_PAD_LEFT) }} · PIN {{ $empleado->codigo_empleado ?? '----' }}</span>
                             </div>
@@ -158,12 +151,12 @@
                     <div class="flex items-center gap-2 mt-3.5 pt-3 border-t border-gray-100 dark:border-white/5">
                         <a href="{{ route('admin.empleados.permisos', $empleado->id) }}" 
                             class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-200 text-[10px] font-black uppercase text-gray-600 dark:bg-black/20 dark:border-white/5 dark:text-gray-400 dark:hover:bg-white/5 transition-all">
-                            <i class="fas fa-shield-alt text-blue-500 text-[11px]"></i> Permisos
+                            <i class="fas fa-shield-alt text-[#b74309] text-[11px]"></i> Permisos
                         </a>
 
                         @if($empleado->esta_activo)
                             <button type="button" title="Editar" onclick="window.ejecutarEditar(this)"
-                                class="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center border border-blue-300 dark:border-blue-500/50 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 active:scale-95 transition-all"
+                                class="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center border border-[#b74309]/50 dark:border-[#b74309]/50 bg-[#b74309]/10 dark:bg-[#b74309]/10 text-[#b74309] dark:text-[#e8946a] active:scale-95 transition-all"
                                 data-id="{{ $empleado->id }}"
                                 data-nombre="{{ $empleado->nombre }}"
                                 data-codigo="{{ $empleado->codigo_empleado }}"
@@ -206,7 +199,7 @@
             @endforelse
         </div>
 
-        {{-- ===================== VISTA ESCRITORIO: TABLA (solo sm+) ===================== --}}
+        {{-- VISTA ESCRITORIO --}}
         <div class="hidden sm:block w-full overflow-x-auto relative z-20 pb-4">
             <table class="w-full min-w-[700px] text-left border-collapse table-fixed">
                 <thead>
@@ -228,32 +221,28 @@
                         if (str_contains($rolStr, 'admin')) { $colorClass = 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'; $dotClass = 'bg-rose-500'; }
                         elseif (str_contains($rolStr, 'cajero')) { $colorClass = 'bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400'; $dotClass = 'bg-purple-500'; }
                         elseif (str_contains($rolStr, 'mesero')) { $colorClass = 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'; $dotClass = 'bg-emerald-500'; }
-                        elseif (str_contains($rolStr, 'capitan') || str_contains($rolStr, 'capitán')) { $colorClass = 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'; $dotClass = 'bg-blue-500'; }
+                        elseif (str_contains($rolStr, 'capitan') || str_contains($rolStr, 'capitán')) { $colorClass = 'bg-[#b74309]/10 text-[#b74309] dark:bg-[#b74309]/10 dark:text-[#e8946a]'; $dotClass = 'bg-[#b74309]'; }
                         elseif (str_contains($rolStr, 'cocinero')) { $colorClass = 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400'; $dotClass = 'bg-orange-500'; }
                     @endphp
 
                     <tr class="fila-empleado group hover:bg-gray-50/80 dark:hover:bg-white/[0.02] transition-all duration-200 {{ !$empleado->esta_activo ? 'opacity-40 grayscale' : '' }}">
                         
-                        {{-- COLUMNA NOMBRE --}}
                         <td class="py-4 px-2 md:px-4 align-middle">
                             <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200/60 dark:from-[#1e2028] dark:to-[#15171e] dark:border-white/10 flex items-center justify-center text-blue-600 dark:text-blue-400 font-black text-sm flex-shrink-0 ring-2 ring-white dark:ring-[#121318]">
+                                <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200/60 dark:from-[#1e2028] dark:to-[#15171e] dark:border-white/10 flex items-center justify-center text-[#b74309] dark:text-[#e8946a] font-black text-sm flex-shrink-0 ring-2 ring-white dark:ring-[#121318]">
                                     {{ strtoupper(substr($empleado->nombre, 0, 1)) }}
                                 </div>
                                 <div class="flex flex-col min-w-0 truncate">
-                                    {{-- AQUÍ TIENES LA CLASE .nombre-empleado-txt --}}
                                     <span class="nombre-empleado-txt font-bold text-sm text-gray-900 dark:text-gray-100 truncate">{{ $empleado->nombre }}</span>
                                     <span class="text-[10px] font-bold text-gray-400 dark:text-gray-600 mt-0.5">ID: EMP-{{ str_pad($empleado->id, 3, '0', STR_PAD_LEFT) }}</span>
                                 </div>
                             </div>
                         </td>
 
-                        {{-- COLUMNA PIN --}}
                         <td class="py-4 px-2 md:px-4 align-middle text-center">
                             <span class="inline-block font-black text-xs text-gray-600 dark:text-gray-400 tracking-[0.2em] bg-gray-50 dark:bg-black/30 px-2.5 py-1 rounded-md">{{ $empleado->codigo_empleado ?? '----' }}</span>
                         </td>
                         
-                        {{-- COLUMNA ROL --}}
                         <td class="py-4 px-2 md:px-4 align-middle text-center">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest {{ $colorClass }}">
                                 <span class="w-1.5 h-1.5 rounded-full {{ $dotClass }}"></span>
@@ -261,21 +250,19 @@
                             </span>
                         </td>
                         
-                        {{-- COLUMNA PERMISOS --}}
                         <td class="py-4 px-2 md:px-4 align-middle text-center">
                             <a href="{{ route('admin.empleados.permisos', $empleado->id) }}" 
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-[9px] md:text-[10px] font-black uppercase text-gray-600 dark:bg-black/20 dark:border-white/5 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-blue-400 transition-all">
-                                <i class="fas fa-shield-alt text-blue-500 text-[10px]"></i> Configurar
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-gray-100 border border-gray-200 text-[9px] md:text-[10px] font-black uppercase text-gray-600 dark:bg-black/20 dark:border-white/5 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-[#e8946a] transition-all">
+                                <i class="fas fa-shield-alt text-[#b74309] text-[10px]"></i> Configurar
                             </a>
                         </td>
                         
-                        {{-- COLUMNA ACCIONES --}}
                         <td class="py-4 px-2 md:px-4 align-middle text-center">
                             <div class="flex items-center justify-center gap-2 relative z-30">
                                 @if($empleado->esta_activo)
                                     <button type="button" title="Editar"
                                         onclick="window.ejecutarEditar(this)"
-                                        class="cursor-pointer relative z-50 h-9 w-9 md:h-10 md:w-10 rounded-xl flex items-center justify-center border border-blue-300 dark:border-blue-500/50 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all shadow-sm outline-none flex-shrink-0"
+                                        class="cursor-pointer relative z-50 h-9 w-9 md:h-10 md:w-10 rounded-xl flex items-center justify-center border border-[#b74309]/50 dark:border-[#b74309]/50 bg-[#b74309]/10 dark:bg-[#b74309]/10 text-[#b74309] dark:text-[#e8946a] hover:bg-[#b74309]/20 dark:hover:bg-[#b74309]/20 transition-all shadow-sm outline-none flex-shrink-0"
                                         data-id="{{ $empleado->id }}" 
                                         data-nombre="{{ $empleado->nombre }}" 
                                         data-codigo="{{ $empleado->codigo_empleado }}" 
@@ -335,7 +322,6 @@
 <div id="modal-confirmacion-eliminar" class="fixed inset-0 z-[999] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm px-4 transition-all duration-300">
     <div class="relative !bg-white dark:!bg-[#1c1c1e] border !border-gray-200 dark:!border-white/5 rounded-[2rem] p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden text-center">
         
-        {{-- Resplandor decorativo que cambia dinámicamente con JS --}}
         <div id="glow-modal" class="absolute -top-24 -left-24 w-48 h-48 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="flex justify-center mb-5 relative z-10">
@@ -377,7 +363,6 @@
         if (esPermanente) {
             titulo.innerText = '¿Eliminar Permanentemente?';
             texto.innerText = 'Esta acción no se puede deshacer. Se borrarán todos los datos de este empleado de la base de datos de manera definitiva.';
-            
             glow.className = "absolute -top-24 -left-24 w-48 h-48 bg-red-500/10 dark:bg-red-500/20 rounded-full blur-3xl pointer-events-none";
             wrapperIcono.className = "flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20";
             icono.className = "fas fa-exclamation-triangle text-2xl sm:text-3xl text-red-500 dark:text-red-400";
@@ -385,7 +370,6 @@
         } else {
             titulo.innerText = '¿Desactivar Empleado?';
             texto.innerText = 'El empleado no podrá acceder al sistema, pero sus registros se mantendrán.';
-            
             glow.className = "absolute -top-24 -left-24 w-48 h-48 bg-amber-500/10 dark:bg-amber-500/20 rounded-full blur-3xl pointer-events-none";
             wrapperIcono.className = "flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20";
             icono.className = "fas fa-user-slash text-2xl sm:text-3xl text-amber-500 dark:text-amber-400";
@@ -406,20 +390,16 @@
         }
     });
 
-    // --- NUEVO: CÓDIGO PARA BUSCADOR Y TECLADO VIRTUAL ---
     document.addEventListener('DOMContentLoaded', function() {
         const buscador = document.getElementById('buscadorEmpleados');
         const filasDesktop = document.querySelectorAll('.fila-empleado');
         const filasMovil = document.querySelectorAll('.fila-empleado-movil');
         
         function filtrarEmpleados(term) {
-            // Filtrar vista de escritorio
             filasDesktop.forEach(fila => {
                 const nombre = fila.querySelector('.nombre-empleado-txt').textContent.toLowerCase();
                 fila.style.display = nombre.includes(term) ? '' : 'none';
             });
-
-            // Filtrar vista móvil
             filasMovil.forEach(fila => {
                 const nombre = fila.querySelector('.nombre-empleado-txt').textContent.toLowerCase();
                 fila.style.display = nombre.includes(term) ? '' : 'none';
@@ -427,12 +407,9 @@
         }
 
         if (buscador) {
-            // Evento normal al teclear
             buscador.addEventListener('input', function(e) {
                 filtrarEmpleados(e.target.value.toLowerCase().trim());
             });
-            
-            // Evento para el teclado virtual personalizado
             buscador.addEventListener('virtualKeyboardInput', function(e) {
                 filtrarEmpleados(e.target.value.toLowerCase().trim());
             });

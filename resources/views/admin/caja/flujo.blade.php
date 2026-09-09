@@ -2,13 +2,13 @@
 
 @section('content')
 {{-- w-full para ocupar todo el espacio disponible --}}
-<div class="p-3 sm:p-6 w-full space-y-4 sm:space-y-6">
+<div class="p-3 sm:p-6 w-full space-y-4 sm:space-y-6" style="background-color: var(--bg-color);">
 
     {{-- Encabezado y Alertas --}}
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-2 w-full">
         <div>
-            <h1 class="text-xl sm:text-2xl font-black tracking-wide text-[var(--text-color)]">Gestión de Flujo de Caja</h1>
-            <p class="text-[10px] sm:text-xs text-[var(--text-muted)] uppercase tracking-widest font-bold mt-1">Monitoreo de movimientos del turno</p>
+            <h1 class="text-xl sm:text-2xl font-black tracking-wide" style="color: var(--text-color);">Gestión de Flujo de Caja</h1>
+            <p class="text-[10px] sm:text-xs uppercase tracking-widest font-bold mt-1" style="color: var(--text-muted);">Monitoreo de movimientos del turno</p>
         </div>
         @if(session('success'))
             <div class="w-full sm:w-auto flex items-center p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-500 text-xs sm:text-sm animate-fade-in shadow-lg shadow-emerald-500/5">
@@ -19,85 +19,86 @@
     </div>
 
     {{-- FRANJA SUPERIOR: Resumen de Turno en formato horizontal de tarjetas --}}
-    <div class="bg-[var(--card-color)] border border-[var(--border-color)] rounded-2xl shadow-xl p-4 sm:p-5 relative overflow-hidden w-full">
-        <div class="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+    <div class="rounded-2xl shadow-xl p-4 sm:p-5 relative overflow-hidden w-full border" style="background-color: var(--card-color); border-color: var(--border-color);">
+        <div class="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-[#b74309] to-[#8f3207]"></div>
 
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div class="flex items-center gap-4 flex-wrap">
-                <h3 class="text-xs sm:text-sm font-black text-[var(--text-muted)] uppercase tracking-wider flex items-center whitespace-nowrap">
-                    <i class="fas fa-cash-register text-blue-500 mr-2"></i> Resumen de Turno
+                <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider flex items-center whitespace-nowrap" style="color: var(--text-muted);">
+                    <i class="fas fa-cash-register text-[#b74309] mr-2"></i> Resumen de Turno
                 </h3>
-                <span class="text-[10px] sm:text-xs font-bold text-[var(--text-muted)]">ID Caja: <span class="text-[var(--text-color)]">#{{ $cajaActiva->id }}</span></span>
-                <span class="text-[10px] sm:text-xs font-bold text-[var(--text-muted)]">Cajero: <span class="text-[var(--text-color)]">{{ $cajaActiva->user->nombre ?? 'Admin' }}</span></span>
-                <span class="px-2.5 py-0.5 rounded-md text-[10px] sm:text-xs font-bold bg-blue-500/10 border border-blue-500/20 text-blue-500 uppercase tracking-wider">
+                <span class="text-[10px] sm:text-xs font-bold" style="color: var(--text-muted);">ID Caja: <span style="color: var(--text-color);">#{{ $cajaActiva->id }}</span></span>
+                <span class="text-[10px] sm:text-xs font-bold" style="color: var(--text-muted);">Cajero: <span style="color: var(--text-color);">{{ $cajaActiva->user->nombre ?? 'Admin' }}</span></span>
+                <span class="px-2.5 py-0.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#b74309] dark:text-[#e8946a] bg-[#b74309]/10 border border-[#b74309]/20">
                     {{ $cajaActiva->turno ?? 'Matutino' }}
                 </span>
             </div>
 
-            {{-- Acciones: al lado en pantallas anchas, ocupan todo el ancho abajo en cuadradas --}}
+            {{-- Acciones --}}
             <div class="flex gap-2 w-full md:w-auto">
                 <a href="{{ route('admin.caja.reporte.pdf', $cajaActiva->id) }}" target="_blank"
-                    class="flex-1 md:flex-none flex items-center justify-center bg-[var(--input-bg)] border border-[var(--border-color)] hover:bg-blue-500/10 hover:border-blue-500/40 text-[var(--text-color)] font-bold text-[11px] sm:text-xs tracking-widest uppercase py-2.5 px-4 rounded-xl transition-all duration-300 shadow-md group whitespace-nowrap">
-                     <i class="fas fa-file-export mr-2 text-[var(--text-muted)] group-hover:text-blue-500"></i> Exportar
+                    class="flex-1 md:flex-none flex items-center justify-center border font-bold text-[11px] sm:text-xs tracking-widest uppercase py-2.5 px-4 rounded-xl transition-all duration-300 shadow-md group whitespace-nowrap hover:border-[#b74309]/40 hover:bg-[#b74309]/10 cursor-pointer"
+                    style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
+                     <i class="fas fa-file-export mr-2 group-hover:text-[#b74309] transition-colors" style="color: var(--text-muted);"></i> Exportar
                 </a>
 
-                <button id="btnAbrirCierreCaja" type="button" class="flex-1 md:flex-none flex items-center justify-center bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500 hover:text-white text-rose-500 font-bold text-[11px] sm:text-xs tracking-widest uppercase py-2.5 px-4 rounded-xl transition-all duration-300 shadow-md shadow-rose-500/5 cursor-pointer whitespace-nowrap">
+                <button id="btnAbrirCierreCaja" type="button" class="flex-1 md:flex-none flex items-center justify-center bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500 hover:text-white text-rose-500 font-bold text-[11px] sm:text-xs tracking-widest uppercase py-2.5 px-4 rounded-xl transition-all duration-300 shadow-md shadow-rose-500/5 cursor-pointer whitespace-nowrap active:scale-95">
                     <i class="fas fa-lock mr-2"></i> Cerrar Caja
                 </button>
             </div>
         </div>
 
-        {{-- Grid de tarjetas: 2 columnas en móvil, 3 en tablet, 6 en escritorio --}}
+        {{-- Grid de tarjetas --}}
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
 
-            <div class="bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl p-3 flex flex-col justify-center shadow-inner">
-                <span class="text-[9px] sm:text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Saldo Inicial</span>
-                <span class="font-black text-[var(--text-color)] text-sm sm:text-base">${{ number_format($cajaActiva->monto_inicial, 2) }}</span>
+            <div class="rounded-xl p-3 flex flex-col justify-center shadow-inner border" style="background-color: var(--input-bg); border-color: var(--border-color);">
+                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1" style="color: var(--text-muted);">Saldo Inicial</span>
+                <span class="font-black text-sm sm:text-base" style="color: var(--text-color);">${{ number_format($cajaActiva->monto_inicial, 2) }}</span>
             </div>
 
-            <div class="bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl p-3 flex flex-col justify-center shadow-inner">
-                <span class="text-[9px] sm:text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1 flex items-center">
+            <div class="rounded-xl p-3 flex flex-col justify-center shadow-inner border" style="background-color: var(--input-bg); border-color: var(--border-color);">
+                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1 flex items-center" style="color: var(--text-muted);">
                     <i class="fas fa-money-bill-wave text-emerald-500 mr-1 w-3"></i> Efectivo
                 </span>
                 <span class="font-black text-emerald-500 text-sm sm:text-base">+${{ number_format($ventasEfectivo, 2) }}</span>
             </div>
 
-            <div class="bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl p-3 flex flex-col justify-center shadow-inner">
-                <span class="text-[9px] sm:text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1 flex items-center">
+            <div class="rounded-xl p-3 flex flex-col justify-center shadow-inner border" style="background-color: var(--input-bg); border-color: var(--border-color);">
+                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1 flex items-center" style="color: var(--text-muted);">
                     <i class="fas fa-credit-card text-sky-500 mr-1 w-3"></i> Tarjeta
                 </span>
                 <span class="font-black text-sky-500 text-sm sm:text-base">+${{ number_format($ventasTarjeta, 2) }}</span>
             </div>
 
-            <div class="bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl p-3 flex flex-col justify-center shadow-inner">
-                <span class="text-[9px] sm:text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1 flex items-center">
+            <div class="rounded-xl p-3 flex flex-col justify-center shadow-inner border" style="background-color: var(--input-bg); border-color: var(--border-color);">
+                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1 flex items-center" style="color: var(--text-muted);">
                     <i class="fas fa-university text-indigo-500 mr-1 w-3"></i> Transf.
                 </span>
                 <span class="font-black text-indigo-500 text-sm sm:text-base">+${{ number_format($ventasTransferencia, 2) }}</span>
             </div>
 
-            <div class="bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl p-3 flex flex-col justify-center shadow-inner">
-                <span class="text-[9px] sm:text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1 flex items-center">
+            <div class="rounded-xl p-3 flex flex-col justify-center shadow-inner border" style="background-color: var(--input-bg); border-color: var(--border-color);">
+                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest mb-1 flex items-center" style="color: var(--text-muted);">
                     <i class="fas fa-minus-circle text-rose-500 mr-1 w-3"></i> Gastos
                 </span>
                 <span class="font-black text-rose-500 text-sm sm:text-base">-${{ number_format($totalGastos, 2) }}</span>
             </div>
 
-            <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 flex flex-col justify-center shadow-inner col-span-2 sm:col-span-1">
-                <span class="text-[9px] sm:text-[10px] font-black text-blue-500/80 uppercase tracking-widest mb-1">Saldo Estimado</span>
-                <span class="font-black text-blue-500 text-base sm:text-lg">${{ number_format($saldoEstimado, 2) }}</span>
+            <div class="rounded-xl p-3 flex flex-col justify-center shadow-inner col-span-2 sm:col-span-1 border bg-[#b74309]/10 border-[#b74309]/30">
+                <span class="text-[9px] sm:text-[10px] font-black text-[#b74309]/80 uppercase tracking-widest mb-1">Saldo Estimado</span>
+                <span class="font-black text-[#b74309] text-base sm:text-lg">${{ number_format($saldoEstimado, 2) }}</span>
             </div>
 
         </div>
     </div>
 
-    {{-- TABLAS DE HISTORIAL: a todo el ancho, apiladas verticalmente --}}
+    {{-- TABLAS DE HISTORIAL --}}
     <div class="space-y-4 sm:space-y-6 w-full">
 
         {{-- BLOQUE 1: Ventas del Turno --}}
-        <div class="bg-[var(--card-color)] border border-[var(--border-color)] rounded-2xl shadow-xl overflow-hidden w-full">
-            <div class="bg-gradient-to-r from-sky-500/10 to-transparent p-3 sm:p-4 border-b border-[var(--border-color)] flex flex-wrap gap-2 justify-between items-center w-full">
-                <h3 class="text-xs sm:text-sm font-black text-[var(--text-color)] uppercase tracking-wider flex items-center">
+        <div class="rounded-2xl shadow-xl overflow-hidden w-full border" style="background-color: var(--card-color); border-color: var(--border-color);">
+            <div class="bg-gradient-to-r from-sky-500/10 to-transparent p-3 sm:p-4 border-b flex flex-wrap gap-2 justify-between items-center w-full" style="border-bottom-color: var(--border-color);">
+                <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider flex items-center" style="color: var(--text-color);">
                     <i class="fas fa-shopping-cart text-sky-500 mr-2"></i> Ventas del Turno
                 </h3>
                 <span class="text-[10px] sm:text-xs font-black bg-sky-500/10 text-sky-500 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-sky-500/20 whitespace-nowrap">
@@ -108,8 +109,8 @@
             <div class="overflow-x-auto w-full -webkit-overflow-scrolling-touch">
                 @if($historicoVentas->isEmpty())
                     <div class="p-8 sm:p-12 text-center flex flex-col items-center justify-center min-h-[140px] sm:min-h-[180px]">
-                        <i class="fas fa-inbox text-2xl sm:text-3xl text-[var(--text-muted)] mb-3"></i>
-                        <p class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">No hay ventas registradas en este turno.</p>
+                        <i class="fas fa-inbox text-2xl sm:text-3xl mb-3 opacity-40" style="color: var(--text-muted);"></i>
+                        <p class="text-xs sm:text-sm font-medium" style="color: var(--text-muted);">No hay ventas registradas en este turno.</p>
                     </div>
                 @else
                     @php
@@ -117,7 +118,7 @@
                     @endphp
                     <table class="w-full text-xs sm:text-sm text-center border-collapse">
                         <thead>
-                            <tr class="bg-[var(--input-bg)] text-[var(--text-muted)] font-bold text-[10px] sm:text-xs border-b border-[var(--border-color)] uppercase tracking-wider">
+                            <tr class="font-bold text-[10px] sm:text-xs border-b uppercase tracking-wider" style="background-color: var(--input-bg); border-bottom-color: var(--border-color); color: var(--text-muted);">
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Hora</th>
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Folio</th>
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Concepto</th>
@@ -126,7 +127,7 @@
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4"></th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-[var(--border-color)] text-[var(--text-color)]">
+                        <tbody class="divide-y" style="border-color: var(--border-color); color: var(--text-color);">
                             @foreach($ventasAgrupadas as $ordenId => $pagos)
                                 @php
                                     $primera     = $pagos->first();
@@ -134,18 +135,18 @@
                                     $esMixto     = $pagos->count() > 1;
                                     $ordenIdReal = $primera->flujoable_id;
                                 @endphp
-                                <tr class="hover:bg-[var(--input-bg)]/50 transition-colors">
-                                    <td class="py-3 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-xs font-medium text-[var(--text-muted)] whitespace-nowrap">
+                                <tr class="transition-colors hover:bg-black/5 dark:hover:bg-white/5" style="border-bottom: 1px solid var(--border-color);">
+                                    <td class="py-3 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-xs font-medium whitespace-nowrap" style="color: var(--text-muted);">
                                         {{ \Carbon\Carbon::parse($primera->fecha)->format('H:i') }} hrs
                                     </td>
                                     <td class="py-3 sm:py-4 px-2 sm:px-4 text-center">
                                         @php $folio = $foliosPorOrden[$ordenIdReal] ?? null; @endphp
                                         @if($folio)
-                                            <span class="px-2 py-0.5 rounded-lg bg-[var(--input-bg)] border border-[var(--border-color)] text-[11px] font-black text-[var(--text-muted)] font-mono tracking-wider">
+                                            <span class="px-2 py-0.5 rounded-lg border text-[11px] font-black font-mono tracking-wider" style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">
                                                 #{{ str_pad($folio, 3, '0', STR_PAD_LEFT) }}
                                             </span>
                                         @else
-                                            <span class="text-[var(--border-color)]">—</span>
+                                            <span style="color: var(--border-color);">—</span>
                                         @endif
                                     </td>
                                     <td class="py-3 sm:py-4 px-2 sm:px-4 font-semibold">{{ $primera->concepto }}</td>
@@ -161,16 +162,16 @@
                                                             'tarjeta'       => 'sky',
                                                             'transferencia' => 'indigo',
                                                             'descuento'     => 'violet',
-                                                            default          => 'emerald',
+                                                            default         => 'emerald',
                                                         };
                                                     @endphp
                                                     <div class="flex items-center gap-1.5 whitespace-nowrap">
                                                         <span class="px-2 py-0.5 rounded-md text-[10px] font-black tracking-wider bg-{{ $colorMetodo }}-500/10 border border-{{ $colorMetodo }}-500/20 text-{{ $colorMetodo }}-500 uppercase">
                                                             {{ $pago->metodo_pago }}
                                                         </span>
-                                                        <span class="text-[10px] font-bold text-[var(--text-muted)]">${{ number_format($pago->monto, 2) }}</span>
+                                                        <span class="text-[10px] font-bold" style="color: var(--text-muted);">${{ number_format($pago->monto, 2) }}</span>
                                                         @if(!empty($pago->referencia))
-                                                            <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-zinc-500/10 border border-zinc-500/20 text-zinc-400">
+                                                            <span class="px-1.5 py-0.5 rounded text-[9px] font-mono border" style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">
                                                                 #{{ $pago->referencia }}
                                                             </span>
                                                         @endif
@@ -182,15 +183,15 @@
                                                         'tarjeta'       => 'sky',
                                                         'transferencia' => 'indigo',
                                                         'descuento'     => 'violet',
-                                                        default          => 'emerald',
+                                                        default         => 'emerald',
                                                     };
                                                 @endphp
                                                 <span class="px-2 sm:px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-black tracking-wider bg-{{ $colorMetodo }}-500/10 border border-{{ $colorMetodo }}-500/20 text-{{ $colorMetodo }}-500 uppercase whitespace-nowrap">
                                                     {{ $primera->metodo_pago }}
                                                 </span>
                                                 @if(!empty($primera->referencia))
-                                                    <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-zinc-500/10 border border-zinc-500/20 text-zinc-400 uppercase tracking-wide whitespace-nowrap shadow-inner">
-                                                        <i class="fas fa-hashtag text-[8px] text-zinc-500 mr-0.5"></i>Ref: {{ $primera->referencia }}
+                                                    <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold border uppercase tracking-wide whitespace-nowrap shadow-inner" style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">
+                                                        <i class="fas fa-hashtag text-[8px] mr-0.5 opacity-60"></i>Ref: {{ $primera->referencia }}
                                                     </span>
                                                 @endif
                                             @endif
@@ -202,7 +203,8 @@
                                     <td class="py-3 sm:py-4 px-2 sm:px-4">
                                         <div class="flex items-center justify-center gap-1.5">
                                             <button type="button"
-                                                class="btn-ver-venta w-8 h-8 rounded-lg border border-[var(--border-color)] text-[var(--text-muted)] hover:text-blue-500 hover:border-blue-500 transition-colors"
+                                                class="btn-ver-venta w-8 h-8 rounded-lg border transition-colors flex items-center justify-center hover:text-[#b74309] hover:border-[#b74309] cursor-pointer"
+                                                style="border-color: var(--border-color); color: var(--text-muted);"
                                                 data-venta="{{ $primera->id }}"
                                                 title="Ver detalle">
                                                 <i class="fas fa-eye text-xs"></i>
@@ -210,7 +212,8 @@
                                             @if($ordenIdReal)
                                                 <a href="{{ route('admin.caja.ticket.imprimir.orden', $ordenIdReal) }}"
                                                    target="_blank"
-                                                   class="w-8 h-8 rounded-lg border border-[var(--border-color)] text-[var(--text-muted)] hover:text-amber-500 hover:border-amber-500 transition-colors flex items-center justify-center"
+                                                   class="w-8 h-8 rounded-lg border transition-colors flex items-center justify-center hover:text-amber-500 hover:border-amber-500 cursor-pointer"
+                                                   style="border-color: var(--border-color); color: var(--text-muted);"
                                                    title="Reimprimir ticket">
                                                     <i class="fas fa-print text-xs"></i>
                                                 </a>
@@ -226,9 +229,9 @@
         </div>
 
         {{-- BLOQUE 2: Gastos y Salidas --}}
-        <div class="bg-[var(--card-color)] border border-[var(--border-color)] rounded-2xl shadow-xl overflow-hidden w-full">
-            <div class="bg-gradient-to-r from-rose-500/10 to-transparent p-3 sm:p-4 border-b border-[var(--border-color)] flex flex-wrap gap-2 justify-between items-center w-full">
-                <h3 class="text-xs sm:text-sm font-black text-[var(--text-color)] uppercase tracking-wider flex items-center">
+        <div class="rounded-2xl shadow-xl overflow-hidden w-full border" style="background-color: var(--card-color); border-color: var(--border-color);">
+            <div class="bg-gradient-to-r from-rose-500/10 to-transparent p-3 sm:p-4 border-b flex flex-wrap gap-2 justify-between items-center w-full" style="border-bottom-color: var(--border-color);">
+                <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider flex items-center" style="color: var(--text-color);">
                     <i class="fas fa-hand-holding-usd text-rose-500 mr-2"></i> Gastos y Salidas
                 </h3>
                 <span class="text-[10px] sm:text-xs font-black bg-rose-500/10 text-rose-500 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-rose-500/20 whitespace-nowrap">
@@ -239,23 +242,25 @@
             <div class="overflow-x-auto w-full -webkit-overflow-scrolling-touch">
                 @if($historicoGastos->isEmpty())
                     <div class="p-8 sm:p-12 text-center flex flex-col items-center justify-center min-h-[140px] sm:min-h-[180px]">
-                        <i class="fas fa-receipt text-2xl sm:text-3xl text-[var(--text-muted)] mb-3"></i>
-                        <p class="text-xs sm:text-sm text-[var(--text-muted)] font-medium">No hay gastos o salidas registrados en este turno.</p>
+                        <i class="fas fa-receipt text-2xl sm:text-3xl mb-3 opacity-40" style="color: var(--text-muted);"></i>
+                        <p class="text-xs sm:text-sm font-medium" style="color: var(--text-muted);">No hay gastos o salidas registrados en este turno.</p>
                     </div>
                 @else
                     <table class="w-full text-xs sm:text-sm text-center border-collapse">
                         <thead>
-                            <tr class="bg-[var(--input-bg)] text-[var(--text-muted)] font-bold text-[10px] sm:text-xs border-b border-[var(--border-color)] uppercase tracking-wider">
+                            <tr class="font-bold text-[10px] sm:text-xs border-b uppercase tracking-wider" style="background-color: var(--input-bg); border-bottom-color: var(--border-color); color: var(--text-muted);">
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Hora</th>
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Categoría</th>
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4 text-left">Concepto / Descripción</th>
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Monto</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-[var(--border-color)] text-[var(--text-color)]">
+                        <tbody class="divide-y" style="border-color: var(--border-color); color: var(--text-color);">
                             @foreach($historicoGastos as $gasto)
-                                <tr class="hover:bg-[var(--input-bg)]/50 transition-colors">
-                                    <td class="py-3 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-xs font-medium text-[var(--text-muted)] whitespace-nowrap">{{ \Carbon\Carbon::parse($gasto->fecha)->format('H:i') }} hrs</td>
+                                <tr class="transition-colors hover:bg-black/5 dark:hover:bg-white/5" style="border-bottom: 1px solid var(--border-color);">
+                                    <td class="py-3 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-xs font-medium whitespace-nowrap" style="color: var(--text-muted);">
+                                        {{ \Carbon\Carbon::parse($gasto->fecha)->format('H:i') }} hrs
+                                    </td>
                                     <td class="py-3 sm:py-4 px-2 sm:px-4">
                                         <span class="px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold bg-rose-500/10 border border-rose-500/20 text-rose-500 uppercase tracking-wide whitespace-nowrap">
                                             {{ $gasto->categoria }}
@@ -264,7 +269,7 @@
                                     <td class="py-3 sm:py-4 px-2 sm:px-4 text-left font-medium">
                                         <span class="font-semibold block">{{ $gasto->concepto }}</span>
                                         @if($gasto->observaciones)
-                                            <span class="text-[10px] sm:text-xs text-[var(--text-muted)] block mt-0.5">{{ $gasto->observaciones }}</span>
+                                            <span class="text-[10px] sm:text-xs block mt-0.5" style="color: var(--text-muted);">{{ $gasto->observaciones }}</span>
                                         @endif
                                     </td>
                                     <td class="py-3 sm:py-4 px-2 sm:px-4 font-black text-rose-500 whitespace-nowrap">-${{ number_format($gasto->monto, 2) }}</td>
@@ -276,14 +281,11 @@
             </div>
         </div>
 
-        {{-- BLOQUE 3: Cuentas canceladas
-             Va aparte de "Gastos y Salidas" a propósito: no son compras ni
-             salidas del cajón, es consumo que nunca se cobró. Tampoco entra
-             al arqueo de efectivo por la misma razón. --}}
+        {{-- BLOQUE 3: Cuentas canceladas --}}
         @if(($historicoCancelaciones ?? collect())->isNotEmpty())
-            <div class="bg-[var(--card-color)] border border-rose-500/30 rounded-2xl shadow-xl overflow-hidden w-full">
-                <div class="bg-gradient-to-r from-rose-500/15 to-transparent p-3 sm:p-4 border-b border-[var(--border-color)] flex flex-wrap gap-2 justify-between items-center w-full">
-                    <h3 class="text-xs sm:text-sm font-black text-[var(--text-color)] uppercase tracking-wider flex items-center">
+            <div class="rounded-2xl shadow-xl overflow-hidden w-full border border-rose-500/30" style="background-color: var(--card-color);">
+                <div class="bg-gradient-to-r from-rose-500/15 to-transparent p-3 sm:p-4 border-b flex flex-wrap gap-2 justify-between items-center w-full" style="border-bottom-color: var(--border-color);">
+                    <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider flex items-center" style="color: var(--text-color);">
                         <i class="fas fa-ban text-rose-500 mr-2"></i> Cuentas canceladas (no cobradas)
                     </h3>
                     <span class="text-[10px] sm:text-xs font-black bg-rose-500/10 text-rose-500 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-rose-500/20 whitespace-nowrap">
@@ -294,19 +296,23 @@
                 <div class="overflow-x-auto w-full -webkit-overflow-scrolling-touch">
                     <table class="w-full text-xs sm:text-sm text-center border-collapse">
                         <thead>
-                            <tr class="bg-[var(--input-bg)] text-[var(--text-muted)] font-bold text-[10px] sm:text-xs border-b border-[var(--border-color)] uppercase tracking-wider">
+                            <tr class="font-bold text-[10px] sm:text-xs border-b uppercase tracking-wider" style="background-color: var(--input-bg); border-bottom-color: var(--border-color); color: var(--text-muted);">
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Hora</th>
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4 text-left">Mesa y motivo</th>
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Autorizó</th>
                                 <th class="py-2.5 sm:py-3.5 px-2 sm:px-4">Monto</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-[var(--border-color)] text-[var(--text-color)]">
+                        <tbody class="divide-y" style="border-color: var(--border-color); color: var(--text-color);">
                             @foreach($historicoCancelaciones as $cancelacion)
-                                <tr class="hover:bg-[var(--input-bg)]/50 transition-colors">
-                                    <td class="py-3 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-xs font-medium text-[var(--text-muted)] whitespace-nowrap">{{ \Carbon\Carbon::parse($cancelacion->fecha)->format('H:i') }} hrs</td>
+                                <tr class="transition-colors hover:bg-black/5 dark:hover:bg-white/5" style="border-bottom: 1px solid var(--border-color);">
+                                    <td class="py-3 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-xs font-medium whitespace-nowrap" style="color: var(--text-muted);">
+                                        {{ \Carbon\Carbon::parse($cancelacion->fecha)->format('H:i') }} hrs
+                                    </td>
                                     <td class="py-3 sm:py-4 px-2 sm:px-4 text-left font-semibold">{{ $cancelacion->concepto }}</td>
-                                    <td class="py-3 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-xs text-[var(--text-muted)] whitespace-nowrap">{{ $cancelacion->referencia }}</td>
+                                    <td class="py-3 sm:py-4 px-2 sm:px-4 text-[10px] sm:text-xs whitespace-nowrap" style="color: var(--text-muted);">
+                                        {{ $cancelacion->referencia }}
+                                    </td>
                                     <td class="py-3 sm:py-4 px-2 sm:px-4 font-black text-rose-500 whitespace-nowrap">-${{ number_format($cancelacion->monto, 2) }}</td>
                                 </tr>
                             @endforeach
@@ -314,7 +320,7 @@
                     </table>
                 </div>
 
-                <p class="px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] text-[var(--text-muted)] border-t border-[var(--border-color)] leading-snug">
+                <p class="px-3 sm:px-4 py-2.5 text-[10px] sm:text-[11px] border-t leading-snug" style="border-top-color: var(--border-color); color: var(--text-muted);">
                     Este dinero nunca entró al cajón, así que no cuenta como venta ni afecta el efectivo esperado del corte.
                 </p>
             </div>
@@ -327,18 +333,20 @@
 <div id="modal-detalle-venta" class="hidden fixed inset-0 z-[9998] items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-cerrar-venta></div>
 
-    <div class="relative w-full max-w-lg bg-[var(--card-color)] rounded-3xl border border-[var(--border-color)] shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
-        <div class="px-5 py-4 border-b border-[var(--border-color)] flex items-start justify-between gap-3">
+    <div class="modal-container relative w-full max-w-lg rounded-3xl border shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
+         style="background-color: var(--card-color); border-color: var(--border-color);">
+        <div class="px-5 py-4 border-b flex items-start justify-between gap-3" style="border-bottom-color: var(--border-color);">
             <div>
-                <h3 class="text-base font-black text-[var(--text-color)]" id="venta-titulo">Detalle de la venta</h3>
-                <p class="text-[11px] text-[var(--text-muted)]" id="venta-subtitulo"></p>
+                <h3 class="text-base font-black" style="color: var(--text-color);" id="venta-titulo">Detalle de la venta</h3>
+                <p class="text-[11px]" style="color: var(--text-muted);" id="venta-subtitulo"></p>
             </div>
             <button type="button" data-cerrar-venta
-                class="w-8 h-8 rounded-lg border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-color)] shrink-0">&times;</button>
+                class="w-8 h-8 rounded-lg border hover:opacity-80 shrink-0 cursor-pointer flex items-center justify-center"
+                style="border-color: var(--border-color); color: var(--text-muted);">&times;</button>
         </div>
 
         <div class="overflow-y-auto flex-1" id="venta-contenido">
-            <p class="p-8 text-center text-sm text-[var(--text-muted)]">Cargando...</p>
+            <p class="p-8 text-center text-sm" style="color: var(--text-muted);">Cargando...</p>
         </div>
     </div>
 </div>
@@ -359,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', async () => {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            contenido.innerHTML = '<p class="p-8 text-center text-sm text-[var(--text-muted)]">Cargando...</p>';
+            contenido.innerHTML = '<p class="p-8 text-center text-sm" style="color: var(--text-muted);">Cargando...</p>';
 
             try {
                 const res = await fetch(urlBase + '/' + btn.dataset.venta + '/detalle', {
@@ -381,12 +389,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Quien atendio y quien cobro
                 html += '<div class="grid grid-cols-2 gap-3">'
-                    + '<div class="rounded-xl border border-[var(--border-color)] p-3">'
-                    + '<p class="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Mesero que atendió</p>'
-                    + '<p class="text-sm font-bold text-[var(--text-color)] mt-0.5">' + d.mesero + '</p></div>'
-                    + '<div class="rounded-xl border border-[var(--border-color)] p-3">'
-                    + '<p class="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Cajero que cobró</p>'
-                    + '<p class="text-sm font-bold text-[var(--text-color)] mt-0.5">' + d.cajero + '</p>'
+                    + '<div class="rounded-xl border p-3" style="border-color: var(--border-color);">'
+                    + '<p class="text-[10px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Mesero que atendió</p>'
+                    + '<p class="text-sm font-bold mt-0.5" style="color: var(--text-color);">' + d.mesero + '</p></div>'
+                    + '<div class="rounded-xl border p-3" style="border-color: var(--border-color);">'
+                    + '<p class="text-[10px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Cajero que cobró</p>'
+                    + '<p class="text-sm font-bold mt-0.5" style="color: var(--text-color);">' + d.cajero + '</p>'
                     + (d.cajero_aproximado
                         ? '<p class="text-[9px] text-amber-500 mt-0.5 leading-tight">Cobro anterior al registro de cajero: se muestra quien abrió el turno.</p>'
                         : '')
@@ -396,34 +404,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += '<div class="rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 flex items-center justify-between">'
                     + '<div><p class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">'
                     + d.metodo + (d.referencia ? ' \u00b7 ref ' + d.referencia : '') + '</p>'
-                    + '<p class="text-[11px] text-[var(--text-muted)]">' + d.concepto + '</p></div>'
+                    + '<p class="text-[11px]" style="color: var(--text-muted);">' + d.concepto + '</p></div>'
                     + '<span class="text-xl font-black text-emerald-600 dark:text-emerald-400">' + dinero(d.monto) + '</span></div>';
 
                 // Consumo
                 if (d.productos.length) {
-                    html += '<div><p class="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Consumo de la mesa</p>'
-                        + '<table class="w-full text-xs"><tbody class="divide-y divide-[var(--border-color)]">';
+                    html += '<div><p class="text-[10px] font-black uppercase tracking-wider mb-1.5" style="color: var(--text-muted);">Consumo de la mesa</p>'
+                        + '<table class="w-full text-xs"><tbody class="divide-y" style="border-color: var(--border-color);">';
                     d.productos.forEach(p => {
                         html += '<tr class="' + (p.cancelado ? 'line-through opacity-50' : '') + '">'
-                            + '<td class="py-2 text-[var(--text-color)]">' + p.producto
+                            + '<td class="py-2" style="color: var(--text-color);">' + p.producto
                             + (p.cancelado ? ' <span class="text-rose-500 font-bold text-[10px] no-underline">CANCELADO</span>' : '')
-                            + (p.notas ? '<div class="text-[10px] text-[var(--text-muted)] italic">' + p.notas + '</div>' : '')
+                            + (p.notas ? '<div class="text-[10px] italic" style="color: var(--text-muted);">' + p.notas + '</div>' : '')
                             + '</td>'
-                            + '<td class="py-2 text-center w-12">x' + p.cantidad + '</td>'
-                            + '<td class="py-2 text-right w-24 font-bold text-[var(--text-color)]">' + dinero(p.importe) + '</td></tr>';
+                            + '<td class="py-2 text-center w-12" style="color: var(--text-muted);">x' + p.cantidad + '</td>'
+                            + '<td class="py-2 text-right w-24 font-bold" style="color: var(--text-color);">' + dinero(p.importe) + '</td></tr>';
                     });
-                    html += '</tbody><tfoot><tr class="border-t border-[var(--border-color)]">'
-                        + '<td colspan="2" class="py-2 text-right text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Consumo</td>'
-                        + '<td class="py-2 text-right font-black text-[var(--text-color)]">' + dinero(d.consumo) + '</td>'
+                    html += '</tbody><tfoot><tr class="border-t" style="border-top-color: var(--border-color);">'
+                        + '<td colspan="2" class="py-2 text-right text-[10px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Consumo</td>'
+                        + '<td class="py-2 text-right font-black" style="color: var(--text-color);">' + dinero(d.consumo) + '</td>'
                         + '</tr></tfoot></table></div>';
 
                     if (Math.abs(d.consumo - d.monto) > 0.01) {
-                        html += '<p class="text-[10px] text-[var(--text-muted)] leading-snug">'
+                        html += '<p class="text-[10px] leading-snug" style="color: var(--text-muted);">'
                             + 'El consumo y el cobro no coinciden porque esta cuenta se pagó en varias partes '
                             + '(pago combinado o cuenta dividida), o incluye IVA, propina o descuento.</p>';
                     }
                 } else {
-                    html += '<p class="text-xs text-[var(--text-muted)]">Sin productos ligados a este movimiento.</p>';
+                    html += '<p class="text-xs" style="color: var(--text-muted);">Sin productos ligados a este movimiento.</p>';
                 }
 
                 html += '</div>';
@@ -467,9 +475,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCancelar) btnCancelar.addEventListener('click', ocultarModal);
     if (backdrop) backdrop.addEventListener('click', ocultarModal);
 
-    // --- Diferencia en vivo mientras se teclea el conteo ---
-    // Le avisa al cajero si hay faltante ANTES de confirmar, en vez de
-    // enterarse hasta que ya se cerró el turno.
     const cajaEsperado = document.getElementById('efectivoEsperado');
     const cajaDiferencia = document.getElementById('diferenciaCorte');
 
@@ -477,8 +482,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const esperado = parseFloat(cajaEsperado.dataset.esperado) || 0;
 
         const pintarDiferencia = () => {
-            // El campo es de texto para que el teclado táctil pueda escribir
-            // el punto decimal; se acepta también la coma.
             const crudo = (inputMonto.value || '').trim().replace(',', '.');
 
             if (crudo === '') {
@@ -511,8 +514,6 @@ document.addEventListener('DOMContentLoaded', () => {
         inputMonto.addEventListener('input', pintarDiferencia);
         inputMonto.addEventListener('change', pintarDiferencia);
 
-        // El teclado virtual escribe con .value y no dispara 'input', así que
-        // también se revisa periódicamente mientras el modal está abierto.
         setInterval(() => {
             if (modal && !modal.classList.contains('hidden')) pintarDiferencia();
         }, 300);

@@ -1,13 +1,11 @@
 <style>
     /* Solo aplicamos el truco de subir el modal en pantallas grandes (computadoras/punto de venta) */
     @media (min-width: 768px) {
-        /* 1. Mandamos el modal a la parte de arriba de la pantalla */
         body.teclado-virtual-abierto #modalEditar {
             align-items: flex-start !important;
             padding-top: 15px !important;
         }
 
-        /* 2. Hacemos que el modal sea más corto para que no choque con el teclado y active el scroll interno */
         body.teclado-virtual-abierto #modalEditarPromocionContent {
             transform: translateY(0) scale(0.98) !important;
             max-height: calc(100dvh - 340px) !important;
@@ -15,21 +13,29 @@
     }
 </style>
 
-<div id="modalEditar" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm overflow-y-auto overflow-x-hidden p-3 sm:p-4">
-    <div id="modalEditarPromocionContent" class="relative !bg-white dark:!bg-[#121318] border !border-transparent dark:!border-white/5 w-full max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] p-5 sm:p-8 lg:p-10 shadow-2xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] my-4 sm:my-8 unique-scrollbar max-h-[92vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden">
+<div id="modalEditar" class="fixed inset-0 z-[9999] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm overflow-y-auto overflow-x-hidden p-3 sm:p-4 transition-all duration-300">
+    {{-- Backdrop clickeable --}}
+    <div class="fixed inset-0 bg-transparent" onclick="closeModal('modalEditar')"></div>
+
+    <div id="modalEditarPromocionContent" class="modal-container relative w-full max-w-2xl rounded-[1.5rem] sm:rounded-[2.5rem] p-5 sm:p-8 lg:p-10 shadow-2xl my-4 sm:my-8 unique-scrollbar max-h-[92vh] sm:max-h-[90vh] overflow-y-auto overflow-x-hidden scale-95 opacity-0 transition-all duration-200"
+         style="background-color: var(--card-color); border: 1px solid var(--border-color);">
 
         {{-- Resplandor decorativo de fondo --}}
-        <div class="absolute -top-32 -right-32 w-64 h-64 bg-amber-500/10 dark:bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -top-32 -right-32 w-64 h-64 bg-[#b74309]/10 rounded-full blur-3xl pointer-events-none"></div>
 
         {{-- Cabecera del Modal --}}
         <div class="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8 relative z-10">
-            <div class="!bg-amber-50 dark:!bg-amber-500/20 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center !text-amber-600 dark:!text-amber-500 text-lg sm:text-xl font-black shadow-inner border !border-amber-100 dark:!border-transparent shrink-0">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-lg sm:text-xl font-black shadow-inner border shrink-0"
+                 style="background-color: rgba(183, 67, 9, 0.1); border-color: rgba(183, 67, 9, 0.2); color: #b74309;">
                 <i class="fas fa-pen"></i>
             </div>
             <div>
-                <h2 class="text-xl sm:text-2xl font-black !text-gray-900 dark:!text-white tracking-tight">Modificar Promoción</h2>
-                <p class="text-[11px] sm:text-xs font-medium !text-gray-500 dark:!text-gray-400 tracking-wide mt-0.5">Modifica los parámetros y restricciones de la oferta.</p>
+                <h2 class="text-xl sm:text-2xl font-black tracking-tight" style="color: var(--text-color);">Modificar Promoción</h2>
+                <p class="text-[11px] sm:text-xs font-medium tracking-wide mt-0.5" style="color: var(--text-muted);">Modifica los parámetros y restricciones de la oferta.</p>
             </div>
+            <button type="button" onclick="closeModal('modalEditar')" class="ml-auto w-9 h-9 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-colors outline-none shrink-0 cursor-pointer" style="color: var(--text-muted);">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
 
         {{-- El campo esta_activa sigue enviándose, oculto, para no perder el dato al guardar --}}
@@ -42,60 +48,117 @@
 
             <div class="space-y-5 sm:space-y-6">
 
-                {{-- Nombre de la Promo (TECLADO VIRTUAL DE TEXTO) --}}
+                {{-- Nombre de la Promo --}}
                 <div class="group">
-                    <label class="block !text-gray-500 dark:!text-gray-400 uppercase text-[10px] font-black tracking-[0.2em] mb-2">Nombre de la Promoción</label>
-                    <input type="text" name="nombre" id="edit_nombre" required data-teclado="texto" data-teclado-titulo="Nombre de la Promoción" inputmode="none" class="w-full !bg-gray-50 dark:!bg-black/40 border !border-gray-200 dark:!border-white/5 rounded-xl py-3.5 px-4 text-base font-bold !text-gray-900 dark:!text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:!border-amber-500/50 focus:!ring-2 focus:!ring-amber-500/20 transition-all shadow-inner" placeholder="Ej: Jueves de Alitas 2x1">
+                    <label class="block uppercase text-[10px] font-black tracking-[0.2em] mb-2" style="color: var(--text-muted);">Nombre de la Promoción</label>
+                    <input type="text" name="nombre" id="edit_nombre" required data-teclado="texto" data-teclado-titulo="Nombre de la Promoción" 
+                           class="w-full rounded-xl py-3.5 px-4 text-base font-bold outline-none transition-all shadow-inner focus:border-[#b74309] focus:ring-2 focus:ring-[#b74309]/10" 
+                           placeholder="Ej: Jueves de Alitas 2x1"
+                           style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);">
                 </div>
 
-                {{-- Descripción (TECLADO VIRTUAL DE TEXTO) --}}
+                {{-- Descripción --}}
                 <div class="group">
-                    <label class="block !text-gray-500 dark:!text-gray-400 uppercase text-[10px] font-black tracking-[0.2em] mb-2">Descripción de la Oferta</label>
-                    <textarea name="descripcion" id="edit_descripcion" rows="2" data-teclado="texto" data-teclado-titulo="Descripción" inputmode="none" class="w-full !bg-gray-50 dark:!bg-black/40 border !border-gray-200 dark:!border-white/5 rounded-xl py-3.5 px-4 text-base font-bold !text-gray-900 dark:!text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:!border-amber-500/50 focus:!ring-2 focus:!ring-amber-500/20 transition-all shadow-inner resize-none" placeholder="Breve nota explicativa para los meseros o clientes..."></textarea>
+                    <label class="block uppercase text-[10px] font-black tracking-[0.2em] mb-2" style="color: var(--text-muted);">Descripción de la Oferta</label>
+                    <textarea name="descripcion" id="edit_descripcion" rows="2" data-teclado="texto" data-teclado-titulo="Descripción" 
+                              class="w-full rounded-xl py-3.5 px-4 text-base font-bold outline-none transition-all shadow-inner resize-none focus:border-[#b74309] focus:ring-2 focus:ring-[#b74309]/10" 
+                              placeholder="Breve nota explicativa para los meseros o clientes..."
+                              style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);"></textarea>
                 </div>
 
                 {{-- Fila: Tipo y Valor --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="group">
-                        <label class="block !text-gray-500 dark:!text-gray-400 uppercase text-[10px] font-black tracking-[0.2em] mb-2">Tipo de Promoción</label>
+                    {{-- Dropdown Personalizado: Tipo de Promoción --}}
+                    <div class="group" id="dropdownAreaEditarPromocionContainer" x-data="{
+                        open: false,
+                        selected: 'porcentaje',
+                        selectedLabel: 'Porcentaje (%)',
+                        options: [
+                            { value: 'porcentaje', label: 'Porcentaje (%)' },
+                            { value: 'descuento_fijo', label: 'Descuento fijo ($)' },
+                            { value: 'dos_por_uno', label: '2 x 1' },
+                            { value: 'combo', label: 'Combo' }
+                        ],
+                        select(opt) {
+                            this.selected = opt.value;
+                            this.selectedLabel = opt.label;
+                            this.open = false;
+                            const input = document.getElementById('edit_tipo_promocion');
+                            if (input) input.value = opt.value;
+                        },
+                        init() {
+                            this.$watch('$el', () => {});
+                            window.actualizarDropdownTipoEditar = (val) => {
+                                const match = this.options.find(o => o.value === val);
+                                if (match) {
+                                    this.selected = match.value;
+                                    this.selectedLabel = match.label;
+                                }
+                            };
+                        }
+                    }">
+                        <label class="block uppercase text-[10px] font-black tracking-[0.2em] mb-2" style="color: var(--text-muted);">Tipo de Promoción</label>
+                        
+                        <input type="hidden" name="tipo_promocion" id="edit_tipo_promocion" :value="selected" value="porcentaje" required>
+
                         <div class="relative">
-                            <select name="tipo_promocion" id="edit_tipo_promocion" required class="w-full appearance-none !bg-gray-50 dark:!bg-black/40 border !border-gray-200 dark:!border-white/5 rounded-xl py-3.5 pl-4 pr-10 text-base font-bold !text-gray-900 dark:!text-white focus:outline-none focus:!border-amber-500/50 focus:!ring-2 focus:!ring-amber-500/20 transition-all shadow-inner cursor-pointer">
-                                <option value="porcentaje">Porcentaje (%)</option>
-                                <option value="descuento_fijo">Descuento fijo ($)</option>
-                                <option value="dos_por_uno">2 x 1</option>
-                                <option value="combo">Combo</option>
-                            </select>
-                            <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 !text-gray-400 dark:!text-gray-500 pointer-events-none text-xs"></i>
+                            <button type="button" @click="open = !open"
+                                class="w-full rounded-xl py-3.5 pl-4 pr-10 text-base font-bold outline-none transition-all shadow-inner border flex items-center justify-between focus:border-[#b74309] cursor-pointer"
+                                style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
+                                <span x-text="selectedLabel">Porcentaje (%)</span>
+                                <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }" style="color: var(--text-muted);"></i>
+                            </button>
+
+                            <div x-show="open" @click.outside="open = false" x-transition
+                                class="absolute z-50 w-full mt-2 rounded-xl shadow-2xl py-2 border overflow-hidden"
+                                style="background-color: var(--card-color); border-color: var(--border-color); display: none;">
+                                <template x-for="opt in options" :key="opt.value">
+                                    <div @click="select(opt)"
+                                        class="px-4 py-2.5 text-sm font-bold cursor-pointer transition-colors hover:bg-[#b74309]/10"
+                                        :class="{ 'bg-[#b74309]/15 text-[#b74309]': selected === opt.value }"
+                                        style="color: var(--text-color);">
+                                        <span x-text="opt.label"></span>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
+
+                    {{-- Valor Descuento --}}
                     <div class="group">
-                        <label class="block !text-gray-500 dark:!text-gray-400 uppercase text-[10px] font-black tracking-[0.2em] mb-2">Valor Descuento / Cantidad</label>
-                        {{-- TECLADO VIRTUAL NUMÉRICO: type=text (no number) para que el teclado personalizado pueda escribir el valor --}}
-                        <input type="text" name="valor_descuento" id="edit_valor_descuento" required pattern="[0-9]*\.?[0-9]*" data-teclado="numerico" data-teclado-titulo="Valor Descuento / Cantidad" inputmode="none" class="w-full !bg-gray-50 dark:!bg-black/40 border !border-gray-200 dark:!border-white/5 rounded-xl py-3.5 px-4 text-base font-bold !text-gray-900 dark:!text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:!border-amber-500/50 focus:!ring-2 focus:!ring-amber-500/20 transition-all shadow-inner" placeholder="Ej: 15.00">
+                        <label class="block uppercase text-[10px] font-black tracking-[0.2em] mb-2" style="color: var(--text-muted);">Valor Descuento / Cantidad</label>
+                        <input type="text" name="valor_descuento" id="edit_valor_descuento" required pattern="[0-9]*\.?[0-9]*" data-teclado="numerico" data-teclado-titulo="Valor Descuento / Cantidad" 
+                               class="w-full rounded-xl py-3.5 px-4 text-base font-bold outline-none transition-all shadow-inner focus:border-[#b74309] focus:ring-2 focus:ring-[#b74309]/10" 
+                               placeholder="Ej: 15.00"
+                               style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);">
                     </div>
                 </div>
 
-                {{-- Fila: Vigencia de Fechas (NO llevan teclado virtual: usan el selector de fecha nativo) --}}
+                {{-- Fila: Vigencia de Fechas --}}
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="group">
-                        <label class="block !text-gray-500 dark:!text-gray-400 uppercase text-[10px] font-black tracking-[0.2em] mb-2">Fecha Inicio Vigencia</label>
+                        <label class="block uppercase text-[10px] font-black tracking-[0.2em] mb-2" style="color: var(--text-muted);">Fecha Inicio Vigencia</label>
                         <div class="relative">
-                            <input type="date" name="fecha_inicio" id="edit_fecha_inicio" required class="date-input-icon w-full !bg-gray-50 dark:!bg-black/40 border !border-gray-200 dark:!border-white/5 rounded-xl py-3.5 pl-4 pr-10 text-base font-bold !text-gray-900 dark:!text-white focus:outline-none focus:!border-amber-500/50 focus:!ring-2 focus:!ring-amber-500/20 transition-all shadow-inner cursor-pointer">
-                            <i onclick="abrirCalendario('edit_fecha_inicio')" class="fas fa-calendar-days absolute right-4 top-1/2 -translate-y-1/2 !text-amber-500 dark:!text-amber-400 cursor-pointer text-sm z-10"></i>
+                            <input type="date" name="fecha_inicio" id="edit_fecha_inicio" required 
+                                   class="date-input-icon w-full rounded-xl py-3.5 pl-4 pr-10 text-base font-bold outline-none transition-all shadow-inner cursor-pointer focus:border-[#b74309]"
+                                   style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);">
+                            <i onclick="abrirCalendario('edit_fecha_inicio')" class="fas fa-calendar-days absolute right-4 top-1/2 -translate-y-1/2 text-[#b74309] cursor-pointer text-sm z-10"></i>
                         </div>
                     </div>
                     <div class="group">
-                        <label class="block !text-gray-500 dark:!text-gray-400 uppercase text-[10px] font-black tracking-[0.2em] mb-2">Fecha Fin Vigencia</label>
+                        <label class="block uppercase text-[10px] font-black tracking-[0.2em] mb-2" style="color: var(--text-muted);">Fecha Fin Vigencia</label>
                         <div class="relative">
-                            <input type="date" name="fecha_fin" id="edit_fecha_fin" required class="date-input-icon w-full !bg-gray-50 dark:!bg-black/40 border !border-gray-200 dark:!border-white/5 rounded-xl py-3.5 pl-4 pr-10 text-base font-bold !text-gray-900 dark:!text-white focus:outline-none focus:!border-amber-500/50 focus:!ring-2 focus:!ring-amber-500/20 transition-all shadow-inner cursor-pointer">
-                            <i onclick="abrirCalendario('edit_fecha_fin')" class="fas fa-calendar-days absolute right-4 top-1/2 -translate-y-1/2 !text-amber-500 dark:!text-amber-400 cursor-pointer text-sm z-10"></i>
+                            <input type="date" name="fecha_fin" id="edit_fecha_fin" required 
+                                   class="date-input-icon w-full rounded-xl py-3.5 pl-4 pr-10 text-base font-bold outline-none transition-all shadow-inner cursor-pointer focus:border-[#b74309]"
+                                   style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);">
+                            <i onclick="abrirCalendario('edit_fecha_fin')" class="fas fa-calendar-days absolute right-4 top-1/2 -translate-y-1/2 text-[#b74309] cursor-pointer text-sm z-10"></i>
                         </div>
                     </div>
                 </div>
 
                 {{-- Días de la Semana --}}
                 <div>
-                    <label class="block !text-gray-500 dark:!text-gray-400 uppercase text-[10px] font-black tracking-[0.2em] mb-3">Días de Aplicación Semanal</label>
+                    <label class="block uppercase text-[10px] font-black tracking-[0.2em] mb-3" style="color: var(--text-muted);">Días de Aplicación Semanal</label>
                     <div class="grid grid-cols-4 sm:flex gap-2 flex-wrap">
                         @php
                             $mapeoDiasEdit = [
@@ -107,12 +170,14 @@
                                 $letra = key($diaData);
                                 $num = $diaData[$letra];
                             @endphp
-                            <label class="flex-1 min-w-[55px] flex flex-col items-center justify-center p-3 rounded-2xl border !border-gray-200 dark:!border-white/5 !bg-gray-50 dark:!bg-black/40 cursor-pointer hover:!border-amber-500/50 hover:!bg-amber-50 dark:hover:!bg-amber-500/10 active:scale-95 transition-all select-none group/day relative">
+                            <label class="flex-1 min-w-[55px] flex flex-col items-center justify-center p-3 rounded-2xl border cursor-pointer hover:border-[#b74309]/50 active:scale-95 transition-all select-none group/day relative"
+                                   style="background-color: var(--input-bg); border-color: var(--border-color);">
                                 <input type="checkbox" name="dias_semana[]" value="{{ $num }}" id="edit_dia_{{ $num }}" class="edit-dia-checkbox peer sr-only">
-                                <div class="w-5 h-5 rounded-lg border-2 !border-gray-300 dark:!border-gray-600 peer-checked:!border-amber-500 peer-checked:!bg-amber-500 flex items-center justify-center transition-all mb-1">
+                                <div class="w-5 h-5 rounded-lg border-2 peer-checked:bg-[#b74309] peer-checked:border-[#b74309] flex items-center justify-center transition-all mb-1"
+                                     style="border-color: var(--border-color);">
                                     <i class="fas fa-check text-[10px] text-white opacity-0 peer-checked:opacity-100 transition-opacity"></i>
                                 </div>
-                                <span class="!text-gray-900 dark:!text-white font-black text-[11px] uppercase tracking-wider group-hover/day:!text-amber-500 transition-colors">{{ $letra }}</span>
+                                <span class="font-black text-[11px] uppercase tracking-wider group-hover/day:text-[#b74309] transition-colors" style="color: var(--text-color);">{{ $letra }}</span>
                             </label>
                         @endforeach
                     </div>
@@ -120,22 +185,25 @@
 
                 {{-- Selección de Productos --}}
                 <div>
-                    <label class="block !text-gray-500 dark:!text-gray-400 uppercase text-[10px] font-black tracking-[0.2em] mb-2">Productos Vinculados</label>
-                    <div class="max-h-52 overflow-y-auto border !border-gray-200 dark:!border-white/5 rounded-2xl p-2 !bg-gray-50 dark:!bg-black/40 shadow-inner unique-scrollbar divide-y !divide-gray-200 dark:!divide-white/5 transition-colors">
+                    <label class="block uppercase text-[10px] font-black tracking-[0.2em] mb-2" style="color: var(--text-muted);">Productos Vinculados</label>
+                    <div class="max-h-52 overflow-y-auto border rounded-2xl p-2 shadow-inner unique-scrollbar divide-y transition-colors"
+                         style="background-color: var(--input-bg); border-color: var(--border-color); divide-color: var(--border-color);">
                         @foreach($productos as $producto)
-                            <label class="flex items-center gap-4 p-3 rounded-xl hover:!bg-gray-200 dark:hover:!bg-white/5 cursor-pointer transition-colors select-none group/prod">
-                                <input type="checkbox" name="productos[]" value="{{ $producto->id }}" id="edit_prod_{{ $producto->id }}" class="edit-prod-checkbox w-5 h-5 rounded-lg !border-gray-300 dark:!border-gray-600 text-amber-500 focus:ring-amber-500/20 cursor-pointer accent-amber-500 bg-white dark:bg-zinc-800 shrink-0">
+                            <label class="flex items-center gap-4 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors select-none group/prod">
+                                <input type="checkbox" name="productos[]" value="{{ $producto->id }}" id="edit_prod_{{ $producto->id }}" 
+                                       class="edit-prod-checkbox w-5 h-5 rounded-lg cursor-pointer accent-[#b74309] shrink-0"
+                                       style="border-color: var(--border-color);">
                                 <div class="flex-1">
-                                    <p class="text-[13px] font-bold !text-gray-900 dark:!text-white group-hover/prod:!text-amber-600 dark:group-hover/prod:!text-amber-400 transition-colors leading-snug flex items-center gap-2">
+                                    <p class="text-[13px] font-bold group-hover/prod:text-[#b74309] transition-colors leading-snug flex items-center gap-2" style="color: var(--text-color);">
                                         {{ $producto->nombre }}
                                         @if($producto->se_vende_por_peso)
-                                            <span class="text-[8px] font-black uppercase tracking-widest !text-orange-500 !bg-orange-500/10 border !border-orange-500/20 px-1.5 py-0.5 rounded-md">Por peso</span>
+                                            <span class="text-[8px] font-black uppercase tracking-widest text-[#b74309] bg-[#b74309]/10 border border-[#b74309]/20 px-1.5 py-0.5 rounded-md">Por peso</span>
                                         @endif
                                     </p>
                                     @if($producto->se_vende_por_peso)
-                                        <p class="!text-gray-500 dark:!text-gray-400 text-[11px] font-medium mt-0.5">${{ number_format($producto->precio_por_100g ?? 0, 2) }} MXN /100g</p>
+                                        <p class="text-[11px] font-medium mt-0.5" style="color: var(--text-muted);">${{ number_format($producto->precio_por_100g ?? 0, 2) }} MXN /100g</p>
                                     @else
-                                        <p class="!text-gray-500 dark:!text-gray-400 text-[11px] font-medium mt-0.5">${{ number_format($producto->precio, 2) }} MXN</p>
+                                        <p class="text-[11px] font-medium mt-0.5" style="color: var(--text-muted);">${{ number_format($producto->precio, 2) }} MXN</p>
                                     @endif
                                 </div>
                             </label>
@@ -144,11 +212,14 @@
                 </div>
 
                 {{-- Botonera Final --}}
-                <div class="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t !border-gray-100 dark:!border-white/5">
-                    <button type="button" onclick="closeModal('modalEditar')" class="w-full sm:flex-1 !bg-gray-50 dark:!bg-black/40 hover:!bg-gray-200 dark:hover:!bg-white/10 active:scale-95 border !border-gray-200 dark:!border-white/5 !text-gray-600 dark:!text-gray-300 py-3.5 sm:py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors outline-none">
+                <div class="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t" style="border-top-color: var(--border-color);">
+                    <button type="button" onclick="closeModal('modalEditar')" 
+                            class="w-full sm:flex-1 py-3.5 sm:py-4 rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-colors outline-none cursor-pointer border"
+                            style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">
                         Cancelar Cambios
                     </button>
-                    <button type="submit" class="w-full sm:flex-1 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 active:scale-95 !text-white py-3.5 sm:py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-[0_10px_25px_-5px_rgba(245,158,11,0.4)] transition-all outline-none">
+                    <button type="submit" 
+                            class="w-full sm:flex-1 bg-[#b74309] hover:bg-[#8f3207] active:scale-95 text-white py-3.5 sm:py-4 rounded-2xl text-xs font-black uppercase tracking-widest shadow-[0_10px_25px_-5px_rgba(183,67,9,0.4)] transition-all outline-none cursor-pointer">
                         Actualizar Promoción
                     </button>
                 </div>
@@ -159,8 +230,6 @@
 </div>
 
 <style>
-    /* Oculta el ícono nativo del navegador para los inputs de fecha y deja solo nuestro ícono personalizado.
-       Esto evita que en modo oscuro el ícono nativo se pierda por contraste. */
     .date-input-icon::-webkit-calendar-picker-indicator {
         opacity: 0;
         position: absolute;
@@ -172,11 +241,6 @@
 </style>
 
 <script>
-    /**
-     * Abre el selector de fecha nativo al hacer clic en el ícono de calendario personalizado.
-     * (Si esta función ya fue declarada por modal-crear.blade.php en la misma página, no hay conflicto:
-     * JavaScript permite redeclarar funciones con "function" sin generar error.)
-     */
     function abrirCalendario(inputId) {
         const input = document.getElementById(inputId);
         if (input && typeof input.showPicker === 'function') {
@@ -186,19 +250,3 @@
         }
     }
 </script>
-
-{{--
-    NOTA: El bloque de abajo era código PHP de un controlador Laravel
-    (function edit(Promocion $promocion) {...}) pegado por error dentro
-    de un <script> JS, lo cual no es válido y nunca se ejecutará en el
-    navegador. Debe vivir en tu controlador, por ejemplo:
-
-    // app/Http/Controllers/PromocionController.php
-    public function edit(Promocion $promocion)
-    {
-        return response()->json([
-            'success' => true,
-            'promocion' => $promocion->load('productos'),
-        ]);
-    }
---}}

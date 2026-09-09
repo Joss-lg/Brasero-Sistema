@@ -1,409 +1,353 @@
-{{-- resources/views/admin/categorias/index.blade.php --}}
 @extends('layouts.admin')
 
-@section('title', 'Categorías | Ollintem Pro')
+@section('title', 'Categorías | El Brasero')
 @section('header-title', 'Gestión de Categorías')
-@section('header-subtitle', 'Organiza y administra las categorías del menú')
+@section('header-subtitle', 'Organiza el menú de tu restaurante mediante bloques estructurales. Control rápido, preciso y con información en tiempo real.')
 
 @section('content')
-<div class="px-4 py-6 sm:p-8 lg:p-10 max-w-[1800px] mx-auto w-full space-y-6 sm:space-y-8 relative z-10 font-sans min-h-screen text-slate-800 dark:text-zinc-100 transition-colors duration-300">
+<div class="min-h-screen p-4 sm:p-6 lg:p-10" style="background-color: var(--bg-color);">
+    <div class="max-w-[1400px] mx-auto space-y-6">
 
-    {{-- ======================================================== --}}
-    {{-- HEADER & MÉTRICAS (ESTILO DASHBOARD PREMIUM) --}}
-    {{-- ======================================================== --}}
-    <div class="flex flex-col xl:flex-row gap-4 sm:gap-6">
-        
-        {{-- Bloque Principal de Contexto --}}
-        <div class="flex-1 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f1115] p-5 sm:p-6 lg:p-8 shadow-sm relative overflow-hidden flex flex-col justify-between group">
-            
-            <div class="relative z-10 space-y-3 sm:space-y-4">
-                <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-900/40 px-3 py-1.5 shadow-sm">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400"></span>
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Catálogo</span>
-                </div>
-                
-                <div>
-                    <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+        {{-- CABECERA --}}
+        <div class="rounded-3xl p-6 sm:p-8 lg:p-10" style="background-color: var(--card-color); border: 1px solid var(--border-color);">
+            <div class="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10">
+
+                {{-- Info izquierda --}}
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-black text-[#b74309] dark:text-[#e8946a] bg-[#b74309]/10 border border-[#b74309]/20 px-3 py-1 rounded-full">● CATÁLOGO</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight mb-3" style="color: var(--text-color);">
                         Gestión de Categorías
                     </h1>
-                    <p class="mt-2 text-xs sm:text-sm text-slate-500 dark:text-zinc-400 max-w-xl leading-relaxed">
+                    <p class="text-sm sm:text-base font-medium leading-relaxed max-w-xl" style="color: var(--text-muted);">
                         Organiza el menú de tu restaurante mediante bloques estructurales. Control rápido, preciso y con información en tiempo real.
                     </p>
-                </div>
-            </div>
 
-            {{-- Controles (Buscador y Creación) --}}
-            <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 relative z-10">
-                {{-- Buscador Premium con Activador de Teclado --}}
-                <div class="relative w-full sm:max-w-sm">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-zinc-500">
-                        <i class="fas fa-search text-sm"></i>
-                    </div>
-                    <input type="text" id="buscadorCategorias" data-teclado="texto" placeholder="Buscar categoría por nombre..."
-                        class="w-full h-11 rounded-xl bg-slate-50 dark:bg-[#15171c] border border-slate-200 dark:border-slate-700 pl-10 pr-4 text-sm font-medium text-slate-700 dark:text-zinc-200 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-inner dark:shadow-none" />
-                </div>
-                
-                {{-- Botón Crear --}}
-                @if(auth()->user()->tienePermiso('categorias.crear'))   
-                    <button onclick="openModalCrear()"
-                        class="inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-[#2563eb] dark:hover:bg-blue-500 px-6 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-blue-500/20 transition-all outline-none w-full sm:w-auto active:scale-95">
-                        <i class="fas fa-plus"></i> Crear Categoría
-                    </button>
-                @endif
-            </div>
-        </div>
+                    {{-- Buscador + botón --}}
+                    <div class="flex flex-col sm:flex-row gap-3 mt-6 sm:mt-8">
+                        <div class="relative flex-1 max-w-sm">
+                            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-sm" style="color: var(--text-muted);"></i>
+                            <input type="text" id="buscadorCategorias"
+                                placeholder="Buscar categoría por nombre..."
+                                class="w-full pl-11 pr-4 py-3 rounded-2xl text-sm font-medium outline-none transition-all focus:border-[#b74309] focus:ring-2 focus:ring-[#b74309]/10"
+                                style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);">
+                        </div>
 
-        {{-- Tarjetas de Métricas Laterales --}}
-        <div class="w-full xl:w-80 flex flex-row sm:flex-row xl:flex-col gap-3 sm:gap-4">
-            {{-- Métrica 1: Total Categorías --}}
-            <div class="flex-1 rounded-2xl border border-slate-300 dark:border-slate-500/70 bg-white dark:bg-[#0f1115] p-4 sm:p-6 shadow-sm hover:border-slate-400 dark:hover:border-slate-400 transition-colors flex flex-col justify-center">
-                <div class="flex items-start justify-between">
-                    <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mt-1">Total Categorías</span>
-                    <div class="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-500 dark:text-slate-300 shrink-0">
-                        <i class="fas fa-cubes text-sm"></i>
-                    </div>
-                </div>
-                <p class="mt-2 text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">{{ count($categorias) }}</p>
-                <p class="mt-2 text-xs font-medium text-slate-400 dark:text-zinc-500 hidden xl:block">Bloques registrados en el menú</p>
-            </div>
-            
-            {{-- Métrica 2: Platillos Activos --}}
-            <div class="flex-1 rounded-2xl border border-emerald-300 dark:border-emerald-500/60 bg-white dark:bg-[#0f1115] p-4 sm:p-6 shadow-sm hover:border-emerald-400 dark:hover:border-emerald-400 transition-colors flex flex-col justify-center">
-                <div class="flex items-start justify-between">
-                    <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mt-1">Platillos Activos</span>
-                    <div class="h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                        <i class="fas fa-utensils text-sm"></i>
-                    </div>
-                </div>
-                <p class="mt-2 text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">{{ $categorias->sum('productos_count') }}</p>
-                <p class="mt-2 text-xs font-medium text-slate-400 dark:text-zinc-500 hidden xl:block">Asignados a través del sistema</p>
-            </div>
-        </div>
-    </div>
-
-    {{-- ======================================================== --}}
-    {{-- VISTA MÓVIL: TARJETAS --}}
-    {{-- ======================================================== --}}
-    <div class="md:hidden space-y-3">
-        <div class="flex items-center justify-between px-1">
-            <h2 class="text-sm font-bold text-slate-800 dark:text-white">Listado de Categorías</h2>
-            <span class="inline-flex items-center rounded-full bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-zinc-300">
-                {{ count($categorias) }} Registros
-            </span>
-        </div>
-
-        @forelse($categorias as $categoria)
-            <div class="fila-categoria rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f1115] shadow-sm p-4 space-y-4">
-
-                {{-- Nombre e Icono --}}
-                <div class="nombre-celda flex items-center gap-3">
-                    <div class="h-11 w-11 rounded-full flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 shadow-sm"
-                         style="background-color: {{ $categoria->color ?? '#3B82F6' }}15; color: {{ $categoria->color ?? '#3B82F6' }};">
-                        <span class="text-sm font-black uppercase">
-                            {{ substr($categoria->nombre, 0, 1) }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col min-w-0">
-                        <span class="text-sm font-semibold text-slate-900 dark:text-zinc-200 truncate">
-                            {{ $categoria->nombre }}
-                        </span>
-                        <span class="text-[10px] font-medium text-slate-400 dark:text-zinc-500">
-                            Añadido el {{ $categoria->created_at->format('d M, Y') }}
-                        </span>
-                    </div>
-                </div>
-
-                {{-- Área de Impresión y Contenido --}}
-                <div class="flex items-center justify-between gap-2 flex-wrap">
-                    <div class="inline-flex items-center gap-2 rounded-md bg-slate-100 dark:bg-zinc-800/50 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-slate-700">
-                        @if($categoria->area_impresion == 'Cocina')
-                            <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-                        @elseif($categoria->area_impresion == 'Barra')
-                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-                        @elseif($categoria->area_impresion == 'Parrilla')
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                        @else
-                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                        @if(auth()->user()->tienePermiso('categorias.crear'))
+                            <button type="button" onclick="openCreateModal()"
+                                class="inline-flex items-center gap-2 bg-[#b74309] hover:bg-[#8f3207] text-white text-sm font-bold px-5 py-2.5 rounded-2xl transition-all shadow-lg shadow-[#b74309]/20 active:scale-95 whitespace-nowrap">
+                                <i class="fas fa-plus text-xs"></i>
+                                CREAR CATEGORÍA
+                            </button>
                         @endif
-                        <span>{{ $categoria->area_impresion ?? 'Sin asignar' }}</span>
                     </div>
-
-                    <span class="inline-flex items-center justify-center rounded-md bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
-                        {{ $categoria->productos_count ?? $categoria->productos()->count() }} Platillos
-                    </span>
                 </div>
 
-                {{-- Botones de Acción --}}
-                <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60">
-                    @if(auth()->user()->tienePermiso('categorias.editar'))
-                        <button type="button"
-                            onclick="abrirModalEspecifico('modalEditar-{{ $categoria->id }}')"
-                            class="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 border border-blue-300 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 active:scale-95 transition-all shadow-sm outline-none text-xs font-bold">
-                            <i class="fas fa-pen text-[12px]"></i> Editar
-                        </button>
-                    @endif
-                    @if(auth()->user()->tienePermiso('categorias.eliminar'))
-                        <button type="button"
-                            onclick="confirmarEliminacion('{{ $categoria->id }}', '{{ $categoria->nombre }}')"
-                            class="flex-1 h-10 rounded-xl flex items-center justify-center gap-2 border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 active:scale-95 transition-all shadow-sm outline-none text-xs font-bold">
-                            <i class="fas fa-trash-alt text-[12px]"></i> Eliminar
-                        </button>
-                    @endif
+                {{-- Stats derecha --}}
+                <div class="flex flex-row lg:flex-col gap-3 lg:gap-4 lg:w-56 shrink-0">
+                    <div class="flex-1 lg:flex-none rounded-2xl p-4 lg:p-5" style="background-color: var(--input-bg); border: 1px solid var(--border-color);">
+                        <p class="text-3xl lg:text-4xl font-black" style="color: var(--text-color);">{{ $categorias->count() }}</p>
+                        <p class="text-xs font-bold mt-1" style="color: var(--text-muted);">Bloques registrados en el menú</p>
+                    </div>
+                    <div class="flex-1 lg:flex-none rounded-2xl p-4 lg:p-5" style="border: 1px solid rgba(34,197,94,0.3); background-color: rgba(34,197,94,0.05);">
+                        <div class="flex items-center justify-between mb-1">
+                            <p class="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Platillos Activos</p>
+                            <i class="fas fa-utensils text-emerald-500 text-sm"></i>
+                        </div>
+                        <p class="text-3xl lg:text-4xl font-black text-emerald-600 dark:text-emerald-400">{{ $totalProductos ?? 0 }}</p>
+                        <p class="text-xs font-bold mt-1 text-emerald-600/70 dark:text-emerald-400/70">Asignados a través del sistema</p>
+                    </div>
                 </div>
             </div>
-        @empty
-            <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f1115] shadow-sm py-14 text-center">
-                <div class="mx-auto flex max-w-sm flex-col items-center gap-4 px-4">
-                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800/50 text-slate-400 dark:text-zinc-500 border border-slate-200 dark:border-slate-700">
-                        <i class="fas fa-folder-open text-2xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-900 dark:text-zinc-200">Aún no hay categorías</h3>
-                        <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1.5 leading-relaxed">Comienza creando tu primera categoría para organizar el menú de tu restaurante correctamente.</p>
-                    </div>
-                    <button onclick="openModalCrear()" class="mt-2 inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-zinc-900 px-5 py-2.5 text-xs font-bold hover:opacity-90 transition-opacity outline-none shadow-md">
-                        <i class="fas fa-plus"></i> Crear Primera Categoría
-                    </button>
-                </div>
-            </div>
-        @endforelse
-    </div>
-
-    {{-- ======================================================== --}}
-    {{-- VISTA ESCRITORIO/TABLET: TABLA --}}
-    {{-- ======================================================== --}}
-    <div class="hidden md:flex w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f1115] shadow-sm overflow-hidden flex-col mt-2 sm:mt-6">
-        
-        {{-- Encabezado de la Tabla --}}
-        <div class="px-6 py-5 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-transparent flex justify-between items-center">
-            <h2 class="text-base font-bold text-slate-800 dark:text-white">Listado de Categorías</h2>
-            <span class="inline-flex items-center rounded-full bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-zinc-300">
-                {{ count($categorias) }} Registros
-            </span>
         </div>
 
-        <div class="overflow-x-auto w-full [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-thumb]:rounded-full">
-            <table class="w-full text-left border-collapse whitespace-nowrap">
-                <thead>
-                    <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#15171c]">
-                        <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Categoría</th>
-                        <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Área de Impresión</th>
-                        <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400">Contenido</th>
-                        <th class="px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-zinc-400 text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaCategorias" class="divide-y divide-slate-100 dark:divide-slate-700/80 bg-white dark:bg-transparent">
-                    @forelse($categorias as $categoria)
-                    <tr class="fila-categoria group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors duration-200">
-                        
-                        {{-- Nombre e Icono Visual --}}
-                        <td class="px-6 py-4.5 nombre-celda">
-                            <div class="flex items-center gap-4">
-                                <div class="h-10 w-10 rounded-full flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700 shadow-sm"
-                                     style="background-color: {{ $categoria->color ?? '#3B82F6' }}15; color: {{ $categoria->color ?? '#3B82F6' }};">
-                                    <span class="text-sm font-black uppercase">
-                                        {{ substr($categoria->nombre, 0, 1) }}
-                                    </span>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-semibold text-slate-900 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                        {{ $categoria->nombre }}
-                                    </span>
-                                    <span class="text-[11px] font-medium text-slate-400 dark:text-zinc-500">
-                                        Añadido el {{ $categoria->created_at->format('d M, Y') }}
-                                    </span>
-                                </div>
-                            </div>
-                        </td>
+        {{-- TABLA --}}
+        <div class="rounded-3xl overflow-hidden" style="background-color: var(--card-color); border: 1px solid var(--border-color);">
 
-                        {{-- Área de Impresión --}}
-                        <td class="px-6 py-4.5">
-                            <div class="inline-flex items-center gap-2 rounded-md bg-slate-100 dark:bg-zinc-800/50 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-slate-700">
-                                @if($categoria->area_impresion == 'Cocina')
-                                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-                                @elseif($categoria->area_impresion == 'Barra')
-                                    <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-                                @elseif($categoria->area_impresion == 'Parrilla')
-                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+            <div class="flex items-center justify-between px-6 sm:px-8 py-4 sm:py-5" style="border-bottom: 1px solid var(--border-color);">
+                <h2 class="text-base sm:text-lg font-black" style="color: var(--text-color);">Listado de Categorías</h2>
+                <span class="text-xs font-bold px-3 py-1 rounded-full" style="color: var(--text-muted); background-color: var(--input-bg); border: 1px solid var(--border-color);">
+                    {{ $categorias->count() }} Registros
+                </span>
+            </div>
+
+            {{-- VISTA MÓVIL --}}
+            <div class="sm:hidden divide-y" style="border-color: var(--border-color);" id="listaMobileCategorias">
+                @forelse($categorias as $categoria)
+                <div class="fila-categoria-movil flex items-center gap-3 px-4 py-3.5">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black text-white shrink-0"
+                        style="background-color: {{ $categoria->color ?? '#b74309' }};">
+                        {{ strtoupper(substr($categoria->nombre, 0, 1)) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-sm truncate nombre-categoria" style="color: var(--text-color);">{{ $categoria->nombre }}</p>
+                        <p class="text-[11px] mt-0.5" style="color: var(--text-muted);">Añadido el {{ $categoria->created_at->format('d M, Y') }}</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        @if(auth()->user()->tienePermiso('categorias.editar'))
+                            <button type="button" onclick="openEditModal(this)"
+                                data-id="{{ $categoria->id }}"
+                                data-nombre="{{ $categoria->nombre }}"
+                                data-area="{{ $categoria->area_impresion ?? '' }}"
+                                class="w-8 h-8 flex items-center justify-center rounded-xl bg-[#b74309]/10 text-[#b74309] dark:text-[#e8946a] hover:bg-[#b74309]/20 transition-all active:scale-95">
+                                <i class="fas fa-pen text-xs"></i>
+                            </button>
+                        @endif
+                        @if(auth()->user()->tienePermiso('categorias.eliminar'))
+                            <button type="button" onclick="abrirModalEliminar(this)"
+                                data-id="{{ $categoria->id }}"
+                                data-nombre="{{ $categoria->nombre }}"
+                                class="w-8 h-8 flex items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-all active:scale-95">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
+                        @endif
+                    </div>
+                </div>
+                @empty
+                <div class="py-12 text-center" style="color: var(--text-muted);">
+                    <i class="fas fa-layer-group text-3xl mb-3 opacity-30"></i>
+                    <p class="text-sm font-bold">No hay categorías registradas.</p>
+                </div>
+                @endforelse
+            </div>
+
+            {{-- VISTA ESCRITORIO --}}
+            <div class="hidden sm:block overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[10px] font-black uppercase tracking-widest" style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                            <th class="px-6 sm:px-8 py-4">Categoría</th>
+                            <th class="px-6 sm:px-8 py-4">Área de Impresión</th>
+                            <th class="px-6 sm:px-8 py-4">Contenido</th>
+                            <th class="px-6 sm:px-8 py-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCategorias">
+                        @forelse($categorias as $categoria)
+                        <tr class="fila-categoria group transition-colors hover:bg-[#b74309]/[0.03]" style="border-bottom: 1px solid var(--border-color);">
+
+                            {{-- Nombre --}}
+                            <td class="px-6 sm:px-8 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black text-white shrink-0"
+                                        style="background-color: {{ $categoria->color ?? '#b74309' }};">
+                                        {{ strtoupper(substr($categoria->nombre, 0, 1)) }}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-sm nombre-categoria" style="color: var(--text-color);">{{ $categoria->nombre }}</p>
+                                        <p class="text-[11px] mt-0.5" style="color: var(--text-muted);">Añadido el {{ $categoria->created_at->format('d M, Y') }}</p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            {{-- Área de impresión --}}
+                            <td class="px-6 sm:px-8 py-4">
+                                @if($categoria->area_impresion)
+                                    @php
+                                        $areaColor = match(strtolower($categoria->area_impresion)) {
+                                            'cocina'  => 'text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20',
+                                            'barra'   => 'text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/20',
+                                            default   => 'text-[#b74309] dark:text-[#e8946a] bg-[#b74309]/10 border-[#b74309]/20',
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border {{ $areaColor }}">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                        {{ ucfirst($categoria->area_impresion) }}
+                                    </span>
                                 @else
-                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                    <span class="text-xs font-bold" style="color: var(--text-muted);">—</span>
                                 @endif
-                                <span>{{ $categoria->area_impresion ?? 'Sin asignar' }}</span>
-                            </div>
-                        </td>
+                            </td>
 
-                        {{-- Contenido --}}
-                        <td class="px-6 py-4.5">
-                            <span class="inline-flex items-center justify-center rounded-md bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 min-w-[70px]">
-                                {{ $categoria->productos_count ?? $categoria->productos()->count() }} Platillos
-                            </span>
-                        </td>
+                            {{-- Contenido --}}
+                            <td class="px-6 sm:px-8 py-4">
+                                <span class="text-xs font-bold text-[#b74309] dark:text-[#e8946a] bg-[#b74309]/10 border border-[#b74309]/20 px-3 py-1 rounded-xl whitespace-nowrap">
+                                    {{ $categoria->productos_count }} Platillo{{ $categoria->productos_count == 1 ? '' : 's' }}
+                                </span>
+                            </td>
 
-                        {{-- Botones de Acción --}}
-                        <td class="px-6 py-4.5">
-                            <div class="flex items-center justify-center gap-2.5">
-                                @if(auth()->user()->tienePermiso('categorias.editar'))
-                                    <button type="button" title="Editar"
-                                        onclick="abrirModalEspecifico('modalEditar-{{ $categoria->id }}')"
-                                        class="h-9 w-9 rounded-xl flex items-center justify-center border border-blue-300 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all shadow-sm outline-none">
-                                        <i class="fas fa-pen text-[13px]"></i>
-                                    </button>
-                                @endif
-                                @if(auth()->user()->tienePermiso('categorias.eliminar'))
-                                    <button type="button" title="Eliminar"
-                                        onclick="confirmarEliminacion('{{ $categoria->id }}', '{{ $categoria->nombre }}')"
-                                        class="h-9 w-9 rounded-xl flex items-center justify-center border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all shadow-sm outline-none">
-                                        <i class="fas fa-trash-alt text-[13px]"></i>
-                                    </button>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @include('admin.categorias.modal-editar', ['categoria' => $categoria])
-                    
-                    @empty
-                    <tr>
-                        <td colspan="4" class="px-6 py-20 text-center">
-                            <div class="mx-auto flex max-w-sm flex-col items-center gap-4">
-                                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800/50 text-slate-400 dark:text-zinc-500 border border-slate-200 dark:border-slate-700">
-                                    <i class="fas fa-folder-open text-3xl"></i>
+                            {{-- Acciones --}}
+                            <td class="px-6 sm:px-8 py-4 text-right">
+                                <div class="flex items-center justify-end gap-2">
+                                    @if(auth()->user()->tienePermiso('categorias.editar'))
+                                        <button type="button" onclick="openEditModal(this)"
+                                            data-id="{{ $categoria->id }}"
+                                            data-nombre="{{ $categoria->nombre }}"
+                                            data-area="{{ $categoria->area_impresion ?? '' }}"
+                                            class="w-8 h-8 flex items-center justify-center rounded-xl bg-[#b74309]/10 text-[#b74309] dark:text-[#e8946a] hover:bg-[#b74309]/20 transition-all active:scale-95">
+                                            <i class="fas fa-pen text-xs"></i>
+                                        </button>
+                                    @endif
+                                    @if(auth()->user()->tienePermiso('categorias.eliminar'))
+                                        <button type="button" onclick="abrirModalEliminar(this)"
+                                            data-id="{{ $categoria->id }}"
+                                            data-nombre="{{ $categoria->nombre }}"
+                                            class="w-8 h-8 flex items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition-all active:scale-95">
+                                            <i class="fas fa-trash-alt text-xs"></i>
+                                        </button>
+                                    @endif
                                 </div>
-                                <div>
-                                    <h3 class="text-sm font-bold text-slate-900 dark:text-zinc-200">Aún no hay categorías</h3>
-                                    <p class="text-xs text-slate-500 dark:text-zinc-400 mt-1.5 leading-relaxed">Comienza creando tu primera categoría para organizar el menú de tu restaurante correctamente.</p>
-                                </div>
-                                <button onclick="openModalCrear()" class="mt-4 inline-flex items-center gap-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-zinc-900 px-5 py-2.5 text-xs font-bold hover:opacity-90 transition-opacity outline-none shadow-md">
-                                    <i class="fas fa-plus"></i> Crear Primera Categoría
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                            </td>
+                        </tr>
+
+                        {{-- MODAL EDITAR ESPECÍFICO DE ESTA CATEGORÍA --}}
+                        @if(auth()->user()->tienePermiso('categorias.editar'))
+                            @include('admin.categorias.modal-editar', ['categoria' => $categoria])
+                        @endif
+
+                        @empty
+                        <tr>
+                            <td colspan="4" class="px-8 py-16 text-center">
+                                <i class="fas fa-layer-group text-4xl mb-4 opacity-20" style="color: var(--text-muted);"></i>
+                                <p class="text-sm font-bold" style="color: var(--text-muted);">No hay categorías registradas.</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+</div>
 
-    {{-- Modales --}}
-    @include('admin.categorias.modal-crear')
-    @include('admin.categorias.modal-eliminar')
-    
+@if(auth()->user()->tienePermiso('categorias.crear')) @include('admin.categorias.modal-crear') @endif
+@if(auth()->user()->tienePermiso('categorias.eliminar')) @include('admin.categorias.modal-eliminar') @endif
 
-    {{-- Scripts --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const buscador = document.getElementById('buscadorCategorias');
-            if (buscador) {
-                buscador.addEventListener('input', function () {
-                    const term = this.value.toLowerCase().trim();
-                    const filas = document.querySelectorAll('.fila-categoria');
+@endsection
 
-                    filas.forEach(fila => {
-                        const celdaNombre = fila.querySelector('.nombre-celda');
-                        const nombre = celdaNombre ? celdaNombre.textContent.toLowerCase() : '';
-                        
-                        if (nombre.includes(term)) {
-                            fila.style.display = '';
-                        } else {
-                            fila.style.display = 'none';
-                        }
-                    });
-                });
-            }
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Mover modales fijos al final del body para evitar problemas de stacking context
+        ['modalCrearCategoria', 'modalCrear', 'modalEliminar'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) document.body.appendChild(el);
         });
 
-        function abrirModalEspecifico(modalId) {
-            const modal = document.getElementById(modalId);
-            if (!modal) return;
-            const container = modal.querySelector('div[id^="modalContainer-"]');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                if (container) {
-                    container.classList.remove('scale-95', 'opacity-0');
-                    container.classList.add('scale-100', 'opacity-100');
-                }
-            }, 15);
+        // Mover todos los modales de edición al body
+        document.querySelectorAll('[id^="modalEditar-"]').forEach(el => {
+            document.body.appendChild(el);
+        });
+
+        const buscador = document.getElementById('buscadorCategorias');
+        const filasDesktop = document.querySelectorAll('.fila-categoria');
+        const filasMovil   = document.querySelectorAll('.fila-categoria-movil');
+
+        function filtrar(term) {
+            filasDesktop.forEach(f => {
+                const nombre = f.querySelector('.nombre-categoria')?.textContent.toLowerCase() ?? '';
+                f.style.display = nombre.includes(term) ? '' : 'none';
+            });
+            filasMovil.forEach(f => {
+                const nombre = f.querySelector('.nombre-categoria')?.textContent.toLowerCase() ?? '';
+                f.style.display = nombre.includes(term) ? '' : 'none';
+            });
         }
 
-        function cerrarModalEspecifico(modalId) {
-            const modal = document.getElementById(modalId);
-            if (!modal) return;
-            const container = modal.querySelector('div[id^="modalContainer-"]');
-            if (container) {
-                container.classList.remove('scale-100', 'opacity-100');
-                container.classList.add('scale-95', 'opacity-0');
-            }
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
-        }
+        if (buscador) buscador.addEventListener('input', e => filtrar(e.target.value.toLowerCase().trim()));
+    });
 
-        function openModalCrear() {
-            const modal = document.getElementById('modalCrear');
-            const container = document.getElementById('createContainer');
-            if (!modal || !container) return;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+    // Abrir Modal Crear
+    window.openCreateModal = function() {
+        const modal = document.getElementById('modalCrearCategoria') || document.getElementById('modalCrear');
+        if (!modal) return;
+        const container = modal.querySelector('.modal-container') || document.getElementById('createContainer') || modal.firstElementChild;
+        modal.classList.remove('hidden');
+        if (container) {
             setTimeout(() => {
                 container.classList.remove('scale-95', 'opacity-0');
                 container.classList.add('scale-100', 'opacity-100');
-            }, 15);
+            }, 10);
         }
+    };
 
-        function closeCreateModal() {
-            const modal = document.getElementById('modalCrear');
-            const container = document.getElementById('createContainer');
-            if (!container || !modal) return;
+    // Cerrar Modal Crear
+    window.closeCreateModal = function() {
+        const modal = document.getElementById('modalCrearCategoria') || document.getElementById('modalCrear');
+        if (!modal) return;
+        const container = modal.querySelector('.modal-container') || document.getElementById('createContainer') || modal.firstElementChild;
+        if (container) {
+            container.classList.remove('scale-100', 'opacity-100');
+            container.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        } else {
+            modal.classList.add('hidden');
+        }
+    };
+
+    // Abrir Modal Editar
+    window.openEditModal = function(btn) {
+        const id = btn.getAttribute('data-id');
+        const modal = document.getElementById(`modalEditar-${id}`) || document.getElementById('modalEditarCategoria');
+        if (!modal) return;
+
+        const container = modal.querySelector('.modal-container') || modal.querySelector('[id^="modalContainer-"]') || modal.firstElementChild;
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        if (container) {
+            setTimeout(() => {
+                container.classList.remove('scale-95', 'opacity-0');
+                container.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+    };
+
+    // Cerrar Modal Editar
+    window.closeEditModal = function(id) {
+        const modal = id ? document.getElementById(`modalEditar-${id}`) : document.getElementById('modalEditarCategoria');
+        if (!modal) return;
+        const container = modal.querySelector('.modal-container') || modal.querySelector('[id^="modalContainer-"]') || modal.firstElementChild;
+        if (container) {
             container.classList.remove('scale-100', 'opacity-100');
             container.classList.add('scale-95', 'opacity-0');
             setTimeout(() => {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             }, 200);
+        } else {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
+    };
 
-        function confirmarEliminacion(id, nombre) {
-            const modal = document.getElementById('modalEliminar');
-            const container = document.getElementById('deleteContainer');
-            const form = document.getElementById('formEliminar');
-            const display = document.getElementById('delete_nombre_display');
-            
-            if (!modal || !container) return;
-            if (display) display.innerText = nombre;
-            
-            let urlBase = "{{ route('admin.categorias.index') }}"; 
-            if (form) form.action = `${urlBase}/${id}`;
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+    // Abrir Modal Eliminar
+    window.abrirModalEliminar = function(btn) {
+        const id     = btn.getAttribute('data-id');
+        const nombre = btn.getAttribute('data-nombre');
+        const modal     = document.getElementById('modalEliminar');
+        if (!modal) return;
+
+        const container = document.getElementById('deleteContainer') || modal.querySelector('.modal-container') || modal.firstElementChild;
+        const form      = document.getElementById('formEliminar') || modal.querySelector('form');
+        const display   = document.getElementById('delete_nombre_display');
+
+        if (display) display.innerText = nombre;
+        if (form)    form.action = `/admin/categorias/${id}`;
+
+        modal.classList.remove('hidden');
+        if (container) {
             setTimeout(() => {
                 container.classList.remove('scale-95', 'opacity-0');
                 container.classList.add('scale-100', 'opacity-100');
-            }, 15);
+            }, 10);
         }
+    };
 
-        function closeDeleteModal() {
-            const modal = document.getElementById('modalEliminar');
-            const container = document.getElementById('deleteContainer');
-            if (!container || !modal) return;
+    // Cerrar Modal Eliminar
+    window.cerrarModalEliminar = function() {
+        const modal = document.getElementById('modalEliminar');
+        if (!modal) return;
+        const container = document.getElementById('deleteContainer') || modal.querySelector('.modal-container') || modal.firstElementChild;
+        if (container) {
             container.classList.remove('scale-100', 'opacity-100');
             container.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 200);
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        } else {
+            modal.classList.add('hidden');
         }
-    </script>
-
-    {{-- ======================================================== --}}
-    {{-- INCLUSIÓN DEL TECLADO VIRTUAL --}}
-    {{-- ======================================================== --}}
-    @include('partials.teclado-virtual')
-
-    {{-- Script de tu teclado --}}
-    <script src="{{ asset('js/teclado-virtual.js') }}"></script>
-    @include('partials.no-back')
-</div>
-@endsection
+    };
+</script>
+@endpush

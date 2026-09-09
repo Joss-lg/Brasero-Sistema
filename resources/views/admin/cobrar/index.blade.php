@@ -1,27 +1,24 @@
 @extends('layouts.admin')
 
-@section('title', 'Cobrar Mesa | Ollintem Pro')
+@section('title', 'Cobrar Mesa | El Brasero')
 @section('no-sidebar', 'true')
 
 @section('content')
 @php
-    // Cuando se divide "por consumo" los contadores +/- por persona
-    // necesitan más ancho horizontal, así que le damos más espacio al
-    // panel de la izquierda en pantallas grandes.
     $esPorProducto = ($division['tipo'] ?? null) === 'por_producto';
     $anchoIzquierda = $esPorProducto ? 'lg:w-3/5' : 'lg:w-2/5';
     $anchoDerecha   = $esPorProducto ? 'lg:w-2/5' : 'lg:w-3/5';
 @endphp
-<div class="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100">
+<div class="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden transition-colors duration-300" style="background-color: var(--bg-color); color: var(--text-color);">
     
     {{-- IZQUIERDA: Detalle --}}
-    <div class="w-full {{ $anchoIzquierda }} border-r border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 flex flex-col border-b lg:border-b-0 lg:overflow-hidden lg:min-h-0 shadow-sm">
-        <div class="p-4 sm:p-5 border-b border-zinc-200 dark:border-white/10">
-            <a href="{{ route('admin.caja.index') }}" class="text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white text-[10px] font-black flex items-center gap-2 mb-1 transition-all hover:translate-x-1 uppercase tracking-widest">
+    <div class="w-full {{ $anchoIzquierda }} border-r flex flex-col border-b lg:border-b-0 lg:overflow-hidden lg:min-h-0 shadow-sm transition-colors duration-300" style="background-color: var(--card-color); border-color: var(--border-color);">
+        <div class="p-4 sm:p-5 border-b" style="border-color: var(--border-color);">
+            <a href="{{ route('admin.caja.index') }}" class="text-[10px] font-black flex items-center gap-2 mb-1 transition-all hover:translate-x-1 uppercase tracking-widest hover:text-[#b74309]" style="color: var(--text-muted);">
                 <i class="fas fa-arrow-left"></i> VOLVER A CAJA
             </a>
             
-            <h1 class="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white italic tracking-tighter uppercase break-words">
+            <h1 class="text-2xl sm:text-3xl font-black italic tracking-tighter uppercase break-words" style="color: var(--text-color);">
                 @if($mesa->esDelivery())
                     <i class="fas fa-motorcycle text-orange-500 mr-1"></i> {{ $mesa->plataformaDelivery->nombre ?? 'Delivery' }} · {{ $mesa->numero }}
                 @else
@@ -29,14 +26,11 @@
                 @endif
             </h1>
             
-            <p class="text-[11px] sm:text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mt-0.5">
+            <p class="text-[11px] sm:text-xs font-bold uppercase tracking-wide mt-0.5" style="color: var(--text-muted);">
                 {{ $orden->numero_orden ?? 'ORDEN SIN NÚMERO' }} • {{ $orden->mesero->nombre ?? 'MESERO NO ASIGNADO' }}
             </p>
 
-            {{-- DESCUENTO DE LA CUENTA
-                 Se movió aquí desde el módulo de Mesas: ahora lo autoriza
-                 quien cobra. Requiere permiso de EDITAR en Caja; la ruta lo
-                 vuelve a validar en el servidor. --}}
+            {{-- DESCUENTO DE LA CUENTA --}}
             @if(auth()->user()->tienePermiso('Caja', 'editar'))
                 <div class="mt-3 flex items-center gap-2">
                     <div class="relative">
@@ -44,24 +38,22 @@
                                id="input-descuento-caja"
                                value="{{ ($descuentoPorcentaje ?? 0) > 0 ? rtrim(rtrim(number_format($descuentoPorcentaje, 2, '.', ''), '0'), '.') : '' }}"
                                placeholder="0"
-                               class="w-20 pl-3 pr-6 py-1.5 rounded-lg border border-zinc-300 dark:border-white/10 bg-white dark:bg-zinc-950 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
-                        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">%</span>
+                               class="w-20 pl-3 pr-6 py-1.5 rounded-lg border text-sm font-bold outline-none transition-colors focus:ring-2 focus:ring-[#b74309] focus:border-[#b74309]"
+                               style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
+                        <span class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold" style="color: var(--text-muted);">%</span>
                     </div>
                     <button type="button" id="btn-aplicar-descuento-caja"
-                        class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-wider transition-colors">
+                        class="px-3 py-1.5 rounded-lg bg-[#b74309] hover:bg-[#8f3207] text-white text-[10px] font-black uppercase tracking-wider transition-colors shadow-sm cursor-pointer active:scale-95">
                         Aplicar descuento
                     </button>
                     <span id="msg-descuento-caja" class="hidden text-[11px] font-bold"></span>
                 </div>
             @endif
 
-            {{-- CANCELAR CUENTA SIN COBRAR
-                 Solo se muestra a quien tenga permiso de ELIMINAR en Caja.
-                 Ocultarlo es comodidad; el bloqueo real lo hace el middleware
-                 'permiso:Caja,eliminar' de la ruta. --}}
+            {{-- CANCELAR CUENTA SIN COBRAR --}}
             @if(auth()->user()->tienePermiso('Caja', 'eliminar'))
                 <button type="button" id="btn-abrir-cancelar-cuenta"
-                    class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-300 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 text-[10px] font-black uppercase tracking-wider hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
+                    class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-500 text-[10px] font-black uppercase tracking-wider hover:bg-rose-500/10 transition-colors cursor-pointer">
                     <i class="fas fa-ban"></i> Cancelar cuenta sin cobrar
                 </button>
             @endif
@@ -91,21 +83,23 @@
      ════════════════════════════════════════════════════════ --}}
 <div id="modal-nip-caja" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="cerrarModalNipCaja()"></div>
-    <div class="relative w-full max-w-xs bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+    <div class="modal-container relative w-full max-w-xs rounded-3xl shadow-2xl border overflow-hidden"
+         style="background-color: var(--card-color); border-color: var(--border-color);">
 
         {{-- Header --}}
-        <div id="mnc-header" class="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+        <div id="mnc-header" class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--border-color);">
             <div class="flex items-center gap-3">
                 <div id="mnc-icono-wrap" class="w-9 h-9 rounded-xl flex items-center justify-center">
                     <i id="mnc-icono" class="fas fa-lock text-sm"></i>
                 </div>
                 <div>
-                    <h3 id="mnc-titulo" class="text-sm font-black text-zinc-900 dark:text-white">Autorización</h3>
-                    <p id="mnc-subtitulo" class="text-[11px] text-zinc-500 dark:text-zinc-400">Ingresa el NIP del Administrador</p>
+                    <h3 id="mnc-titulo" class="text-sm font-black" style="color: var(--text-color);">Autorización</h3>
+                    <p id="mnc-subtitulo" class="text-[11px]" style="color: var(--text-muted);">Ingresa el NIP del Administrador</p>
                 </div>
             </div>
             <button type="button" onclick="cerrarModalNipCaja()"
-                class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center transition-colors">
+                class="w-8 h-8 rounded-xl border flex items-center justify-center transition-colors cursor-pointer"
+                style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">
                 <i class="fas fa-xmark text-xs"></i>
             </button>
         </div>
@@ -115,7 +109,7 @@
             {{-- Dots --}}
             <div class="flex justify-center gap-3 py-1">
                 @for($i = 0; $i < 4; $i++)
-                    <div class="mnc-dot w-4 h-4 rounded-full border-2 border-zinc-300 dark:border-zinc-600 bg-transparent transition-all duration-150"></div>
+                    <div class="mnc-dot w-4 h-4 rounded-full border-2 bg-transparent transition-all duration-150" style="border-color: var(--border-color);"></div>
                 @endfor
             </div>
 
@@ -123,26 +117,28 @@
             <div class="grid grid-cols-3 gap-2">
                 @foreach(['1','2','3','4','5','6','7','8','9'] as $k)
                     <button type="button" onclick="mncEscribir('{{ $k }}')"
-                        class="h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white font-black text-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all">
+                        class="h-12 rounded-2xl border font-black text-lg transition-all active:scale-95 cursor-pointer hover:border-[#b74309]/50"
+                        style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
                         {{ $k }}
                     </button>
                 @endforeach
                 <button type="button" onclick="mncBorrar()"
-                    class="h-12 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-500 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-500/20 active:scale-95 transition-all">
+                    class="h-12 rounded-2xl border bg-rose-500/10 border-rose-500/20 text-rose-500 flex items-center justify-center hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer">
                     <i class="fas fa-delete-left text-base"></i>
                 </button>
                 <button type="button" onclick="mncEscribir('0')"
-                    class="h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white font-black text-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all">
+                    class="h-12 rounded-2xl border font-black text-lg transition-all active:scale-95 cursor-pointer hover:border-[#b74309]/50"
+                    style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
                     0
                 </button>
                 <button type="button" id="mnc-btn-ok" onclick="mncConfirmar()"
-                    class="h-12 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-sm active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                    class="h-12 rounded-2xl bg-[#b74309] hover:bg-[#8f3207] text-white font-black text-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-[#b74309]/20">
                     <i class="fas fa-check text-xs"></i> OK
                 </button>
             </div>
 
             {{-- Error --}}
-            <p id="mnc-error" class="hidden text-center text-xs font-bold text-red-500 bg-red-50 dark:bg-red-500/10 rounded-xl py-2 px-3"></p>
+            <p id="mnc-error" class="hidden text-center text-xs font-bold text-rose-500 bg-rose-500/10 border border-rose-500/20 rounded-xl py-2 px-3"></p>
         </div>
     </div>
 </div>
@@ -159,11 +155,11 @@
     function actualizarDots() {
         dots().forEach((d, i) => {
             if (i < _mncNip.length) {
-                d.classList.add('bg-zinc-900', 'dark:bg-white', 'border-zinc-900', 'dark:border-white');
-                d.classList.remove('border-zinc-300', 'dark:border-zinc-600', 'bg-transparent');
+                d.style.backgroundColor = 'var(--text-color)';
+                d.style.borderColor = 'var(--text-color)';
             } else {
-                d.classList.remove('bg-zinc-900', 'dark:bg-white', 'border-zinc-900', 'dark:border-white');
-                d.classList.add('border-zinc-300', 'dark:border-zinc-600', 'bg-transparent');
+                d.style.backgroundColor = 'transparent';
+                d.style.borderColor = 'var(--border-color)';
             }
         });
     }
@@ -177,8 +173,8 @@
 
         const wrap = document.getElementById('mnc-icono-wrap');
         const ico  = document.getElementById('mnc-icono');
-        wrap.className = `w-9 h-9 rounded-xl flex items-center justify-center bg-${colorIcono || 'blue'}-500/15 border border-${colorIcono || 'blue'}-500/20`;
-        ico.className  = `fas ${icono || 'fa-lock'} text-${colorIcono || 'blue'}-500 text-sm`;
+        wrap.className = `w-9 h-9 rounded-xl flex items-center justify-center bg-[#b74309]/15 border border-[#b74309]/20`;
+        ico.className  = `fas ${icono || 'fa-lock'} text-[#b74309] text-sm`;
 
         actualizarDots();
         if (errorEl()) errorEl().classList.add('hidden');
@@ -239,23 +235,16 @@
     document.addEventListener('DOMContentLoaded', () => {
         window.COBRO_CONFIG = {
             mesaId: {{ $mesa->id }},
-            // AJUSTE: se deja de mandar ordenId (solo tomaba la primera orden
-            // de la mesa y se perdían productos/total si había más de una).
-            // El ticket ahora se imprime por MESA completa, agregando todas
-            // sus órdenes activas — la misma unidad que ya usa el desglose
-            // que ves en pantalla (subtotal, IVA, propina, total).
             urlTicket: "{{ route('admin.caja.ticket.imprimir', $mesa->id) }}",
             total: {{ $totalPagar ?? 0 }},
             csrfToken: "{{ csrf_token() }}",
             urlPago: "{{ route('admin.caja.procesar-pago') }}",
-            // NUEVO: endpoints y datos para la división de cuenta
             urlDivisionIniciar: "{{ route('admin.caja.division.iniciar') }}",
             urlDivisionAsignar: "{{ route('admin.caja.division.asignar') }}",
             urlDivisionCancelar: "{{ route('admin.caja.division.cancelar') }}",
             division: @json($division ?? null)
         };
 
-        // --- DESCUENTO DE LA CUENTA (movido desde el módulo de Mesas) ---
         const btnDescuento = document.getElementById('btn-aplicar-descuento-caja');
         const inputDescuento = document.getElementById('input-descuento-caja');
         const msgDescuento = document.getElementById('msg-descuento-caja');
@@ -276,14 +265,12 @@
                     return;
                 }
 
-                // Pedir NIP antes de aplicar el descuento
                 abrirModalNipCaja({
                     titulo: 'Autorizar descuento',
                     subtitulo: `Descuento del ${porcentaje}% — ingresa tu NIP`,
                     icono: 'fa-tag',
-                    colorIcono: 'blue',
+                    colorIcono: 'amber',
                     onConfirm: async (nip) => {
-                        // Verificar NIP
                         const resNip = await fetch('/mesero/capitan/verify', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' },
@@ -294,7 +281,6 @@
                             throw new Error(dataNip?.message || 'NIP incorrecto.');
                         }
 
-                        // Aplicar descuento
                         const res = await fetch(@json(route('admin.caja.cuenta.descuento')), {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' },

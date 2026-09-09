@@ -4,70 +4,71 @@
 @section('header-subtitle', 'Administra el menú y las recetas de los productos')
 @section('content')
 
-{{-- MODIFICADO AQUÍ: Contenedor optimizado libre de flex-1 directo --}}
-<div class="p-3 sm:p-6 lg:p-8 xl:p-10 max-w-[1400px] mx-auto w-full space-y-5 sm:space-y-8 bg-[var(--bg-color)] text-[var(--text-color)]">
+<div class="p-3 sm:p-6 lg:p-8 xl:p-10 max-w-[1400px] mx-auto w-full space-y-5 sm:space-y-8" style="background-color: var(--bg-color); color: var(--text-color);">
 
     {{-- Encabezado --}}
     <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-end gap-3 sm:gap-4">
         <div>
-            <h1 class="text-xl sm:text-3xl font-black tracking-tight text-[var(--text-color)]">Menú de Productos</h1>
-            <p class="text-xs sm:text-sm font-medium text-[var(--text-muted)] mt-1">Gestiona los productos del restaurante</p>
+            <h1 class="text-xl sm:text-3xl font-black tracking-tight" style="color: var(--text-color);">Menú de Productos</h1>
+            <p class="text-xs sm:text-sm font-medium mt-1" style="color: var(--text-muted);">Gestiona los productos del restaurante</p>
         </div>
-<button type="button" onclick="abrirModalCrear()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-[var(--text-color)] text-[var(--bg-color)] hover:opacity-80 px-5 py-3 sm:py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm active:scale-[0.98]">
-    <i class="fas fa-plus text-[12px]"></i>
-    <span>Agregar Producto</span>
-</button>
+        <button type="button" onclick="abrirModalCrear()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#b74309] hover:bg-[#8f3207] text-white px-5 py-3 sm:py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm active:scale-[0.98]">
+            <i class="fas fa-plus text-[12px]"></i>
+            <span>Agregar Producto</span>
+        </button>
     </div>
 
     {{-- Estadísticas --}}
     <div class="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5">
-        <div class="bg-[var(--bg-panel)] rounded-[18px] sm:rounded-[20px] p-4 sm:p-6 shadow-sm shadow-blue-500/20 border border-blue-500/40 flex flex-col justify-between relative overflow-hidden transition-all hover:shadow-md hover:shadow-blue-500/40">
+        <div class="rounded-[18px] sm:rounded-[20px] p-4 sm:p-6 shadow-sm border flex flex-col justify-between relative overflow-hidden transition-all hover:shadow-md" style="background-color: var(--card-color); border-color: rgba(183,67,9,0.4); box-shadow: 0 1px 3px rgba(183,67,9,0.2);">
             <div class="flex items-center justify-between mb-3 sm:mb-4">
-                <span class="text-[10px] sm:text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest">Total Productos</span>
-                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
+                <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-widest" style="color: var(--text-muted);">Total Productos</span>
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#b74309]/10 flex items-center justify-center text-[#b74309] shrink-0">
                     <i class="fas fa-utensils text-xs sm:text-sm"></i>
                 </div>
             </div>
-            <span class="text-2xl sm:text-4xl font-black text-[var(--text-color)] tracking-tight" id="stat-total">0</span>
+            <span class="text-2xl sm:text-4xl font-black tracking-tight" style="color: var(--text-color);" id="stat-total">0</span>
         </div>
 
-        <div class="bg-[var(--bg-panel)] rounded-[18px] sm:rounded-[20px] p-4 sm:p-6 shadow-sm shadow-green-500/20 border border-green-500/40 flex flex-col justify-between relative overflow-hidden transition-all hover:shadow-md hover:shadow-green-500/40">
+        <div class="rounded-[18px] sm:rounded-[20px] p-4 sm:p-6 shadow-sm border flex flex-col justify-between relative overflow-hidden transition-all hover:shadow-md" style="background-color: var(--card-color); border-color: rgba(34,197,94,0.4); box-shadow: 0 1px 3px rgba(34,197,94,0.2);">
             <div class="flex items-center justify-between mb-3 sm:mb-4">
-                <span class="text-[10px] sm:text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest">Disponibles</span>
+                <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-widest" style="color: var(--text-muted);">Disponibles</span>
                 <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500 shrink-0">
                     <i class="fas fa-check text-xs sm:text-sm"></i>
                 </div>
             </div>
-            <span class="text-2xl sm:text-4xl font-black text-[var(--text-color)] tracking-tight" id="stat-disponibles">0</span>
+            <span class="text-2xl sm:text-4xl font-black tracking-tight" style="color: var(--text-color);" id="stat-disponibles">0</span>
         </div>
 
-        <div class="bg-[var(--bg-panel)] rounded-[18px] sm:rounded-[20px] p-4 sm:p-6 shadow-sm shadow-purple-500/20 border border-purple-500/40 flex flex-col justify-between relative overflow-hidden transition-all hover:shadow-md hover:shadow-purple-500/40 col-span-1 min-[420px]:col-span-2 md:col-span-1">
+        <div class="rounded-[18px] sm:rounded-[20px] p-4 sm:p-6 shadow-sm border flex flex-col justify-between relative overflow-hidden transition-all hover:shadow-md col-span-1 min-[420px]:col-span-2 md:col-span-1" style="background-color: var(--card-color); border-color: rgba(168,85,247,0.4); box-shadow: 0 1px 3px rgba(168,85,247,0.2);">
             <div class="flex items-center justify-between mb-3 sm:mb-4">
-                <span class="text-[10px] sm:text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest">Categorías</span>
+                <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-widest" style="color: var(--text-muted);">Categorías</span>
                 <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 shrink-0">
                     <i class="fas fa-tags text-xs sm:text-sm"></i>
                 </div>
             </div>
-            <span class="text-2xl sm:text-4xl font-black text-[var(--text-color)] tracking-tight" id="stat-categorias">0</span>
+            <span class="text-2xl sm:text-4xl font-black tracking-tight" style="color: var(--text-color);" id="stat-categorias">0</span>
         </div>
     </div>
 
-    {{-- BUSCADOR: filtra mientras se escribe, sin recargar. --}}
+    {{-- Buscador --}}
     <div class="relative mb-4">
-        <i class="fas fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] text-sm pointer-events-none"></i>
+        <i class="fas fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-sm pointer-events-none" style="color: var(--text-muted);"></i>
         <input type="text" id="buscadorProductosAdmin"
                placeholder="Buscar producto por nombre..."
                autocomplete="off"
-               class="w-full pl-11 pr-11 py-3 rounded-[16px] border border-[var(--border-color)] bg-[var(--bg-panel)] text-sm font-semibold text-[var(--text-color)] placeholder:text-[var(--text-muted)] placeholder:font-normal outline-none focus:border-blue-500 transition-colors shadow-sm">
+               class="w-full pl-11 pr-11 py-3 rounded-[16px] text-sm font-semibold outline-none transition-colors shadow-sm focus:border-[#b74309]"
+               style="border: 1px solid var(--border-color); background-color: var(--card-color); color: var(--text-color);">
         <button type="button" id="limpiarBusquedaAdmin"
-                class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full text-[var(--text-muted)] hover:text-[var(--text-color)] transition-colors"
+                class="hidden absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full transition-colors"
+                style="color: var(--text-muted);"
                 title="Limpiar búsqueda">
             <i class="fas fa-xmark text-sm"></i>
         </button>
     </div>
 
-    {{-- Contenedor de productos por categoría --}}
-    <div class="bg-[var(--bg-panel)] rounded-[18px] sm:rounded-[24px] p-2.5 sm:p-6 shadow-sm border border-[var(--border-color)] min-h-[420px]">
+    {{-- Contenedor de productos --}}
+    <div class="rounded-[18px] sm:rounded-[24px] p-2.5 sm:p-6 shadow-sm min-h-[420px]" style="background-color: var(--card-color); border: 1px solid var(--border-color);">
         <div id="categorias-container" class="space-y-5 sm:space-y-6"
              data-permiso-editar="{{ auth()->user()->tienePermiso('Productos', 'editar') ? 'true' : 'false' }}"
              data-permiso-eliminar="{{ auth()->user()->tienePermiso('Productos', 'eliminar') ? 'true' : 'false' }}"
@@ -106,12 +107,8 @@
         setInterval(cargarEstadisticas, 10000);
     });
  
-    // ─── FIX SCROLL: guarda la posición actual y la restaura después de
-    // volver a pintar la lista de productos, para que borrar/editar/crear
-    // no manden al usuario hasta arriba de la página ────────────────────────
     function cargarProductos() {
         const scrollY = window.scrollY;
-
         fetch(RUTA_PRODUCTOS)
             .then(r => r.json())
             .then(data => {
@@ -121,9 +118,6 @@
                     data[cat].forEach(p => { estadoGlobal.productosMap[p.id] = p; });
                 });
                 renderizarProductos();
-
-                // Restaura la posición del scroll en el siguiente frame,
-                // una vez que el DOM ya se reconstruyó.
                 requestAnimationFrame(() => window.scrollTo(0, scrollY));
             })
             .catch(e => console.error('Error cargando productos:', e));
@@ -143,12 +137,8 @@
             .catch(e => console.error('Error cargando estadísticas:', e));
     }
  
-    // Texto del buscador. Vive fuera de la funcion para que al recargar los
-    // productos (crear, editar, borrar) el filtro siga aplicado y la lista no
-    // "salte" mostrando todo de golpe.
     let filtroProductos = '';
 
-    /** Quita acentos y pasa a minusculas: buscar "cafe" debe encontrar "Café". */
     function normalizarTexto(texto) {
         return (texto || '').toString().toLowerCase()
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -158,7 +148,7 @@
         const container = document.getElementById('categorias-container');
         container.innerHTML = '';
         if (Object.keys(estadoGlobal.productos).length === 0) {
-            container.innerHTML = '<p class="text-center text-[var(--text-muted)] py-10 sm:py-12 font-bold text-sm px-4">No hay productos registrados aún.</p>';
+            container.innerHTML = '<p class="text-center py-10 sm:py-12 font-bold text-sm px-4" style="color: var(--text-muted);">No hay productos registrados aún.</p>';
             return;
         }
 
@@ -166,30 +156,25 @@
         let encontrados = 0;
 
         Object.keys(estadoGlobal.productos).forEach(catNombre => {
-            // Se filtra por nombre de producto y tambien por categoria: asi
-            // escribir "bebidas" trae la seccion completa, que es como la
-            // gente suele buscar.
             const coincideCategoria = buscado !== '' && normalizarTexto(catNombre).includes(buscado);
-
             const productos = buscado === '' || coincideCategoria
                 ? estadoGlobal.productos[catNombre]
                 : estadoGlobal.productos[catNombre].filter(p => normalizarTexto(p.nombre).includes(buscado));
 
-            // Las categorias sin coincidencias no se dibujan: dejar encabezados
-            // vacios haria parecer que la busqueda fallo.
             if (productos.length === 0) return;
             encontrados += productos.length;
             const gridId = 'grid-' + catNombre.toLowerCase().replace(/[^a-z0-9]/g, '-');    
-            const seccion   = document.createElement('div');
-            seccion.className = 'mb-6 sm:mb-8 bg-[var(--bg-color)] rounded-[16px] sm:rounded-[20px] p-2.5 sm:p-4 border border-[var(--border-color)]';
+            const seccion = document.createElement('div');
+            seccion.className = 'mb-6 sm:mb-8 rounded-[16px] sm:rounded-[20px] p-2.5 sm:p-4';
+            seccion.style.cssText = 'background-color: var(--bg-color); border: 1px solid var(--border-color);';
             seccion.innerHTML = `
-                <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5 border-b border-[var(--border-color)] pb-3 sm:pb-4 px-1.5 sm:px-2">
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 bg-[var(--bg-panel)] border border-[var(--border-color)] rounded-xl flex items-center justify-center text-[var(--text-color)] shadow-sm">
+                <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5 pb-3 sm:pb-4 px-1.5 sm:px-2" style="border-bottom: 1px solid var(--border-color);">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl flex items-center justify-center shadow-sm" style="background-color: var(--card-color); border: 1px solid var(--border-color); color: var(--text-color);">
                         <i class="${obtenerIconoCategoria(catNombre)} text-xs sm:text-sm"></i>
                     </div>
                     <div class="min-w-0">
-                        <h2 class="text-sm sm:text-lg font-black text-[var(--text-color)] tracking-tight uppercase truncate">${catNombre}</h2>
-                        <p class="text-[9px] sm:text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-0.5">${productos.length} Producto${productos.length !== 1 ? 's' : ''}</p>
+                        <h2 class="text-sm sm:text-lg font-black tracking-tight uppercase truncate" style="color: var(--text-color);">${catNombre}</h2>
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-0.5" style="color: var(--text-muted);">${productos.length} Producto${productos.length !== 1 ? 's' : ''}</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4" id="${gridId}"></div>
@@ -202,14 +187,13 @@
         if (encontrados === 0) {
             container.innerHTML = `
                 <div class="text-center py-12 px-4">
-                    <i class="fas fa-magnifying-glass text-4xl text-[var(--text-muted)] opacity-30 mb-3"></i>
-                    <p class="font-bold text-[var(--text-color)]">Sin resultados para "${filtroProductos}"</p>
-                    <p class="text-sm text-[var(--text-muted)] mt-1">Prueba con otras letras.</p>
+                    <i class="fas fa-magnifying-glass text-4xl opacity-30 mb-3" style="color: var(--text-muted);"></i>
+                    <p class="font-bold" style="color: var(--text-color);">Sin resultados para "${filtroProductos}"</p>
+                    <p class="text-sm mt-1" style="color: var(--text-muted);">Prueba con otras letras.</p>
                 </div>`;
         }
     }
 
-    // --- BUSCADOR ---
     document.addEventListener('DOMContentLoaded', () => {
         const buscador = document.getElementById('buscadorProductosAdmin');
         const btnLimpiar = document.getElementById('limpiarBusquedaAdmin');
@@ -223,7 +207,6 @@
 
         buscador.addEventListener('input', buscar);
 
-        // El teclado tactil escribe con .value y no siempre dispara 'input'.
         let vigilante = null;
         buscador.addEventListener('focus', () => {
             let previo = buscador.value;
@@ -244,10 +227,11 @@
  
     function crearCardProducto(producto) {
         const card = document.createElement('div');
-        card.className = 'bg-[var(--bg-panel)] rounded-[14px] sm:rounded-[16px] p-3.5 sm:p-5 border border-[var(--border-color)] shadow-sm group flex flex-col relative';
+        card.className = 'rounded-[14px] sm:rounded-[16px] p-3.5 sm:p-5 shadow-sm group flex flex-col relative';
+        card.style.cssText = 'background-color: var(--card-color); border: 1px solid var(--border-color);';
  
         const mods = producto.modificadores?.length
-            ? `<p class="text-[10px] text-[var(--text-muted)] mt-1.5 truncate"><i class="fas fa-list-ul mr-1 opacity-70"></i> ${producto.modificadores.map(m => m.nombre).join(', ')}</p>`
+            ? `<p class="text-[10px] mt-1.5 truncate" style="color: var(--text-muted);"><i class="fas fa-list-ul mr-1 opacity-70"></i> ${producto.modificadores.map(m => m.nombre).join(', ')}</p>`
             : '';
 
         const esPorPeso = !!producto.se_vende_por_peso;
@@ -256,11 +240,11 @@
             : '';
 
         const precioMostrado = esPorPeso
-            ? `$${parseFloat(producto.precio_por_100g ?? 0).toFixed(2)} <span class="text-[10px] sm:text-[11px] font-bold text-[var(--text-muted)]">/100g</span>`
+            ? `$${parseFloat(producto.precio_por_100g ?? 0).toFixed(2)} <span class="text-[10px] sm:text-[11px] font-bold" style="color: var(--text-muted);">/100g</span>`
             : `$${parseFloat(producto.precio).toFixed(2)}`;
  
         const botonesHTML = [
-            tienePermisoEditar   ? `<button class="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-[var(--bg-color)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-color)] flex items-center justify-center transition active:scale-95" onclick="editarProducto(${producto.id})" title="Editar"><i class="fas fa-pen text-[11px]"></i></button>` : '',
+            tienePermisoEditar   ? `<button class="w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition active:scale-95 hover:text-[#b74309] hover:border-[#b74309]" style="background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-muted);" onclick="editarProducto(${producto.id})" title="Editar"><i class="fas fa-pen text-[11px]"></i></button>` : '',
             tienePermisoEliminar ? `<button class="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition active:scale-95" onclick="eliminarProducto(${producto.id})" title="Eliminar"><i class="fas fa-trash text-[11px]"></i></button>` : '',
         ].join('');
  
@@ -272,20 +256,20 @@
             <div class="flex justify-between items-start mb-3 sm:mb-4 gap-2">
                 <div class="flex items-start gap-2.5 sm:gap-3 overflow-hidden min-w-0">
                     <div class="overflow-hidden min-w-0">
-                        <h3 class="text-sm sm:text-[15px] font-bold text-[var(--text-color)] tracking-tight truncate">${producto.nombre}</h3>
-                        <p class="text-[11px] sm:text-[12px] text-[var(--text-muted)] mt-1 line-clamp-2">${producto.descripcion ?? 'Sin descripción'}</p>
+                        <h3 class="text-sm sm:text-[15px] font-bold tracking-tight truncate" style="color: var(--text-color);">${producto.nombre}</h3>
+                        <p class="text-[11px] sm:text-[12px] mt-1 line-clamp-2" style="color: var(--text-muted);">${producto.descripcion ?? 'Sin descripción'}</p>
                         ${mods}
                         ${badgePorPeso}
                     </div>
                 </div>
                 <div class="flex items-center gap-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity shrink-0">${botonesHTML}</div>
             </div>
-            <div class="flex flex-wrap justify-between items-center gap-2 mt-auto pt-3 sm:pt-4 border-t border-[var(--border-color)]">
+            <div class="flex flex-wrap justify-between items-center gap-2 mt-auto pt-3 sm:pt-4" style="border-top: 1px solid var(--border-color);">
                 <div class="flex items-center gap-2.5 sm:gap-3">
                     ${toggleHTML}
-                    <span class="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest texto-estado">${producto.esta_disponible ? 'Disponible' : 'Agotado'}</span>
+                    <span class="text-[9px] font-bold uppercase tracking-widest texto-estado" style="color: var(--text-muted);">${producto.esta_disponible ? 'Disponible' : 'Agotado'}</span>
                 </div>
-                <span class="text-sm sm:text-[16px] font-black text-[var(--text-color)] tracking-tight">${precioMostrado}</span>
+                <span class="text-sm sm:text-[16px] font-black tracking-tight" style="color: var(--text-color);">${precioMostrado}</span>
             </div>
         `;
         return card;
@@ -341,13 +325,13 @@
  
     function crearFilaIngrediente(ingrediente = {}) {
         const row = document.createElement('div');
-        row.className = 'flex flex-col md:grid md:grid-cols-12 gap-3 items-stretch md:items-end p-4 md:p-0 bg-[var(--bg-color)] md:bg-transparent rounded-2xl border border-[var(--border-color)] md:border-0 ingrediente-row relative mb-3 md:mb-0';
+        row.className = 'flex flex-col md:grid md:grid-cols-12 gap-3 items-stretch md:items-end p-4 md:p-0 rounded-2xl md:border-0 ingrediente-row relative mb-3 md:mb-0';
+        row.style.cssText = 'background-color: var(--bg-color); border: 1px solid var(--border-color);';
         
         const insumoValue   = ingrediente.insumo_id    ?? ingrediente.id ?? '';
         const cantidadValue = ingrediente.cantidad     ?? ingrediente.pivot?.cantidad_usada ?? '';
         const unidadValue   = ingrediente.unidad_medida ?? '';
 
-        // Mapeo seguro asegurando que el stock_actual (incluso si es 0) se convierta en String
         const options = insumosDisponibles.map(ins => {
             const sel = ins.id == insumoValue ? 'selected' : '';
             const stockSeguro = (ins.stock_actual !== undefined && ins.stock_actual !== null) ? ins.stock_actual : 0;
@@ -356,19 +340,19 @@
 
         row.innerHTML = `
             <div class="md:col-span-6">
-                <label class="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-1">Ingrediente</label>
-                <select name="insumos[]" class="w-full bg-[var(--input-bg)] border border-[var(--border-color)] rounded-2xl p-4 mt-1 text-[var(--text-color)] focus:ring-2 focus:ring-blue-500 transition" onchange="sincronizarInsumo(this)" required>
+                <label class="text-[10px] font-black uppercase tracking-widest ml-1" style="color: var(--text-muted);">Ingrediente</label>
+                <select name="insumos[]" class="w-full rounded-2xl p-4 mt-1 outline-none transition focus:border-[#b74309] focus:ring-2 focus:ring-[#b74309]/20" style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);" onchange="sincronizarInsumo(this)" required>
                     <option value="">Seleccionar...</option>${options}
                 </select>
             </div>
             <div class="grid grid-cols-12 gap-2 items-end md:col-span-6">
                 <div class="col-span-6">
-                    <label class="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-1">Cantidad</label>
-                    <input type="number" name="cantidades[]" step="0.001" min="0.001" value="${cantidadValue}" class="w-full bg-[var(--input-bg)] border border-[var(--border-color)] rounded-2xl p-4 mt-1 text-[var(--text-color)] focus:ring-2 focus:ring-blue-500 transition" placeholder="0.000" required>
+                    <label class="text-[10px] font-black uppercase tracking-widest ml-1" style="color: var(--text-muted);">Cantidad</label>
+                    <input type="number" name="cantidades[]" step="0.001" min="0.001" value="${cantidadValue}" class="w-full rounded-2xl p-4 mt-1 outline-none transition focus:border-[#b74309] focus:ring-2 focus:ring-[#b74309]/20" style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);" placeholder="0.000" required>
                 </div>
                 <div class="col-span-3">
-                    <label class="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-1 text-center block">Uni</label>
-                    <input type="text" value="${unidadValue}" class="w-full bg-[var(--input-bg)] border border-[var(--border-color)] rounded-2xl p-4 mt-1 text-[var(--text-color)] text-center font-medium" disabled>
+                    <label class="text-[10px] font-black uppercase tracking-widest ml-1 text-center block" style="color: var(--text-muted);">Uni</label>
+                    <input type="text" value="${unidadValue}" class="w-full rounded-2xl p-4 mt-1 text-center font-medium" style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);" disabled>
                 </div>
                 <div class="col-span-3 flex flex-col items-center justify-end h-full">
                     <button type="button" class="w-full md:w-10 h-12 rounded-xl bg-red-900/10 border border-red-900/20 text-red-500 hover:bg-red-900/40 transition flex items-center justify-center active:scale-95" onclick="eliminarIngredienteRow(this)">
@@ -376,7 +360,7 @@
                     </button>
                 </div>
             </div>
-            <div class="text-[10px] text-[var(--text-muted)] font-bold mt-1 px-1 item-stock-label"></div>
+            <div class="text-[10px] font-bold mt-1 px-1 item-stock-label" style="color: var(--text-muted);"></div>
         `;
 
         const select = row.querySelector('select[name="insumos[]"]');
@@ -394,11 +378,9 @@
 
         if (opt && opt.value) {
             if (unidadInput) unidadInput.value = opt.dataset.unidad ?? '';
-            
-            // Validación estricta para evitar "undefined"
             const stockValor = opt.dataset.stock;
             if (stockValor !== undefined && stockValor !== 'undefined' && stockValor !== '') {
-                stockLabel.innerHTML = `<span class="bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-md inline-block">Stock: ${stockValor}</span>`;
+                stockLabel.innerHTML = `<span class="bg-[#b74309]/10 text-[#b74309] px-2 py-0.5 rounded-md inline-block">Stock: ${stockValor}</span>`;
             } else {
                 stockLabel.innerHTML = '';
             }
@@ -479,7 +461,6 @@
         return data;
     }
 
-    // ===== NOTIFICACIÓN TOAST (mismo diseño visual que el toast global de session) =====
     let contadorToast = 0;
 
     function mostrarNotificacion(mensaje, tipo) {

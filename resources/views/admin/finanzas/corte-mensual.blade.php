@@ -36,33 +36,56 @@
     {{-- FILTRO DE MES Y AÑO --}}
     <form method="GET" action="{{ route('admin.finanzas.corte.mensual') }}"
         class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 flex flex-col sm:flex-row items-stretch sm:items-end gap-3 shadow-sm">
+        
+        {{-- Dropdown Mes --}}
         <div class="flex-1 sm:max-w-[220px]">
             <label class="block text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase mb-1">Mes</label>
-            <select name="mes" class="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                @foreach(range(1, 12) as $m)
-                    <option value="{{ $m }}" @selected($m == $mes)>
-                        {{ ucfirst(\Carbon\Carbon::create(null, $m, 1)->translatedFormat('F')) }}
-                    </option>
-                @endforeach
-            </select>
+            <input type="hidden" name="mes" id="mes-hidden" value="{{ $mes }}">
+            <div class="relative" id="mes-wrapper">
+                <button type="button" id="mes-trigger" onclick="toggleMesDropdown()"
+                    class="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-800 dark:text-zinc-100 flex items-center justify-between gap-2 outline-none focus:border-[#b74309] focus:ring-1 focus:ring-[#b74309]">
+                    <span id="mes-label">{{ ucfirst(\Carbon\Carbon::create(null, $mes, 1)->translatedFormat('F')) }}</span>
+                    <i id="mes-chevron" class="fas fa-chevron-down text-zinc-400 text-[10px] transition-transform duration-200"></i>
+                </button>
+                <div id="mes-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl z-50 overflow-hidden max-h-52 overflow-y-auto">
+                    @foreach(range(1, 12) as $m)
+                        <button type="button" onclick="seleccionarMes({{ $m }}, '{{ ucfirst(\Carbon\Carbon::create(null, $m, 1)->translatedFormat('F')) }}')"
+                            class="w-full px-4 py-2 text-left text-sm {{ $m == $mes ? 'bg-[#b74309]/10 text-[#b74309] font-bold' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800' }} transition-colors">
+                            {{ ucfirst(\Carbon\Carbon::create(null, $m, 1)->translatedFormat('F')) }}
+                        </button>
+                    @endforeach
+                </div>
+            </div>
         </div>
 
+        {{-- Dropdown Año --}}
         <div class="flex-1 sm:max-w-[160px]">
             <label class="block text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase mb-1">Año</label>
-            <select name="año" class="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                @foreach($añosDisponibles as $a)
-                    <option value="{{ $a }}" @selected($a == $año)>{{ $a }}</option>
-                @endforeach
-            </select>
+            <input type="hidden" name="año" id="año-hidden" value="{{ $año }}">
+            <div class="relative" id="año-wrapper">
+                <button type="button" id="año-trigger" onclick="toggleAñoDropdown()"
+                    class="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm text-zinc-800 dark:text-zinc-100 flex items-center justify-between gap-2 outline-none focus:border-[#b74309] focus:ring-1 focus:ring-[#b74309]">
+                    <span id="año-label">{{ $año }}</span>
+                    <i id="año-chevron" class="fas fa-chevron-down text-zinc-400 text-[10px] transition-transform duration-200"></i>
+                </button>
+                <div id="año-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                    @foreach($añosDisponibles as $a)
+                        <button type="button" onclick="seleccionarAño({{ $a }})"
+                            class="w-full px-4 py-2 text-left text-sm {{ $a == $año ? 'bg-[#b74309]/10 text-[#b74309] font-bold' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800' }} transition-colors">
+                            {{ $a }}
+                        </button>
+                    @endforeach
+                </div>
+            </div>
         </div>
 
         <button type="submit"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center gap-2">
+            class="px-6 py-2.5 bg-[#b74309] hover:bg-[#8f3207] text-white rounded-lg text-sm font-bold transition shadow-sm flex items-center justify-center gap-2">
             <i class="fas fa-filter"></i> Filtrar
         </button>
     </form>
 
-    {{-- TARJETAS DE TOTALES DEL MES --}}
+    {{-- TARJETAS DE TOTALES --}}
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow-sm">
             <p class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Ingresos</p>
@@ -88,7 +111,7 @@
         </div>
     </div>
 
-    {{-- DESGLOSE POR CATEGORÍA DEL MES --}}
+    {{-- DESGLOSE POR CATEGORÍA --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 shadow-sm">
             <h3 class="text-sm font-black text-zinc-800 dark:text-zinc-100 uppercase mb-3">Ingresos por Categoría</h3>
@@ -159,7 +182,7 @@
                                 @if($dia->tiene_movimientos)
                                     <button type="button"
                                         onclick="document.getElementById('detalle-{{ $dia->fecha->format('Ymd') }}').classList.toggle('hidden')"
-                                        class="text-blue-600 dark:text-blue-400 hover:underline text-xs font-bold">
+                                        class="text-[#b74309] dark:text-[#e8946a] hover:underline text-xs font-bold">
                                         Ver ({{ $dia->movimientos->count() }})
                                     </button>
                                 @else
@@ -212,4 +235,57 @@
         </div>
     </div>
 </div>
+
+<script>
+    // --- DROPDOWN MES ---
+    function toggleMesDropdown() {
+        const dd = document.getElementById('mes-dropdown');
+        const chevron = document.getElementById('mes-chevron');
+        const isHidden = dd.classList.contains('hidden');
+        cerrarTodosDropdowns();
+        if (isHidden) {
+            dd.classList.remove('hidden');
+            chevron.style.transform = 'rotate(180deg)';
+        }
+    }
+
+    function seleccionarMes(valor, etiqueta) {
+        document.getElementById('mes-hidden').value = valor;
+        document.getElementById('mes-label').textContent = etiqueta;
+        cerrarTodosDropdowns();
+    }
+
+    // --- DROPDOWN AÑO ---
+    function toggleAñoDropdown() {
+        const dd = document.getElementById('año-dropdown');
+        const chevron = document.getElementById('año-chevron');
+        const isHidden = dd.classList.contains('hidden');
+        cerrarTodosDropdowns();
+        if (isHidden) {
+            dd.classList.remove('hidden');
+            chevron.style.transform = 'rotate(180deg)';
+        }
+    }
+
+    function seleccionarAño(valor) {
+        document.getElementById('año-hidden').value = valor;
+        document.getElementById('año-label').textContent = valor;
+        cerrarTodosDropdowns();
+    }
+
+    function cerrarTodosDropdowns() {
+        ['mes-dropdown', 'año-dropdown'].forEach(id => {
+            document.getElementById(id)?.classList.add('hidden');
+        });
+        document.getElementById('mes-chevron').style.transform = 'rotate(0deg)';
+        document.getElementById('año-chevron').style.transform = 'rotate(0deg)';
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!document.getElementById('mes-wrapper')?.contains(e.target) &&
+            !document.getElementById('año-wrapper')?.contains(e.target)) {
+            cerrarTodosDropdowns();
+        }
+    });
+</script>
 @endsection

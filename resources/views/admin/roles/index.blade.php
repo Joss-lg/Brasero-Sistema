@@ -12,7 +12,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6">
         <div class="w-full sm:w-auto">
             <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-[0_4px_14px_rgba(37,99,235,0.35)] shrink-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-[#b74309] to-[#8f3207] shadow-[0_4px_14px_rgba(183,67,9,0.35)] shrink-0">
                     <i class="fas fa-sitemap text-white text-sm"></i>
                 </div>
                 <h1 class="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -27,7 +27,7 @@
         @if(auth()->user()->tienePermiso('roles.crear'))
             <button type="button"
                     onclick="abrirModalCrear()"
-                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-[0_4px_12px_rgba(37,99,235,0.25)] hover:shadow-[0_8px_20px_rgba(37,99,235,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-[#15151a]">
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:py-2.5 bg-gradient-to-r from-[#b74309] to-[#8f3207] hover:from-[#c94d0a] hover:to-[#a03808] text-white text-sm font-semibold rounded-xl transition-all duration-200 shadow-[0_4px_12px_rgba(183,67,9,0.25)] hover:shadow-[0_8px_20px_rgba(183,67,9,0.4)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] outline-none focus:ring-2 focus:ring-[#b74309] focus:ring-offset-2 dark:focus:ring-offset-[#15151a]">
                 <i class="fas fa-plus text-xs"></i>
                 Nuevo Puesto
             </button>
@@ -45,14 +45,14 @@
             </span>
         </div>
 
-        {{-- ===================== VISTA MÓVIL: TARJETAS (solo < sm) ===================== --}}
+        {{-- VISTA MÓVIL --}}
         <div class="flex flex-col gap-2.5 sm:hidden">
             @forelse($roles as $rol)
             <div class="group relative overflow-hidden border border-slate-100 dark:border-slate-800/60 rounded-2xl p-3.5 bg-slate-50/50 dark:bg-white/[0.02] active:bg-slate-100 dark:active:bg-white/[0.04] transition-colors">
-                <span class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-indigo-500 {{ $rol->usuarios_count > 0 ? 'opacity-100' : 'opacity-30' }}"></span>
+                <span class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#b74309] to-[#8f3207] {{ $rol->usuarios_count > 0 ? 'opacity-100' : 'opacity-30' }}"></span>
                 <div class="flex items-center justify-between gap-3 pl-1.5">
                     <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800/80 text-blue-600 dark:text-slate-400 shadow-sm ring-1 ring-slate-100 dark:ring-slate-700/50 shrink-0">
+                        <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800/80 text-[#b74309] dark:text-[#e8946a] shadow-sm ring-1 ring-slate-100 dark:ring-slate-700/50 shrink-0">
                             <i class="fas fa-user-shield text-sm"></i>
                         </div>
                         <div class="flex flex-col min-w-0">
@@ -62,10 +62,10 @@
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         @if(auth()->user()->tienePermiso('roles.editar'))
-                            <button onclick="abrirModalEditar(this)" data-id="{{ $rol->id }}" data-nombre="{{ $rol->nombre }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 active:scale-95 transition-all outline-none focus:ring-2 focus:ring-blue-400"><i class="fas fa-pen text-xs"></i></button>
+                            <button onclick="abrirModalEditar(this)" data-id="{{ $rol->id }}" data-nombre="{{ $rol->nombre }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#b74309]/10 hover:bg-[#b74309]/20 text-[#b74309] dark:text-[#e8946a] active:scale-95 transition-all outline-none focus:ring-2 focus:ring-[#b74309]/40"><i class="fas fa-pen text-xs"></i></button>
                         @endif
                         @if(auth()->user()->tienePermiso('roles.eliminar'))
-                            <button onclick="abrirModalEliminar(this)" data-id="{{ $rol->id }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 active:scale-95 transition-all outline-none focus:ring-2 focus:ring-rose-400"><i class="fas fa-trash-alt text-xs"></i></button>
+                           <button onclick="abrirModalEliminar(this)" data-id="{{ $rol->id }}" data-nombre="{{ $rol->nombre }}" class="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 active:scale-95 transition-all outline-none focus:ring-2 focus:ring-rose-400"><i class="fas fa-trash-alt text-xs"></i></button>
                         @endif
                     </div>
                 </div>
@@ -80,7 +80,7 @@
             @endforelse
         </div>
 
-        {{-- ===================== VISTA ESCRITORIO: TABLA (solo sm+) ===================== --}}
+        {{-- VISTA ESCRITORIO --}}
         <div class="hidden sm:block w-full overflow-x-auto pb-2">
             <table class="w-full min-w-[500px] text-left border-collapse">
                 <thead>
@@ -95,22 +95,22 @@
                     <tr class="group hover:bg-slate-50/70 dark:hover:bg-white/[0.03] transition-colors duration-200">
                         <td class="py-4 sm:py-5 pl-2">
                             <div class="flex items-center gap-3 sm:gap-4">
-                                <div class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400 shadow-sm ring-1 ring-slate-100 dark:ring-slate-700/50 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/10 transition-colors shrink-0">
+                                <div class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400 shadow-sm ring-1 ring-slate-100 dark:ring-slate-700/50 group-hover:text-[#b74309] dark:group-hover:text-[#e8946a] group-hover:bg-[#b74309]/10 dark:group-hover:bg-[#b74309]/10 transition-colors shrink-0">
                                     <i class="fas fa-user-shield text-xs sm:text-sm"></i>
                                 </div>
                                 <span class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">{{ $rol->nombre }}</span>
                             </div>
                         </td>
                         <td class="py-4 sm:py-5 text-center">
-                            <span class="inline-flex items-center justify-center font-black px-3 py-1 rounded-lg text-xs sm:text-sm {{ $rol->usuarios_count > 0 ? 'text-blue-700 bg-blue-50 dark:text-blue-300 dark:bg-blue-500/10' : 'text-slate-400 bg-slate-100 dark:text-slate-500 dark:bg-slate-800/60' }}">{{ $rol->usuarios_count }}</span>
+                            <span class="inline-flex items-center justify-center font-black px-3 py-1 rounded-lg text-xs sm:text-sm {{ $rol->usuarios_count > 0 ? 'text-[#b74309] bg-[#b74309]/10 dark:text-[#e8946a] dark:bg-[#b74309]/10' : 'text-slate-400 bg-slate-100 dark:text-slate-500 dark:bg-slate-800/60' }}">{{ $rol->usuarios_count }}</span>
                         </td>
                         <td class="py-4 sm:py-5 text-right pr-2 sm:pr-4">
                             <div class="flex items-center justify-end gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                                 @if(auth()->user()->tienePermiso('roles.editar'))
-                                    <button onclick="abrirModalEditar(this)" data-id="{{ $rol->id }}" data-nombre="{{ $rol->nombre }}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 hover:scale-105 active:scale-95 transition-all outline-none focus:ring-2 focus:ring-blue-400"><i class="fas fa-pen text-xs"></i></button>
+                                    <button onclick="abrirModalEditar(this)" data-id="{{ $rol->id }}" data-nombre="{{ $rol->nombre }}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-[#b74309]/10 hover:bg-[#b74309]/20 text-[#b74309] dark:text-[#e8946a] hover:scale-105 active:scale-95 transition-all outline-none focus:ring-2 focus:ring-[#b74309]/40"><i class="fas fa-pen text-xs"></i></button>
                                 @endif
                                 @if(auth()->user()->tienePermiso('roles.eliminar'))
-                                    <button onclick="abrirModalEliminar(this)" data-id="{{ $rol->id }}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 hover:scale-105 active:scale-95 transition-all outline-none focus:ring-2 focus:ring-rose-400"><i class="fas fa-trash-alt text-xs"></i></button>
+                                 <button onclick="abrirModalEliminar(this)" data-id="{{ $rol->id }}" data-nombre="{{ $rol->nombre }}" class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 hover:scale-105 active:scale-95 transition-all outline-none focus:ring-2 focus:ring-rose-400"><i class="fas fa-trash-alt text-xs"></i></button>
                                 @endif
                             </div>
                         </td>
@@ -141,24 +141,17 @@
 
 @push('scripts')
 <script>
-    // PASO 2: Liberar modales al <body> para que se sobrepongan al menú en móviles
     document.addEventListener('DOMContentLoaded', () => {
-        // Asegúrate de que estos IDs coincidan exactamente con los que tienes en tus archivos modal-*.blade.php
         const modales = ['modalCrearRol', 'modalEditarRol', 'modalEliminarRol'];
-
         modales.forEach(id => {
             const modalElement = document.getElementById(id);
-            if (modalElement) {
-                document.body.appendChild(modalElement);
-            }
+            if (modalElement) document.body.appendChild(modalElement);
         });
     });
 
-    // Lógica para cerrar modales al hacer clic fuera
     document.addEventListener('click', (e) => {
         const modalEditar = document.getElementById('modalEditarRol');
         const modalEliminar = document.getElementById('modalEliminarRol');
-
         if (modalEditar && e.target === modalEditar) cerrarModalEditar();
         if (modalEliminar && e.target === modalEliminar) cerrarModalEliminar();
     });

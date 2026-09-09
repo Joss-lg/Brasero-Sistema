@@ -33,9 +33,7 @@
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Hoja inferior de propiedades en móvil: oculta fuera de pantalla por
-       defecto (translate-y-full) y visible de nuevo como columna fija en
-       escritorio gracias a las clases lg:static lg:translate-y-0 del HTML */
+    /* Hoja inferior de propiedades en móvil */
     #panelPropiedades {
         max-height: 85dvh;
     }
@@ -58,20 +56,14 @@
                 </div>
 
                 <div class="flex flex-wrap gap-2">
-                    {{-- MIS MESAS: resumen del dia del mesero en sesion.
-                         Va en esta fila y no en una nueva porque la cabecera es
-                         sticky sobre un contenedor de alto fijo: una fila extra
-                         empuja el mapa fuera de la vista. --}}
+                    {{-- MIS MESAS --}}
                     <button type="button" id="btnMisMesas"
-                        class="flex-1 sm:flex-none justify-center px-4 py-2 rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] text-sm font-semibold transition hover:border-blue-500 hover:text-blue-500 flex items-center gap-2 shadow-sm">
+                        class="flex-1 sm:flex-none justify-center px-4 py-2 rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] text-sm font-semibold transition hover:border-[#b74309] hover:text-[#b74309] flex items-center gap-2 shadow-sm cursor-pointer">
                         <i class="fas fa-clipboard-list"></i>
                         <span>Mis mesas</span>
                     </button>
 
-                    {{-- Aviso de caja cerrada. Va DENTRO de la fila de botones
-                         (no en una fila aparte) porque la cabecera es sticky y
-                         su contenedor padre tiene alto fijo con overflow-hidden:
-                         una fila extra empujaría el mapa fuera de la vista. --}}
+                    {{-- Aviso de caja cerrada --}}
                     @unless($cajaAbierta ?? true)
                         <span class="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs sm:text-sm font-bold">
                             <i class="fas fa-triangle-exclamation"></i>
@@ -79,16 +71,10 @@
                         </span>
                     @endunless
 
-                    {{-- --- DELIVERY (Rappi/Uber/DiDi) ---
-                         Van en la MISMA fila que los botones de acción a
-                         propósito: la cabecera es sticky y su contenedor
-                         padre (admin/mesas/index.blade.php) tiene alto fijo
-                         con overflow-hidden. Si estos botones ocuparan su
-                         propia fila, empujarían el mapa fuera del área
-                         visible y las mesas dejarían de verse. --}}
+                    {{-- DELIVERY --}}
                     @foreach(($plataformasDelivery ?? collect()) as $plataforma)
                         <button type="button"
-                            class="btn-delivery flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 rounded-lg text-white text-sm sm:text-base font-semibold transition shadow-sm active:scale-95 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                            class="btn-delivery flex-1 sm:flex-none justify-center px-3 sm:px-4 py-2 rounded-lg text-white text-sm sm:text-base font-semibold transition shadow-sm active:scale-95 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                             style="background-color: {{ $plataforma->color }}"
                             data-plataforma-id="{{ $plataforma->id }}"
                             data-plataforma-nombre="{{ $plataforma->nombre }}"
@@ -97,10 +83,10 @@
                             <span>{{ $plataforma->nombre }}</span>
                         </button>
                     @endforeach
-                    {{-- El modo "Editar" da acceso a mover mesas, agregar y eliminar.
-                         Se muestra si el usuario tiene AL MENOS UNO de esos permisos. --}}
+
+                    {{-- Modo Editar --}}
                     @if($puedeEditarMesa || $puedeCrearMesa || $puedeEliminarMesa)
-                        <button type="button" id="btnEditar" class="flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm sm:text-base font-semibold transition flex items-center gap-2 shadow-sm">
+                        <button type="button" id="btnEditar" class="flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2 bg-[#b74309] hover:bg-[#8f3207] text-white rounded-lg text-sm sm:text-base font-semibold transition flex items-center gap-2 shadow-sm cursor-pointer active:scale-95">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
                             </svg>
@@ -108,9 +94,9 @@
                         </button>
                     @endif
 
-                    {{-- Guardar posiciones (drag & drop) requiere permiso de editar --}}
+                    {{-- Guardar posiciones --}}
                     @if($puedeEditarMesa)
-                        <button type="button" id="btnGuardar" class="flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm sm:text-base font-semibold transition flex items-center gap-2 hidden shadow-sm">
+                        <button type="button" id="btnGuardar" class="flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm sm:text-base font-semibold transition flex items-center gap-2 hidden shadow-sm cursor-pointer active:scale-95">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M7.707 9.293a1 1 0 010 1.414L4.414 14h11.172a1 1 0 110 2H4.414l3.293 3.293a1 1 0 01-1.414 1.414l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 0z"></path>
                             </svg>
@@ -119,7 +105,7 @@
                     @endif
 
                     @if($puedeEditarMesa || $puedeCrearMesa || $puedeEliminarMesa)
-                        <button type="button" id="btnCancelar" class="flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm sm:text-base font-semibold transition hidden shadow-sm flex items-center gap-2">
+                        <button type="button" id="btnCancelar" class="flex-1 sm:flex-none justify-center px-4 sm:px-6 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm sm:text-base font-semibold transition hidden shadow-sm flex items-center gap-2 cursor-pointer active:scale-95">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                             </svg>
@@ -134,10 +120,10 @@
                     <span id="totalMesas" class="text-sm font-semibold text-[var(--text-color)] bg-[var(--input-bg)] border border-[var(--border-color)] px-3 py-2 rounded-lg shadow-sm">Mesas: 0</span>
                 </div>
 
-                {{-- "Agregar" solo aparece si el usuario tiene permiso de crear mesas --}}
+                {{-- "Agregar" --}}
                 @if($puedeCrearMesa)
                     <div id="modosEdicion" class="hidden flex gap-2 w-full sm:w-auto sm:ml-auto">
-                        <button type="button" id="btnAgregarMesa" class="w-full sm:w-auto justify-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow-sm">
+                        <button type="button" id="btnAgregarMesa" class="w-full sm:w-auto justify-center px-4 py-2 bg-[#b74309] hover:bg-[#8f3207] text-white rounded-lg text-sm font-semibold transition flex items-center gap-1 shadow-sm cursor-pointer active:scale-95">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
                             </svg>
@@ -150,13 +136,10 @@
     </div>
 
     {{-- CONTENEDOR PRINCIPAL: MAPA Y PROPIEDADES --}}
-   <div class="py-3 sm:py-6 lg:py-8">
+    <div class="py-3 sm:py-6 lg:py-8">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
             {{-- MAPA --}}
             <div class="lg:col-span-3">
-                {{-- relative: la simbologia flotante se posiciona contra este bloque
-                     y NO contra el viewport con scroll, para que se quede fija
-                     en su esquina aunque se haga pan del plano. --}}
                 <div class="relative bg-[var(--card-color)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-lg">
 
                     {{-- Barra de zoom --}}
@@ -164,22 +147,17 @@
                         <span class="text-xs font-semibold text-[var(--text-muted)] hidden sm:inline">Toca y arrastra para mover el plano</span>
                         <span class="text-xs font-semibold text-[var(--text-muted)] sm:hidden">Desliza para mover el plano</span>
                         <div class="flex items-center gap-1 ml-auto">
-                            <button type="button" id="btnZoomOut" class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] active:scale-95 transition font-bold text-lg">−</button>
+                            <button type="button" id="btnZoomOut" class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] active:scale-95 transition font-bold text-lg cursor-pointer">−</button>
                             <span id="zoomLabel" class="text-xs font-semibold text-[var(--text-color)] w-12 text-center select-none">100%</span>
-                            <button type="button" id="btnZoomIn" class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] active:scale-95 transition font-bold text-lg">+</button>
-                            <button type="button" id="btnZoomReset" class="h-11 sm:h-9 px-3 flex items-center justify-center rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] active:scale-95 transition text-xs font-semibold">Ajustar</button>
+                            <button type="button" id="btnZoomIn" class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] active:scale-95 transition font-bold text-lg cursor-pointer">+</button>
+                            <button type="button" id="btnZoomReset" class="h-11 sm:h-9 px-3 flex items-center justify-center rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] active:scale-95 transition text-xs font-semibold cursor-pointer">Ajustar</button>
                         </div>
                     </div>
 
-                    {{-- Viewport: esto es lo que hace scroll/pan en el teléfono --}}
-                    {{-- SIMBOLOGIA
-                         Va flotando SOBRE el plano, no como una fila debajo:
-                         el contenedor tiene alto fijo, y cualquier fila extra
-                         empuja el mapa fuera del area visible.
-                         Se puede plegar porque en telefono tapa mesas. --}}
+                    {{-- SIMBOLOGIA --}}
                     <div class="absolute top-14 right-3 z-20 select-none">
                         <button type="button" id="btnSimbologia"
-                            class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-t-lg bg-[var(--card-color)]/95 backdrop-blur border border-[var(--border-color)] text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-color)] transition-colors">
+                            class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-t-lg bg-[var(--card-color)]/95 backdrop-blur border border-[var(--border-color)] text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-color)] transition-colors cursor-pointer">
                             <span><i class="fas fa-palette mr-1"></i> Simbología</span>
                             <i id="iconoSimbologia" class="fas fa-chevron-up text-[9px]"></i>
                         </button>
@@ -187,18 +165,17 @@
                         <div id="listaSimbologia"
                              class="bg-[var(--card-color)]/95 backdrop-blur border border-t-0 border-[var(--border-color)] rounded-b-lg px-2.5 py-2 space-y-1.5 shadow-lg">
                             <div class="flex items-center gap-2 whitespace-nowrap">
-                                <span class="w-3 h-3 rounded-full bg-green-500 shrink-0 border border-black/10"></span>
+                                <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0 border border-black/10"></span>
                                 <span class="text-[11px] font-semibold text-[var(--text-color)]">Disponible</span>
                             </div>
                             <div class="flex items-center gap-2 whitespace-nowrap">
-                                <span class="w-3 h-3 rounded-full bg-yellow-500 shrink-0 border border-black/10"></span>
+                                <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0 border border-black/10"></span>
                                 <span class="text-[11px] font-semibold text-[var(--text-color)]">Mis mesas</span>
                             </div>
                             <div class="flex items-center gap-2 whitespace-nowrap">
-                                <span class="w-3 h-3 rounded-full bg-pink-500 shrink-0 border border-black/10"></span>
+                                <span class="w-3 h-3 rounded-full bg-rose-500 shrink-0 border border-black/10"></span>
                                 <span class="text-[11px] font-semibold text-[var(--text-color)]">De otro mesero</span>
                             </div>
-                            
                         </div>
                     </div>
 
@@ -206,9 +183,7 @@
                          class="relative w-full h-[380px] sm:h-[480px] lg:h-[600px] bg-[var(--input-bg)] overflow-auto shadow-inner"
                          style="touch-action: pan-x pan-y;">
 
-                        {{-- Lienzo real: tamaño fijo, aquí sí tienen sentido las coordenadas x/y de las mesas --}}
                         <div id="planoLienzo" class="relative origin-top-left" style="width:1400px; height:900px; transition: transform 0.15s ease-out;">
-                            {{-- Las mesas se inyectan aquí vía JS --}}
                             <div id="planoVacio" class="hidden absolute inset-0 flex flex-col items-center justify-center text-center px-6">
                                 <svg class="w-14 h-14 mb-3 text-[var(--text-muted)] opacity-40" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zm10 0a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" clip-rule="evenodd"></path>
@@ -219,16 +194,10 @@
                         </div>
                     </div>
                 </div>
-
-                {{-- La leyenda se movio a la simbologia flotante sobre el plano. --}}
             </div>
 
             {{-- PANEL DE PROPIEDADES --}}
-            {{-- En móvil esto se convierte en una hoja inferior (bottom sheet) que
-                 sube desde abajo al seleccionar una mesa; en escritorio (lg:) se
-                 queda como columna lateral fija, igual que antes. --}}
             <div class="lg:col-span-1">
-                {{-- Fondo oscuro detrás de la hoja, solo en móvil --}}
                 <div id="panelBackdrop" class="hidden lg:hidden fixed inset-0 bg-black/50 z-30"></div>
 
                 <div id="panelPropiedades"
@@ -236,7 +205,6 @@
                             lg:sticky lg:inset-auto lg:translate-y-0 lg:transition-none lg:z-auto lg:rounded-xl lg:border lg:shadow-lg lg:top-28"
                      style="max-height: 85dvh;">
 
-                    {{-- Manija de arrastre, solo móvil --}}
                     <div class="lg:hidden flex justify-center pt-2 pb-1 shrink-0">
                         <span class="w-10 h-1.5 rounded-full bg-[var(--border-color)]"></span>
                     </div>
@@ -267,7 +235,7 @@
                                     data-teclado="texto"
                                     data-teclado-titulo="Número de Mesa"
                                     data-teclado-max="10"
-                                    class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner transition-colors">
+                                    class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] text-sm focus:outline-none focus:ring-2 focus:ring-[#b74309] shadow-inner transition-colors">
                             </div>
 
                             <div>
@@ -278,18 +246,18 @@
                                     data-teclado="numerico"
                                     data-teclado-titulo="Capacidad"
                                     data-teclado-max="2"
-                                    class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner transition-colors">
+                                    class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] text-sm focus:outline-none focus:ring-2 focus:ring-[#b74309] shadow-inner transition-colors">
                             </div>
 
                             @if($puedeEliminarMesa || $puedeEditarMesa)
                                 <div id="botonesAccion" class="pt-4 flex flex-col gap-2 border-t border-[var(--border-color)] mt-2">
                                     @if($puedeEliminarMesa)
-                                        <button type="button" id="btnEliminar" class="flex-1 px-3 py-2.5 lg:py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition shadow-sm">
+                                        <button type="button" id="btnEliminar" class="flex-1 px-3 py-2.5 lg:py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-semibold transition shadow-sm cursor-pointer active:scale-95">
                                             Eliminar
                                         </button>
                                     @endif
                                     @if($puedeEditarMesa)
-                                        <button type="button" id="btnActualizar" class="flex-1 px-3 py-2.5 lg:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition shadow-sm">
+                                        <button type="button" id="btnActualizar" class="flex-1 px-3 py-2.5 lg:py-2 bg-[#b74309] hover:bg-[#8f3207] text-white rounded-lg text-sm font-semibold transition shadow-sm cursor-pointer active:scale-95">
                                             Actualizar
                                         </button>
                                     @endif
@@ -302,64 +270,101 @@
         </div>
     </div>
 
-    {{-- MODAL CREAR MESA (ACTUALIZADO CON FLEX-COL) --}}
+    {{-- MODAL CREAR MESA --}}
     @if($puedeCrearMesa)
     <div id="modalCrearMesa" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[60] p-4 backdrop-blur-sm transition-all duration-300">
 
-        {{-- Contenedor del Modal: flex flex-col para permitir scroll interno --}}
         <div id="modalCrearMesaContent" class="bg-[var(--card-color)] rounded-xl shadow-2xl max-w-md w-full border border-[var(--border-color)] overflow-hidden max-h-[90vh] flex flex-col transition-all duration-200">
 
-            {{-- HEADER: shrink-0 --}}
+            {{-- HEADER --}}
             <div class="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-color)]/50 shrink-0">
                 <h2 class="text-xl font-bold text-[var(--text-color)]">Crear Nueva Mesa</h2>
-                <button type="button" class="btnCerrarModal text-[var(--text-muted)] hover:text-red-500 transition-colors outline-none">
+                <button type="button" class="btnCerrarModal text-[var(--text-muted)] hover:text-rose-500 transition-colors outline-none cursor-pointer">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                     </svg>
                 </button>
             </div>
 
-            {{-- BODY: overflow-y-auto --}}
+            {{-- BODY --}}
             <div class="px-6 py-5 space-y-4 overflow-y-auto">
                 <div>
-                    <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">Número de Mesa <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">Número de Mesa <span class="text-rose-500">*</span></label>
                     <input type="text" id="newNumero"
                         autocomplete="off"
                         data-teclado="texto"
                         data-teclado-titulo="Número de Mesa"
                         data-teclado-max="10"
-                        class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner transition-all" placeholder="ej: M1, Mesa-1, Table 1" required>
+                        class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[#b74309] shadow-inner transition-all" placeholder="ej: M1, Mesa-1, Table 1" required>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">Capacidad <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">Capacidad <span class="text-rose-500">*</span></label>
                     <input type="text" id="newCapacidad"
                         inputmode="numeric"
                         autocomplete="off"
                         data-teclado="numerico"
                         data-teclado-titulo="Capacidad"
                         data-teclado-max="2"
-                        class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner transition-all" placeholder="4" required>
+                        class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[#b74309] shadow-inner transition-all" placeholder="4" required>
                 </div>
 
-                <div>
+                {{-- Dropdown Personalizado: Estado Inicial --}}
+                <div x-data="{
+                    open: false,
+                    selected: 'disponible',
+                    selectedLabel: 'Disponible',
+                    options: [
+                        { value: 'disponible', label: 'Disponible' },
+                        { value: 'reservada', label: 'Reservada' },
+                        { value: 'limpieza', label: 'Limpieza' }
+                    ],
+                    select(opt) {
+                        this.selected = opt.value;
+                        this.selectedLabel = opt.label;
+                        this.open = false;
+                        const el = document.getElementById('newEstado');
+                        if (el) {
+                            el.value = opt.value;
+                            el.dispatchEvent(new Event('change'));
+                        }
+                    }
+                }">
                     <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">Estado Inicial</label>
-                    <select id="newEstado" class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all">
-                        <option value="disponible">Disponible</option>
-                        <option value="reservada">Reservada</option>
-                        <option value="limpieza">Limpieza</option>
-                    </select>
+                    
+                    <input type="hidden" id="newEstado" :value="selected" value="disponible">
+
+                    <div class="relative">
+                        <button type="button" @click="open = !open"
+                            class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] flex items-center justify-between text-sm font-medium outline-none transition-all focus:border-[#b74309] cursor-pointer">
+                            <span x-text="selectedLabel">Disponible</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }" style="color: var(--text-muted);"></i>
+                        </button>
+
+                        <div x-show="open" @click.outside="open = false" x-transition
+                            class="absolute z-50 w-full mt-1.5 rounded-lg shadow-2xl py-1.5 border overflow-hidden"
+                            style="background-color: var(--card-color); border-color: var(--border-color); display: none;">
+                            <template x-for="opt in options" :key="opt.value">
+                                <div @click="select(opt)"
+                                    class="px-3 py-2 text-sm font-medium cursor-pointer transition-colors hover:bg-[#b74309]/10"
+                                    :class="{ 'bg-[#b74309]/15 text-[#b74309] font-bold': selected === opt.value }"
+                                    style="color: var(--text-color);">
+                                    <span x-text="opt.label"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
 
                 <p class="text-xs text-[var(--text-muted)] mt-3">La mesa aparecerá en el plano lista para ser posicionada.</p>
             </div>
 
-            {{-- FOOTER: shrink-0 --}}
+            {{-- FOOTER --}}
             <div class="px-6 py-4 border-t border-[var(--border-color)] flex gap-3 justify-end bg-[var(--bg-color)]/50 shrink-0">
-                <button type="button" class="btnCerrarModal px-4 py-2 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] hover:opacity-80 rounded-lg font-semibold transition shadow-sm">
+                <button type="button" class="btnCerrarModal px-4 py-2 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] hover:opacity-80 rounded-lg font-semibold transition shadow-sm cursor-pointer">
                     Cancelar
                 </button>
-                <button type="button" id="btnConfirmarNueva" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition shadow-sm">
+                <button type="button" id="btnConfirmarNueva" class="px-4 py-2 bg-[#b74309] hover:bg-[#8f3207] text-white rounded-lg font-semibold transition shadow-sm cursor-pointer active:scale-95">
                     Crear Mesa
                 </button>
             </div>
@@ -369,7 +374,6 @@
 
     <div id="notificacion" class="fixed bottom-4 right-4 px-4 py-3 rounded-lg text-white text-sm font-semibold hidden z-50 transition-all shadow-xl"></div>
 </div>
-
 
 {{-- MODAL: MIS MESAS DEL DIA --}}
 <div id="modal-mis-mesas" class="hidden fixed inset-0 z-[9998] items-center justify-center p-3 sm:p-4">
@@ -382,7 +386,7 @@
                 <p class="text-[11px] text-[var(--text-muted)]" id="mis-mesas-fecha"></p>
             </div>
             <button type="button" data-cerrar-mis-mesas
-                class="w-8 h-8 rounded-lg border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-color)] shrink-0">&times;</button>
+                class="w-8 h-8 rounded-lg border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-color)] shrink-0 cursor-pointer flex items-center justify-center">&times;</button>
         </div>
 
         <div class="overflow-y-auto flex-1" id="mis-mesas-contenido">
@@ -415,7 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filas.forEach(f => {
             html += '<div class="border border-[var(--border-color)] rounded-xl overflow-hidden">'
-                + '<button type="button" class="btn-mi-mesa w-full px-3 py-2.5 flex items-center justify-between gap-2 text-left hover:bg-[var(--input-bg)] transition-colors" data-orden="' + f.orden_id + '">'
+                + '<button type="button" class="btn-mi-mesa w-full px-3 py-2.5 flex items-center justify-between gap-2 text-left hover:bg-[var(--input-bg)] transition-colors cursor-pointer" data-orden="' + f.orden_id + '">'
                 + '<div class="min-w-0">'
                 + '<span class="font-black text-[var(--text-color)]">Mesa ' + f.mesa + '</span>'
                 + '<span class="text-[10px] text-[var(--text-muted)] ml-2">' + (f.numero || '') + '</span>'
@@ -508,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 + '<div class="rounded-xl border border-[var(--border-color)] p-2.5 text-center"><p class="text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)]">Atendidas</p><p class="text-lg font-black text-[var(--text-color)]">' + t.mesas_atendidas + '</p></div>'
                 + '<div class="rounded-xl border border-[var(--border-color)] p-2.5 text-center"><p class="text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)]">Abiertas</p><p class="text-lg font-black text-amber-500">' + t.abiertas + '</p></div>'
                 + '<div class="rounded-xl border border-[var(--border-color)] p-2.5 text-center"><p class="text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)]">Vendido</p><p class="text-lg font-black text-emerald-500">' + dinero(t.vendido) + '</p></div>'
-                + '<div class="rounded-xl border border-[var(--border-color)] p-2.5 text-center"><p class="text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)]">Por cobrar</p><p class="text-lg font-black text-blue-500">' + dinero(t.por_cobrar) + '</p></div>'
+                + '<div class="rounded-xl border border-[var(--border-color)] p-2.5 text-center"><p class="text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)]">Por cobrar</p><p class="text-lg font-black text-[#b74309]">' + dinero(t.por_cobrar) + '</p></div>'
                 + '</div>';
 
             html += pintarGrupo('Atendiendo ahora', 'fa-utensils', 'text-amber-500', d.grupos.atendiendo, 'atendiendo');
@@ -523,9 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
             html += '<div class="h-4"></div>';
             contenido.innerHTML = html;
 
-            // Cada mesa despliega su consumo. Se pide al servidor solo al
-            // abrirla: cargar el detalle de todas de golpe seria lento y casi
-            // siempre innecesario.
             contenido.querySelectorAll('.btn-mi-mesa').forEach(b => {
                 b.addEventListener('click', () => {
                     const bloque = b.nextElementSibling;
@@ -551,8 +552,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 TecladoVirtual.attachAll();
             }
 
-            // Plegar/desplegar la simbologia. En telefono el plano es chico y
-            // la tarjeta puede tapar mesas, asi que conviene poder cerrarla.
             const btnSimbologia = document.getElementById('btnSimbologia');
             const listaSimbologia = document.getElementById('listaSimbologia');
             const iconoSimbologia = document.getElementById('iconoSimbologia');
@@ -567,14 +566,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                // En pantallas chicas arranca plegada.
                 if (window.innerWidth < 640) btnSimbologia.click();
             }
 
-            // --- NUEVO: botones de Delivery (Rappi/Uber/DiDi) ---
-            // Al elegir una plataforma, se crea el "pedido" (una mesa virtual)
-            // en el servidor y se redirige a la comanda, exactamente igual
-            // que si se hubiera abierto una mesa del salón.
             document.querySelectorAll('.btn-delivery').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const plataformaId = btn.dataset.plataformaId;

@@ -16,7 +16,7 @@
                     colors: {
                         'ol-bg': '#09090b',
                         'ol-card': '#18181b',
-                        'ol-blue': '#3B82F6',
+                        'ol-blue': '#b74309',
                         'ol-text-muted': '#a1a1aa'
                     }
                 }
@@ -88,10 +88,10 @@
         .key-btn:active { transform: scale(0.95); box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2); }
 
         .btn-ok {
-            background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%);
-            border: 1px solid #2563EB;
-            border-top: 1px solid #93C5FD;
-            box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
+            background: linear-gradient(180deg, #b74309 0%, #8f3207 100%);
+            border: 1px solid #8f3207;
+            border-top: 1px solid #e8946a;
+            box-shadow: 0 6px 15px rgba(183, 67, 9, 0.3);
             color: white !important;
         }
 
@@ -128,7 +128,7 @@
 
     <div class="absolute z-50" style="top: max(1rem, env(safe-area-inset-top)); right: max(1rem, env(safe-area-inset-right));">
         <button onclick="toggleTheme()" class="theme-toggle px-4 py-2 rounded-full flex items-center gap-2 text-[9px] sm:text-[10px] font-black tracking-widest uppercase shadow-lg">
-            <i id="themeIcon" class="fas fa-moon text-ol-blue"></i>
+            <i id="themeIcon" class="fas fa-moon text-[#b74309]"></i>
             <span id="themeText" class="hidden sm:inline">Modo Claro</span>
         </button>
     </div>
@@ -162,7 +162,7 @@
         {{-- Visor más chaparrito --}}
         <div class="compact-visor w-full h-14 sm:h-16 visor-screen rounded-2xl mb-5 sm:mb-6 flex items-center justify-center gap-2 relative overflow-hidden">
             <span id="pinDisplay" class="text-3xl sm:text-4xl font-black tracking-[0.4em] mt-1"></span>
-            <span class="cursor-blink w-[2px] h-8 bg-ol-blue rounded-full"></span>
+                <span class="cursor-blink w-[2px] h-8 bg-[#b74309] rounded-full"></span>
         </div>
 
         {{-- GRID PERFECTO: Usa aspect-square para mantener proporción siempre --}}

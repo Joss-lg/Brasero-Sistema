@@ -21,7 +21,7 @@
         body.modo-crema #sidebar .menu-link:hover { background: rgba(15, 23, 42, 0.04); }
         body.modo-crema #sidebar .menu-link .sidebar-text { color: #4b5563; }
         body.modo-crema #sidebar .menu-link .menu-icon { background: rgba(248, 250, 252, 0.96); border-color: rgba(15, 23, 42, 0.08); color: #374151; }
-        body.modo-crema #sidebar .menu-link.active { background: rgba(59, 130, 246, 0.12); border-color: rgba(59, 130, 246, 0.18); box-shadow: 0 12px 30px rgba(59, 130, 246, 0.12); }
+        body.modo-crema #sidebar .menu-link.active { background: rgba(183, 67, 9, 0.12); border-color: rgba(183, 67, 9, 0.18); box-shadow: 0 12px 30px rgba(183, 67, 9, 0.12); }
         body.modo-crema .user-footer { background: #ffffff; border-color: rgba(15, 23, 42, 0.08); box-shadow: 0 25px 50px rgba(15, 23, 42, 0.06); }
         body.modo-crema .btn-logout { border-color: rgba(15, 23, 42, 0.08); }
 
@@ -59,7 +59,7 @@
 
     {{-- Header del Logo --}}
     <div class="h-24 flex items-center px-5 relative shrink-0 w-full transition-all">
-        <div class="absolute top-1/2 left-10 -translate-y-1/2 w-20 h-20 bg-blue-500/10 blur-[30px] rounded-full pointer-events-none"></div>
+        <div class="absolute top-1/2 left-10 -translate-y-1/2 w-20 h-20 bg-[#b74309]/10 blur-[30px] rounded-full pointer-events-none"></div>
         
         <div class="logo-wrapper flex items-center relative z-10 w-full transition-opacity duration-300">
             <div class="w-10 h-10 rounded-xl overflow-hidden shadow-lg shrink-0">
@@ -132,15 +132,15 @@
                             }
                         @endphp
 
-                        <a href="{{ $url }}" class="menu-link relative flex items-center px-3 py-2.5 rounded-xl transition-all duration-300 group overflow-hidden {{ $isActive ? 'bg-blue-600/10 border border-blue-500/30' : 'border border-transparent hover:bg-[var(--input-bg)]' }}">
-                            <div class="menu-icon flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-300 shrink-0 relative z-10 {{ $isActive ? 'bg-blue-500 text-white' : 'bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-muted)] group-hover:text-[var(--text-color)]' }}">
+                        <a href="{{ $url }}" class="menu-link relative flex items-center px-3 py-2.5 rounded-xl transition-all duration-300 group overflow-hidden {{ $isActive ? 'bg-[#b74309]/10 border border-[#b74309]/30' : 'border border-transparent hover:bg-[var(--input-bg)]' }}">
+                            <div class="menu-icon flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-300 shrink-0 relative z-10 {{ $isActive ? 'bg-[#b74309] text-white' : 'bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-muted)] group-hover:text-[var(--text-color)]' }}">
                                 <i class="{{ $item['icon'] }} text-[15px]"></i>
                             </div>
                             <span class="sidebar-text ml-4 text-[14px] tracking-wide {{ $isActive ? 'text-[var(--text-color)] font-bold' : 'text-[var(--text-muted)] font-medium group-hover:text-[var(--text-color)]' }}">
                                 {{ $item['label'] }}
                             </span>
                             @if($isActive)
-                                <div class="absolute left-[-1px] top-1/2 -translate-y-1/2 w-[3px] h-[60%] bg-blue-500 rounded-r-md"></div>
+                                <div class="absolute left-[-1px] top-1/2 -translate-y-1/2 w-[3px] h-[60%] bg-[#b74309] rounded-r-md"></div>
                             @endif
                         </a>
                     @endif
@@ -152,7 +152,7 @@
     {{-- Footer de Usuario --}}
     <div class="user-footer p-4 mx-3 mb-5 mt-2 rounded-2xl bg-[var(--card-color)] border border-[var(--border-color)] flex flex-col gap-3 shrink-0 relative transition-all duration-300 shadow-lg">
         <div class="flex items-center w-full">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.3)] mx-auto">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#b74309] to-[#8f3207] text-white flex items-center justify-center font-black text-sm shrink-0 shadow-[0_0_10px_rgba(183,67,9,0.3)] mx-auto">
                 {{ substr(auth()->user()->nombre ?? 'U', 0, 2) }}
             </div>
             <div class="sidebar-text ml-3 flex flex-col justify-center">

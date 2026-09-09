@@ -21,9 +21,10 @@
 </style>
 
 @if($comandas->isEmpty())
-    <div class="glass-card rounded-[24px] px-6 py-16 sm:py-24 text-center border border-[var(--border-color)] shadow-xl mt-6 sm:mt-8 bg-[var(--card-color)]">
+    <div class="rounded-[24px] px-6 py-16 sm:py-24 text-center border shadow-xl mt-6 sm:mt-8 transition-colors" 
+         style="background-color: var(--card-color); border-color: var(--border-color);">
         <i class="fas fa-check-double text-5xl text-emerald-500 mb-4"></i>
-        <h2 class="text-xl sm:text-2xl font-black text-[var(--text-color)]">¡{{ $areaSeleccionada }} Despejada!</h2>
+        <h2 class="text-xl sm:text-2xl font-black" style="color: var(--text-color);">¡{{ $areaSeleccionada }} Despejada!</h2>
     </div>
 @else
     <div class="grid gap-3 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 mt-4 sm:mt-8 items-start w-full">
@@ -53,14 +54,17 @@
                 $colorBorde  = $esDelivery ? 'border-t-orange-500' : 'border-t-emerald-500';
             @endphp
 
-            <article class="bg-[var(--card-color)] w-full rounded-[20px] border border-[var(--border-color)] border-t-[6px] {{ $colorBorde }} shadow-lg flex flex-col h-full overflow-hidden relative transition-all duration-300 comanda-card {{ $claseAlerta }}"
+            <article class="w-full rounded-[20px] border border-t-[6px] {{ $colorBorde }} shadow-lg flex flex-col h-full overflow-hidden relative transition-all duration-300 comanda-card {{ $claseAlerta }}"
+                     style="background-color: var(--card-color); border-color: var(--border-color);"
                      data-comanda-id="{{ $comanda->id }}"
                      data-lote="{{ $comanda->detalles->first()?->lote_envio ?? $comanda->id }}"
                      data-tiempo-inicio="{{ $fechaCarbon->getTimestampMs() }}">
-                <div class="p-4 border-b border-[var(--border-color)] min-w-0 flex items-start justify-between gap-2">
+                
+                {{-- Cabecera comanda --}}
+                <div class="p-4 border-b min-w-0 flex items-start justify-between gap-2" style="border-bottom-color: var(--border-color);">
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 mb-0.5">
-                            <h3 class="font-black text-lg truncate capitalize">{{ $labelMesa }}</h3>
+                            <h3 class="font-black text-lg truncate capitalize" style="color: var(--text-color);">{{ $labelMesa }}</h3>
                             @if($esDelivery)
                                 <span class="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-500 text-white text-[9px] font-black uppercase tracking-wider shadow-sm">
                                     <i class="fas fa-motorcycle text-[8px]"></i>
@@ -68,81 +72,79 @@
                                 </span>
                             @endif
                         </div>
-                        <p class="text-xs text-[var(--text-muted)] truncate">Mesero: {{ $comanda->mesero->nombre ?? 'N/A' }}</p>
+                        <p class="text-xs truncate" style="color: var(--text-muted);">Mesero: {{ $comanda->mesero->nombre ?? 'N/A' }}</p>
                     </div>
-                    <span
-                        class="tiempo-espera shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wide whitespace-nowrap bg-zinc-500/10 border-zinc-500/30 text-zinc-400"
-                        data-creado="{{ $fechaCarbon->toIso8601String() }}"
-                    >
+                    <span class="tiempo-espera shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wide whitespace-nowrap"
+                          style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);"
+                          data-creado="{{ $fechaCarbon->toIso8601String() }}">
                         <i class="fas fa-clock"></i>
                         <span class="tiempo-texto">--</span>
                     </span>
                 </div>
 
+                {{-- Detalles de productos --}}
                 <div class="p-4 flex-1 min-w-0">
                     <ul class="space-y-2">
                         @foreach($comanda->detalles as $detalle)
                             @php
                                 $tiempoClases = [
-                                    'sin-tiempo'     => ['label' => 'S', 'clase' => 'text-zinc-400 bg-zinc-500/10 border-zinc-500/30'],
-                                    'primer-tiempo'  => ['label' => '1', 'clase' => 'text-blue-400 bg-blue-500/10 border-blue-500/30'],
-                                    'segundo-tiempo' => ['label' => '2', 'clase' => 'text-purple-400 bg-purple-500/10 border-purple-500/30'],
-                                    'tercer-tiempo'  => ['label' => '3', 'clase' => 'text-pink-400 bg-pink-500/10 border-pink-500/30'],
+                                    'sin-tiempo'     => ['label' => 'S', 'clase' => 'border text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md', 'style' => 'background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);'],
+                                    'primer-tiempo'  => ['label' => '1', 'clase' => 'text-[#b74309] dark:text-[#e8946a] bg-[#b74309]/10 border border-[#b74309]/30 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md', 'style' => ''],
+                                    'segundo-tiempo' => ['label' => '2', 'clase' => 'text-purple-500 bg-purple-500/10 border border-purple-500/30 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md', 'style' => ''],
+                                    'tercer-tiempo'  => ['label' => '3', 'clase' => 'text-pink-500 bg-pink-500/10 border border-pink-500/30 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md', 'style' => ''],
                                 ];
                                 $tInfo = $tiempoClases[$detalle->tiempo] ?? null;
                             @endphp
-                           <li class="flex flex-col text-sm gap-1.5 detalle-item"
-                               data-detalle-id="{{ $detalle->id }}"
-                               data-estado="{{ $detalle->estado_preparacion }}">
-    <div class="flex items-center justify-between gap-2">
-        <span class="font-bold break-words flex flex-wrap items-center gap-1.5 nombre-producto transition-all
-              {{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'line-through opacity-40 text-[var(--text-muted)]' : 'text-[var(--text-color)]' }}">
-        {{ $detalle->cantidad }}x {{ $detalle->producto->nombre ?? 'Producto Eliminado' }}
-        @if($tInfo)
-            <span class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md border {{ $tInfo['clase'] }}">
-                <i class="fas fa-clock"></i>Tiempo {{ $tInfo['label'] }}
-            </span>
-        @endif
-        @if($detalle->gramaje)
-            @php
-                $gramajeLimpio = rtrim(rtrim(number_format((float) $detalle->gramaje, 2, '.', ''), '0'), '.');
-            @endphp
-            <span class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide text-orange-400 bg-orange-500/10 border border-orange-500/30 px-1.5 py-0.5 rounded-md">
-                <i class="fas fa-weight-hanging"></i>{{ $gramajeLimpio }}g
-            </span>
-        @endif
-        </span>
+                            <li class="flex flex-col text-sm gap-1.5 detalle-item"
+                                data-detalle-id="{{ $detalle->id }}"
+                                data-estado="{{ $detalle->estado_preparacion }}">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-bold break-words flex flex-wrap items-center gap-1.5 nombre-producto transition-all {{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'line-through opacity-40' : '' }}"
+                                          style="{{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'color: var(--text-muted);' : 'color: var(--text-color);' }}">
+                                        {{ $detalle->cantidad }}x {{ $detalle->producto->nombre ?? 'Producto Eliminado' }}
+                                        @if($tInfo)
+                                            <span class="inline-flex items-center gap-1 {{ $tInfo['clase'] }}" style="{{ $tInfo['style'] }}">
+                                                <i class="fas fa-clock"></i>Tiempo {{ $tInfo['label'] }}
+                                            </span>
+                                        @endif
+                                        @if($detalle->gramaje)
+                                            @php
+                                                $gramajeLimpio = rtrim(rtrim(number_format((float) $detalle->gramaje, 2, '.', ''), '0'), '.');
+                                            @endphp
+                                            <span class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wide text-orange-500 bg-orange-500/10 border border-orange-500/30 px-1.5 py-0.5 rounded-md">
+                                                <i class="fas fa-weight-hanging"></i>{{ $gramajeLimpio }}g
+                                            </span>
+                                        @endif
+                                    </span>
 
-        {{-- Boton de tachar: marca este producto como listo sin avanzar toda la comanda --}}
-        <button type="button"
-            class="btn-tachar shrink-0 w-8 h-8 rounded-xl border-2 transition-all flex items-center justify-center
-                   {{ in_array($detalle->estado_preparacion, ['listo_cocina','servida'])
-                       ? 'bg-emerald-500 border-emerald-500 text-white scale-95'
-                       : 'border-zinc-300 dark:border-white/20 text-zinc-400 hover:border-emerald-500 hover:text-emerald-500 hover:scale-105' }}"
-            title="{{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'Desmarcar' : 'Marcar como listo' }}">
-            <i class="fas fa-check text-[11px]"></i>
-        </button>
-    </div>
-    @if($detalle->notas)
-        <span class="flex items-start gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold w-full break-words leading-snug">
-            <i class="fas fa-exclamation-circle mt-0.5 shrink-0"></i>
-            <span>{{ $detalle->notas }}</span>
-        </span>
-    @endif
-</li>
+                                    {{-- Boton de tachar --}}
+                                    <button type="button"
+                                        class="btn-tachar shrink-0 w-8 h-8 rounded-xl border-2 transition-all flex items-center justify-center cursor-pointer {{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'bg-emerald-500 border-emerald-500 text-white scale-95' : 'hover:border-emerald-500 hover:text-emerald-500 hover:scale-105' }}"
+                                        style="{{ !in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'border-color: var(--border-color); color: var(--text-muted);' : '' }}"
+                                        title="{{ in_array($detalle->estado_preparacion, ['listo_cocina','servida']) ? 'Desmarcar' : 'Marcar como listo' }}">
+                                        <i class="fas fa-check text-[11px]"></i>
+                                    </button>
+                                </div>
+                                @if($detalle->notas)
+                                    <span class="flex items-start gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-bold w-full break-words leading-snug">
+                                        <i class="fas fa-exclamation-circle mt-0.5 shrink-0"></i>
+                                        <span>{{ $detalle->notas }}</span>
+                                    </span>
+                                @endif
+                            </li>
                         @endforeach
                     </ul>
                 </div>
 
                 {{-- Formulario con ÚNICO Botón para finalizar la comanda --}}
-                <div class="p-3 sm:p-4 bg-[var(--bg-color)] border-t border-[var(--border-color)]">
+                <div class="p-3 sm:p-4 border-t" style="background-color: var(--bg-color); border-top-color: var(--border-color);">
                     <form action="{{ route('admin.cocina.orden.estado', $comanda->orden_id) }}" method="POST" class="form-avanzar-estado">
                         @csrf @method('PATCH')
                         <input type="hidden" name="estado" value="servida">
                         <input type="hidden" name="lote" value="{{ $comanda->lote }}">
                         <input type="hidden" name="area" value="{{ strtolower($areaSeleccionada) }}">
                         <button type="submit"
-                            class="w-full py-3.5 rounded-xl font-black uppercase text-[12px] tracking-[0.1em] transition-all active:scale-95 bg-emerald-500 hover:bg-emerald-400 text-white shadow-md">
+                            class="w-full py-3.5 rounded-xl font-black uppercase text-[12px] tracking-[0.1em] transition-all active:scale-95 bg-emerald-500 hover:bg-emerald-400 text-white shadow-md cursor-pointer">
                             MARCAR COMO LISTA
                         </button>
                     </form>

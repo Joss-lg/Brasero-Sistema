@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Mesas | Ollintem Pro')
+@section('title', 'Mesas | El Brasero')
 @section('header-title', 'Gestión de Mesas')
 @section('header-subtitle', 'Supervisión en tiempo real y gestión espacial')
 

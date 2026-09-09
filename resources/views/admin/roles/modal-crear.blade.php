@@ -1,13 +1,11 @@
 {{-- resources/views/admin/roles/modal-crear.blade.php --}}
 
 <style>
-    /* Solo aplicamos el ajuste de posición en pantallas grandes */
     @media (min-width: 768px) {
         body.teclado-virtual-abierto #modalCrearRol {
             align-items: flex-start !important;
             padding-top: 15px !important;
         }
-        
         body.teclado-virtual-abierto .dynamic-modal-content {
             transform: translateY(0) scale(0.98) !important;
             max-height: calc(100dvh - 340px) !important; 
@@ -17,12 +15,11 @@
 
 <div id="modalCrearRol" class="fixed inset-0 z-[99999] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300">
     
-    {{-- Capa de cierre al hacer clic fuera --}}
     <div class="absolute inset-0" onclick="cerrarModalCrear()"></div>
 
     <div class="bg-[var(--card-color)] border border-[var(--border-color)] rounded-[1.5rem] sm:rounded-[2rem] w-full max-w-lg p-6 sm:p-8 shadow-2xl relative overflow-hidden transform scale-95 opacity-0 transition-all duration-300 dynamic-modal-content z-10 max-h-[92vh] overflow-y-auto">
         
-        <div class="absolute top-[-10%] left-[-10%] w-32 h-32 rounded-full bg-blue-600/10 blur-[60px] pointer-events-none"></div>
+        <div class="absolute top-[-10%] left-[-10%] w-32 h-32 rounded-full bg-[#b74309]/10 blur-[60px] pointer-events-none"></div>
 
         <div class="flex justify-between items-center mb-5 sm:mb-6 relative">
             <h2 class="text-lg sm:text-xl font-black text-[var(--text-color)] tracking-tight">Crear Puesto Nuevo</h2>
@@ -38,7 +35,7 @@
                 <label for="nombre" class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-3 block">Nombre del Puesto</label>
                 <input type="text" id="nombre" name="nombre" placeholder="Ej: Guardia Nocturno" required 
                         data-teclado="texto"
-                       class="w-full h-12 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-5 text-base text-[var(--text-color)] outline-none transition-all focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                       class="w-full h-12 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-5 text-base text-[var(--text-color)] outline-none transition-all focus:border-[#b74309] focus:ring-1 focus:ring-[#b74309]">
                 @error('nombre') <span class="text-xs text-rose-500 mt-2 block font-bold">{{ $message }}</span> @enderror
             </div>
 
@@ -48,7 +45,7 @@
                     Cancelar
                 </button>
                 <button type="submit" 
-                        class="w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] outline-none">
+                        class="w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-bold bg-[#b74309] hover:bg-[#8f3207] text-white transition-all shadow-lg shadow-[#b74309]/20 active:scale-[0.98] outline-none">
                     <i class="fas fa-save mr-2"></i> Guardar Puesto
                 </button>
             </div>
@@ -57,7 +54,6 @@
 </div>
 
 <script>
-    // Inicializamos los campos del teclado virtual
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof TecladoVirtual !== 'undefined') {
             TecladoVirtual.attachAll();
@@ -67,10 +63,8 @@
     window.abrirModalCrear = function() {
         const modal = document.getElementById('modalCrearRol');
         const content = modal.querySelector('.dynamic-modal-content');
-        
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        
         requestAnimationFrame(() => {
             content.classList.remove('scale-95', 'opacity-0');
             content.classList.add('scale-100', 'opacity-100');
@@ -80,10 +74,8 @@
     window.cerrarModalCrear = function() {
         const modal = document.getElementById('modalCrearRol');
         const content = modal.querySelector('.dynamic-modal-content');
-        
         content.classList.remove('scale-100', 'opacity-100');
         content.classList.add('scale-95', 'opacity-0');
-        
         setTimeout(() => {
             modal.classList.remove('flex');
             modal.classList.add('hidden');

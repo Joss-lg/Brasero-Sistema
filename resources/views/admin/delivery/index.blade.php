@@ -1,45 +1,48 @@
 @extends('layouts.admin')
 
-@section('title', 'Delivery | Ollintem Pro')
+@section('title', 'Delivery | El Brasero')
 @section('header-title', 'Configuración de Delivery')
 @section('header-subtitle', 'Comisión + IVA que cobra cada plataforma')
 
 @section('content')
-<div class="px-3 sm:px-6 lg:px-8 py-5 sm:py-8 w-full max-w-4xl mx-auto space-y-5 sm:space-y-8 relative z-10">
+<div class="px-3 sm:px-6 lg:px-8 py-5 sm:py-8 w-full max-w-4xl mx-auto space-y-5 sm:space-y-8 relative z-10" style="background-color: var(--bg-color);">
 
     <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-red-600 shadow-[0_4px_14px_rgba(234,88,12,0.35)] shrink-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-[#b74309] to-[#8f3207] shadow-[0_4px_14px_rgba(183,67,9,0.35)] shrink-0">
             <i class="fas fa-motorcycle text-white text-sm"></i>
         </div>
         <div>
-            <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Plataformas de Delivery</h1>
-            <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight" style="color: var(--text-color);">Plataformas de Delivery</h1>
+            <p class="text-xs sm:text-sm font-medium" style="color: var(--text-muted);">
                 Estos porcentajes se negocian directamente con cada plataforma. Ajústalos aquí cuando cambie tu contrato.
             </p>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-[#15151a] border border-slate-100 dark:border-slate-800/60 rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-3">
+    <div class="rounded-2xl sm:rounded-[2rem] p-3.5 sm:p-6 shadow-xl space-y-3" style="background-color: var(--card-color); border: 1px solid var(--border-color);">
         @foreach($plataformas as $plataforma)
-            <div class="plataforma-card p-3.5 sm:p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/60 dark:bg-white/[0.02]"
+            <div class="plataforma-card p-3.5 sm:p-4 rounded-xl border transition-colors"
+                 style="background-color: var(--input-bg); border-color: var(--border-color);"
                  data-id="{{ $plataforma->id }}">
                 <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                     <div class="flex items-center gap-2.5 sm:w-40 shrink-0">
                         <span class="w-3 h-3 rounded-full shrink-0" style="background-color: {{ $plataforma->color }}"></span>
-                        <span class="font-black text-sm text-slate-900 dark:text-white">{{ $plataforma->nombre }}</span>
+                        <span class="font-black text-sm" style="color: var(--text-color);">{{ $plataforma->nombre }}</span>
                     </div>
 
                     <div class="flex-1 grid grid-cols-2 gap-3">
                         <label class="block">
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-slate-400">% Comisión</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wide" style="color: var(--text-muted);">% Comisión</span>
                             <input type="text" inputmode="decimal" data-teclado="numerico"
-                                   class="input-comision mt-0.5 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f0f13] text-sm font-bold text-slate-900 dark:text-white"
+                                   class="input-comision mt-0.5 w-full px-3 py-2 rounded-lg border text-sm font-bold outline-none transition-colors focus:border-[#b74309] focus:ring-1 focus:ring-[#b74309]"
+                                   style="background-color: var(--card-color); border-color: var(--border-color); color: var(--text-color);"
                                    value="{{ number_format($plataforma->comision_porcentaje, 2, '.', '') }}">
                         </label>
                         <label class="block">
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-slate-400">% IVA sobre comisión</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wide" style="color: var(--text-muted);">% IVA sobre comisión</span>
                             <input type="text" inputmode="decimal" data-teclado="numerico"
-                                   class="input-iva mt-0.5 w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0f0f13] text-sm font-bold text-slate-900 dark:text-white"
+                                   class="input-iva mt-0.5 w-full px-3 py-2 rounded-lg border text-sm font-bold outline-none transition-colors focus:border-[#b74309] focus:ring-1 focus:ring-[#b74309]"
+                                   style="background-color: var(--card-color); border-color: var(--border-color); color: var(--text-color);"
                                    value="{{ number_format($plataforma->iva_comision_porcentaje, 2, '.', '') }}">
                         </label>
                     </div>
@@ -47,10 +50,10 @@
                     <div class="flex items-center gap-2 sm:w-auto shrink-0">
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" class="input-activo sr-only peer" {{ $plataforma->activo ? 'checked' : '' }}>
-                            <div class="w-9 h-5 bg-slate-300 dark:bg-slate-700 rounded-full peer peer-checked:bg-emerald-600 transition-colors"></div>
-                            <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4"></div>
+                            <div class="w-9 h-5 rounded-full peer peer-checked:bg-emerald-600 transition-colors" style="background-color: var(--border-color);"></div>
+                            <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4 shadow-sm"></div>
                         </label>
-                        <button type="button" class="btn-guardar px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase tracking-wide transition-colors">
+                        <button type="button" class="btn-guardar px-4 py-2 rounded-lg bg-[#b74309] hover:bg-[#8f3207] active:scale-95 text-white text-xs font-black uppercase tracking-wide transition-all shadow-md shadow-[#b74309]/20 outline-none cursor-pointer">
                             Guardar
                         </button>
                     </div>
@@ -60,11 +63,11 @@
         @endforeach
 
         @if($plataformas->isEmpty())
-            <p class="text-center text-sm text-slate-400 py-8">No hay plataformas configuradas todavía.</p>
+            <p class="text-center text-sm py-8" style="color: var(--text-muted);">No hay plataformas configuradas todavía.</p>
         @endif
     </div>
 
-    <p class="text-[11px] text-slate-400 dark:text-slate-500 text-center">
+    <p class="text-[11px] text-center" style="color: var(--text-muted);">
         La comisión se calcula sobre el precio de venta (subtotal + IVA del producto) y se suma al total que paga el cliente en el pedido de delivery.
     </p>
 </div>
@@ -78,11 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = card.dataset.id;
             const mensaje = card.querySelector('.mensaje-guardado');
 
-            // Los campos son de texto (para que el teclado táctil pueda
-            // escribir el punto decimal), así que la validación de rango
-            // que antes hacía el navegador con min/max ahora va aquí.
-            // También se acepta la coma como separador decimal: es común
-            // teclear "25,5" y así no se pierde el valor.
             const leerPorcentaje = (selector) => {
                 const el = card.querySelector(selector);
                 const crudo = (el.value || '').trim().replace(',', '.');
@@ -97,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const mostrarError = (texto) => {
                 mensaje.textContent = texto;
                 mensaje.classList.remove('hidden', 'text-emerald-500');
-                mensaje.classList.add('text-red-500');
+                mensaje.classList.add('text-rose-500');
                 setTimeout(() => mensaje.classList.add('hidden'), 3000);
             };
 
@@ -110,8 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Se normaliza lo que quedó en pantalla, para que el usuario vea
-            // exactamente el valor que se guardó.
             card.querySelector('.input-comision').value = comision.toFixed(2);
             card.querySelector('.input-iva').value = iva.toFixed(2);
 
@@ -134,17 +130,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (res.ok && data.success) {
                     mensaje.textContent = 'Guardado correctamente';
-                    mensaje.classList.remove('hidden', 'text-red-500');
+                    mensaje.classList.remove('hidden', 'text-rose-500');
                     mensaje.classList.add('text-emerald-500');
                 } else {
                     mensaje.textContent = data.message || 'Error al guardar';
                     mensaje.classList.remove('hidden', 'text-emerald-500');
-                    mensaje.classList.add('text-red-500');
+                    mensaje.classList.add('text-rose-500');
                 }
             } catch (e) {
                 mensaje.textContent = 'Error de conexión al guardar';
                 mensaje.classList.remove('hidden', 'text-emerald-500');
-                mensaje.classList.add('text-red-500');
+                mensaje.classList.add('text-rose-500');
             }
 
             setTimeout(() => mensaje.classList.add('hidden'), 2500);

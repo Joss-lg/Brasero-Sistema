@@ -1,56 +1,60 @@
-@extends('layouts.admin') {{-- Ajusta según el nombre de tu plantilla layout --}}
+@extends('layouts.admin')
 
 @section('content')
-<div class="w-full min-h-screen p-4 sm:p-6 lg:p-8">
+<div class="w-full min-h-screen p-4 sm:p-6 lg:p-8" style="background-color: var(--bg-color);">
     
     {{-- 1. Encabezado / Botones de Área --}}
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-       <div class="flex items-center gap-2 bg-[var(--card-color)] p-1.5 rounded-2xl border border-[var(--border-color)]">
-    <a href="{{ route('admin.cocina.index', ['area' => 'cocina']) }}" 
-       class="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all {{ $areaSeleccionada === 'Cocina' ? 'bg-blue-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-color)]' }}">
-        <i class="fas fa-fire mr-2"></i>Cocina
-    </a>
-    <a href="{{ route('admin.cocina.index', ['area' => 'barra']) }}" 
-       class="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all {{ $areaSeleccionada === 'Barra' ? 'bg-blue-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-color)]' }}">
-        <i class="fas fa-glass-martini-alt mr-2"></i>Barra
-    </a>
-</div>
+        <div class="flex items-center gap-2 p-1.5 rounded-2xl border" style="background-color: var(--card-color); border-color: var(--border-color);">
+            <a href="{{ route('admin.cocina.index', ['area' => 'cocina']) }}" 
+               class="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all {{ $areaSeleccionada === 'Cocina' ? 'bg-[#b74309] text-white shadow-lg shadow-[#b74309]/25' : 'hover:opacity-100 opacity-70' }}"
+               style="{{ $areaSeleccionada !== 'Cocina' ? 'color: var(--text-color);' : '' }}">
+                <i class="fas fa-fire mr-2"></i>Cocina
+            </a>
+            <a href="{{ route('admin.cocina.index', ['area' => 'barra']) }}" 
+               class="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all {{ $areaSeleccionada === 'Barra' ? 'bg-[#b74309] text-white shadow-lg shadow-[#b74309]/25' : 'hover:opacity-100 opacity-70' }}"
+               style="{{ $areaSeleccionada !== 'Barra' ? 'color: var(--text-color);' : '' }}">
+                <i class="fas fa-glass-martini-alt mr-2"></i>Barra
+            </a>
+        </div>
+
         <div class="flex items-center gap-2 text-xs font-bold text-emerald-500">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> EN VIVO
 
             {{-- Acceso al historial de comandas del turno --}}
             <a href="{{ route('admin.cocina.historial', ['area' => $areaSeleccionada]) }}"
-               class="ml-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:border-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors font-bold text-[10px] uppercase tracking-wider"
+               class="ml-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-colors font-bold text-[10px] uppercase tracking-wider hover:border-[#b74309] hover:text-[#b74309]"
+               style="background-color: var(--card-color); border-color: var(--border-color); color: var(--text-muted);"
                title="Ver historial de comandas del turno">
                 <i class="fas fa-clock-rotate-left text-[10px]"></i> Historial
             </a>
         </div>
     </div>
 
-  {{-- 2. Tarjetas de Estadísticas --}}
-<div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+    {{-- 2. Tarjetas de Estadísticas --}}
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
 
-    {{-- Órdenes Activas - Azul --}}
-    <div class="p-4 sm:p-5 rounded-2xl bg-[var(--card-color)] border border-blue-500/40 shadow-[0_0_20px_-5px_rgba(59,130,246,0.35)]">
-        <span class="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">Órdenes Activas</span>
-        <h4 id="stat-ordenes-activas" class="text-2xl sm:text-3xl font-black text-[var(--text-color)] mt-1">{{ $ordenesActivasEnArea }}</h4>
+        {{-- Órdenes Activas - Acento El Brasero (#b74309) --}}
+        <div class="p-4 sm:p-5 rounded-2xl border shadow-[0_0_20px_-5px_rgba(183,67,9,0.35)]" style="background-color: var(--card-color); border-color: rgba(183,67,9,0.4);">
+            <span class="text-[10px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Órdenes Activas</span>
+            <h4 id="stat-ordenes-activas" class="text-2xl sm:text-3xl font-black mt-1" style="color: var(--text-color);">{{ $ordenesActivasEnArea }}</h4>
+        </div>
+
+        {{-- En Proceso - Púrpura --}}
+        <div class="p-4 sm:p-5 rounded-2xl border border-purple-500/40 shadow-[0_0_20px_-5px_rgba(168,85,247,0.35)]" style="background-color: var(--card-color);">
+            <span class="text-[10px] font-black uppercase tracking-wider" style="color: var(--text-muted);">En Proceso</span>
+            <h4 id="stat-enproceso" class="text-2xl sm:text-3xl font-black mt-1" style="color: var(--text-color);">{{ $enProceso }}</h4>
+        </div>
+
+        {{-- Listas (Turno) - Esmeralda --}}
+        <div class="p-4 sm:p-5 rounded-2xl border border-emerald-500/40 shadow-[0_0_20px_-5px_rgba(16,185,129,0.35)]" style="background-color: var(--card-color);">
+            <span class="text-[10px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Listas (Turno)</span>
+            <h4 id="stat-servidas" class="text-2xl sm:text-3xl font-black mt-1" style="color: var(--text-color);">{{ $servidas }}</h4>
+        </div>
+
     </div>
 
-    {{-- En Proceso - Púrpura --}}
-    <div class="p-4 sm:p-5 rounded-2xl bg-[var(--card-color)] border border-purple-500/40 shadow-[0_0_20px_-5px_rgba(168,85,247,0.35)]">
-        <span class="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">En Proceso</span>
-        <h4 id="stat-enproceso" class="text-2xl sm:text-3xl font-black text-[var(--text-color)] mt-1">{{ $enProceso }}</h4>
-    </div>
-
-    {{-- Listas (Turno) - Esmeralda --}}
-    <div class="p-4 sm:p-5 rounded-2xl bg-[var(--card-color)] border border-emerald-500/40 shadow-[0_0_20px_-5px_rgba(16,185,129,0.35)]">
-        <span class="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">Listas (Turno)</span>
-        <h4 id="stat-servidas" class="text-2xl sm:text-3xl font-black text-[var(--text-color)] mt-1">{{ $servidas }}</h4>
-    </div>
-
-</div>
     {{-- 3. CONTENEDOR DE COMANDAS --}}
-    {{-- Importante: Debe ser un div neutro simple, ya que 'comandas.blade.php' incluye su propio grid --}}
     <div id="comandas-container" class="w-full">
         @include('admin.cocina.partials.comandas')
     </div>
@@ -68,40 +72,40 @@
     // tarjetas + contadores, sin recargar la página completa.
     // ---------------------------------------------------------------
     async function actualizarComandas() {
-    try {
-        const res = await fetch(`${URL_API_COMANDAS}?area=${AREA_ACTUAL}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-        });
+        try {
+            const res = await fetch(`${URL_API_COMANDAS}?area=${AREA_ACTUAL}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            });
 
-        if (!res.ok) {
-            const texto = await res.text();
-            console.error('apiComandas falló:', res.status, texto.slice(0, 500));
-            return;
+            if (!res.ok) {
+                const texto = await res.text();
+                console.error('apiComandas falló:', res.status, texto.slice(0, 500));
+                return;
+            }
+
+            const data = await res.json();
+            if (!data || !data.success) {
+                console.error('apiComandas respondió sin success:', data);
+                return;
+            }
+
+            const contenedor = document.getElementById('comandas-container');
+            if (contenedor) contenedor.innerHTML = data.html;
+
+            const setTexto = (id, valor) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = valor;
+            };
+            setTexto('stat-ordenes-activas', data.ordenesActivasEnArea);
+            setTexto('stat-pendientes', data.pendientes);
+            setTexto('stat-enproceso', data.enProceso);
+            setTexto('stat-servidas', data.servidas);
+
+            actualizarContadoresEspera();
+        } catch (err) {
+            console.error('Error actualizando comandas:', err);
         }
-
-        const data = await res.json();
-        if (!data || !data.success) {
-            console.error('apiComandas respondió sin success:', data);
-            return;
-        }
-
-        const contenedor = document.getElementById('comandas-container');
-        if (contenedor) contenedor.innerHTML = data.html;
-
-        const setTexto = (id, valor) => {
-            const el = document.getElementById(id);
-            if (el) el.innerText = valor;
-        };
-        setTexto('stat-ordenes-activas', data.ordenesActivasEnArea);
-        setTexto('stat-pendientes', data.pendientes);
-        setTexto('stat-enproceso', data.enProceso);
-        setTexto('stat-servidas', data.servidas);
-
-        actualizarContadoresEspera();
-    } catch (err) {
-        console.error('Error actualizando comandas:', err);
     }
-}
 
     // ---------------------------------------------------------------
     // Carga lateral de Mesas Abiertas (KDS)
@@ -129,7 +133,7 @@
             
             if (mesas.length === 0) {
                 list.innerHTML = `
-                    <div class="text-[11px] text-zinc-500 modo-crema:text-zinc-400 font-medium p-4 text-center bg-zinc-950/40 modo-crema:bg-zinc-100/50 rounded-xl border border-zinc-800 modo-crema:border-zinc-200">
+                    <div class="text-[11px] font-medium p-4 text-center rounded-xl border" style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">
                         No hay mesas activas en este momento.
                     </div>`;
                 return;
@@ -138,26 +142,28 @@
             mesas.forEach(m => {
                 const a = document.createElement('a');
                 a.href = `{{ url('mesero/comanda') }}/${m.id}`;
-                a.className = 'block p-4 rounded-xl border border-zinc-800 modo-crema:border-zinc-200 bg-zinc-900/40 modo-crema:bg-white hover:border-blue-500/50 hover:bg-zinc-900 modo-crema:hover:bg-zinc-50 transition-all flex items-center justify-between group cursor-pointer';
+                a.className = 'block p-4 rounded-xl border transition-all flex items-center justify-between group cursor-pointer hover:border-[#b74309]/50';
+                a.style.backgroundColor = 'var(--card-color)';
+                a.style.borderColor = 'var(--border-color)';
                 
                 a.innerHTML = `
                     <div class="flex-1 w-full min-w-0 pr-2">
                         <div class="flex items-center gap-2 mb-1">
-                            <h5 class="text-sm font-black text-zinc-100 modo-crema:text-zinc-900 truncate group-hover:text-blue-500 transition-colors">
+                            <h5 class="text-sm font-black truncate group-hover:text-[#b74309] transition-colors" style="color: var(--text-color);">
                                 Mesa ${m.numero}
                             </h5>
                             <span class="inline-flex items-center px-1.5 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase tracking-wider shadow-sm">
                                 ACTIVA
                             </span>
                         </div>
-                        <div class="flex flex-wrap items-center gap-3 text-[10px] text-zinc-400 modo-crema:text-zinc-500 font-bold">
-                            <span class="flex items-center gap-1.5"><i class="fas fa-users text-blue-500"></i> ${m.capacidad ?? '0'} pax</span>
-                            <span class="text-emerald-400 modo-crema:text-emerald-600 tracking-wide">$ ${Number(m.total_consumo || 0).toFixed(2)}</span>
+                        <div class="flex flex-wrap items-center gap-3 text-[10px] font-bold" style="color: var(--text-muted);">
+                            <span class="flex items-center gap-1.5"><i class="fas fa-users text-[#b74309]"></i> ${m.capacidad ?? '0'} pax</span>
+                            <span class="text-emerald-500 tracking-wide">$ ${Number(m.total_consumo || 0).toFixed(2)}</span>
                         </div>
                     </div>
                     <div class="pl-2 flex items-center shrink-0">
-                        <div class="w-8 h-8 rounded-full bg-zinc-950 modo-crema:bg-zinc-100 border border-zinc-800 modo-crema:border-zinc-200 flex items-center justify-center group-hover:bg-blue-600 group-hover:border-blue-600 transition-colors">
-                            <i class="fas fa-chevron-right text-[9px] text-zinc-500 group-hover:text-white transition-colors"></i>
+                        <div class="w-8 h-8 rounded-full border flex items-center justify-center group-hover:bg-[#b74309] group-hover:border-[#b74309] group-hover:text-white transition-colors" style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">
+                            <i class="fas fa-chevron-right text-[9px]"></i>
                         </div>
                     </div>
                 `;
@@ -180,18 +186,14 @@
         return `Espera: ${horas}h ${resto}min`;
     }
 
-    // AJUSTADO: Manejo de colores de alerta según tiempo transcurrido
     function claseNivelEspera(minutos) {
         if (minutos >= 15) {
-            // ROJO Parpadeante (Crítico >= 15 min)
-            return 'bg-red-500/20 border-red-500/50 text-red-500 animate-pulse';
+            return 'bg-rose-500/20 border-rose-500/50 text-rose-500 animate-pulse';
         }
         if (minutos >= 10) {
-            // AMARILLO (Advertencia 10 - 14 min)
-            return 'bg-amber-500/20 border-amber-500/50 text-amber-400';
+            return 'bg-amber-500/20 border-amber-500/50 text-amber-500';
         }
-        // NORMAL (< 10 min)
-        return 'bg-zinc-500/10 border-zinc-500/30 text-zinc-400';
+        return 'border text-[10px] font-black uppercase tracking-wide';
     }
 
     function actualizarContadoresEspera() {
@@ -204,6 +206,15 @@
             if (texto) texto.textContent = formatearEspera(minutos);
 
             el.className = 'tiempo-espera shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wide whitespace-nowrap transition-colors ' + claseNivelEspera(minutos);
+            if (minutos < 10) {
+                el.style.backgroundColor = 'var(--input-bg)';
+                el.style.borderColor = 'var(--border-color)';
+                el.style.color = 'var(--text-muted)';
+            } else {
+                el.style.backgroundColor = '';
+                el.style.borderColor = '';
+                el.style.color = '';
+            }
         });
     }
 
@@ -211,27 +222,23 @@
     // Inicialización del DOM
     // ---------------------------------------------------------------
     document.addEventListener('DOMContentLoaded', () => {
-        // Carga inicial
         actualizarContadoresEspera();
         cargarKdsMesas();
 
-        // Intervals de actualización
         setInterval(actualizarComandas, 5000);
         setInterval(cargarKdsMesas, 10000);
         setInterval(actualizarContadoresEspera, 10000);
-        setInterval(verificarAlertas15min, 30000); // Cada 30s revisa si hay comandas viejas
+        setInterval(verificarAlertas15min, 30000);
 
-        // Sonidos y tachar al cargar
         iniciarSonidosYTachar();
     });
 
     // ---------------------------------------------------------------
-    // SONIDOS (Web Audio API, sin archivos externos)
+    // SONIDOS (Web Audio API)
     // ---------------------------------------------------------------
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function sonarEntrada() {
-        // Dos tonos ascendentes: "llegó algo nuevo"
         [660, 880].forEach((freq, i) => {
             const o = audioCtx.createOscillator();
             const g = audioCtx.createGain();
@@ -247,7 +254,6 @@
     }
 
     function sonarAlerta() {
-        // Tres pulsos cortos: "esto lleva mucho tiempo"
         [440, 440, 440].forEach((freq, i) => {
             const o = audioCtx.createOscillator();
             const g = audioCtx.createGain();
@@ -262,13 +268,10 @@
         });
     }
 
-    // IDs de comandas ya conocidas (para detectar nuevas entre polling)
     let lotesConocidos = new Set();
-    let alertasDisparadas = new Set(); // Para no repetir la alerta del mismo lote
+    let alertasDisparadas = new Set();
     let audioDesbloqueado = false;
 
-    // El AudioContext necesita un gesto del usuario para funcionar.
-    // Al primer click en la pantalla, lo activamos.
     document.addEventListener('click', () => {
         if (!audioDesbloqueado && audioCtx.state === 'suspended') {
             audioCtx.resume();
@@ -290,8 +293,7 @@
             if (minutos >= 15) {
                 alertasDisparadas.add(lote);
                 sonarAlerta();
-                // Borde rojo pulsante en la tarjeta
-                card.classList.add('ring-2', 'ring-red-500', 'ring-offset-1', 'animate-pulse');
+                card.classList.add('ring-2', 'ring-rose-500', 'ring-offset-1', 'animate-pulse');
                 setTimeout(() => card.classList.remove('animate-pulse'), 5000);
             }
         });
@@ -299,20 +301,16 @@
 
     // ---------------------------------------------------------------
     // TACHAR PRODUCTOS
-    // Se usa delegación en el contenedor para que funcione incluso
-    // después de que el polling reemplace el HTML de las tarjetas.
     // ---------------------------------------------------------------
     const URL_DETALLE_LISTO = @json(url('/cocina/detalle'));
     const CSRF = document.querySelector('meta[name="csrf-token"]')?.content;
 
     function iniciarSonidosYTachar() {
-        // Registrar lotes ya visibles al cargar (no sonar por ellos)
         document.querySelectorAll('[data-lote]').forEach(c => {
             lotesConocidos.add(c.dataset.lote);
         });
     }
 
-    // Delegación: escucha clicks en el contenedor padre
     document.getElementById('comandas-container').addEventListener('click', async (e) => {
         const btn = e.target.closest('.btn-tachar');
         if (!btn) return;
@@ -341,19 +339,18 @@
                 const nombre = li.querySelector('.nombre-producto');
 
                 if (listo) {
-                    nombre?.classList.add('line-through', 'opacity-40', 'text-[var(--text-muted)]');
-                    nombre?.classList.remove('text-[var(--text-color)]');
+                    nombre?.classList.add('line-through', 'opacity-40');
+                    nombre?.style.setProperty('color', 'var(--text-muted)');
                     btn.classList.add('bg-emerald-500', 'border-emerald-500', 'text-white', 'scale-95');
-                    btn.classList.remove('border-zinc-300', 'dark:border-white/20', 'text-zinc-400');
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
                 } else {
-                    nombre?.classList.remove('line-through', 'opacity-40', 'text-[var(--text-muted)]');
-                    nombre?.classList.add('text-[var(--text-color)]');
+                    nombre?.classList.remove('line-through', 'opacity-40');
+                    nombre?.style.removeProperty('color');
                     btn.classList.remove('bg-emerald-500', 'border-emerald-500', 'text-white', 'scale-95');
-                    btn.classList.add('border-zinc-300', 'dark:border-white/20', 'text-zinc-400');
+                    btn.style.borderColor = 'var(--border-color)';
+                    btn.style.color = 'var(--text-muted)';
                 }
-
-                // Si todos listos, el polling va a refrescar y la tarjeta va a desaparecer.
-                // No hacemos nada extra: el siguiente ciclo de 5s lo maneja.
             }
         } catch (err) {
             console.error('Error al tachar producto:', err);
@@ -363,14 +360,12 @@
     });
 
     // ---------------------------------------------------------------
-    // SONAR al detectar comandas NUEVAS entre refrescos
-    // (se engancha sobre la funcion actualizarComandas existente)
+    // SONAR al detectar comandas NUEVAS
     // ---------------------------------------------------------------
     const _actualizarOriginal = actualizarComandas;
     actualizarComandas = async function() {
         await _actualizarOriginal();
 
-        // Después del refresco, buscar lotes que no estaban antes
         const lotesActuales = new Set();
         document.querySelectorAll('[data-lote]').forEach(c => {
             const l = c.dataset.lote;
@@ -380,8 +375,6 @@
             }
         });
         lotesConocidos = lotesActuales;
-
-        // Revisar alertas de 15 min al refrescar también
         verificarAlertas15min();
     };
 </script>

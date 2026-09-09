@@ -25,10 +25,10 @@
             <div>
                 <label for="fecha" class="block text-[10px] font-black uppercase tracking-wider text-zinc-500 mb-1">Día</label>
                 <input type="date" name="fecha" id="fecha" value="{{ $fecha->toDateString() }}"
-                       class="px-3 py-2 rounded-xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-zinc-950 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+                       class="px-3 py-2 rounded-xl border border-zinc-300 dark:border-white/10 bg-white dark:bg-zinc-950 text-sm font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-[#b74309]">
             </div>
             <button type="submit"
-                class="px-4 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-black uppercase tracking-wider">
+                class="px-4 py-2 rounded-xl bg-[#b74309] hover:bg-[#8f3207] text-white text-xs font-black uppercase tracking-wider transition-colors">
                 Ver
             </button>
         </form>
@@ -46,7 +46,6 @@
             <p class="text-2xl font-black text-zinc-900 dark:text-white mt-1">{{ $mesasDelDia }}</p>
         </div>
 
-        {{-- FONDO POR REPARTIR: se acumula con cada aporte del día --}}
         <div class="bg-gradient-to-br from-emerald-500/15 to-transparent border border-emerald-500/30 rounded-2xl p-4">
             <p class="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 <i class="fas fa-hand-holding-dollar mr-1"></i> Fondo barra y cocina
@@ -95,7 +94,7 @@
 
                             <td class="py-3 px-3 text-right font-black text-zinc-900 dark:text-white">${{ number_format($fila->venta_total, 2) }}</td>
                             <td class="py-3 px-3 text-right text-emerald-600 dark:text-emerald-400 font-semibold">${{ number_format($fila->efectivo, 2) }}</td>
-                            <td class="py-3 px-3 text-right text-blue-600 dark:text-blue-400 font-semibold">${{ number_format($fila->tarjeta, 2) }}</td>
+                            <td class="py-3 px-3 text-right text-[#b74309] dark:text-[#e8946a] font-semibold">${{ number_format($fila->tarjeta, 2) }}</td>
                             <td class="py-3 px-3 text-right text-purple-600 dark:text-purple-400 font-semibold">${{ number_format($fila->transferencia, 2) }}</td>
 
                             {{-- APORTE AL FONDO --}}
@@ -104,12 +103,12 @@
                                     <div class="flex items-center justify-center gap-1.5">
                                         <div class="relative">
                                             <input type="text" inputmode="decimal" data-teclado="numerico"
-                                                   class="input-aporte w-16 pl-2 pr-5 py-1.5 rounded-lg border border-zinc-300 dark:border-white/10 bg-white dark:bg-zinc-950 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 text-center"
+                                                   class="input-aporte w-16 pl-2 pr-5 py-1.5 rounded-lg border border-zinc-300 dark:border-white/10 bg-white dark:bg-zinc-950 text-xs font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-[#b74309] text-center"
                                                    value="{{ $fila->aporte_porcentaje !== null ? rtrim(rtrim(number_format($fila->aporte_porcentaje, 2, '.', ''), '0'), '.') : $porcentajeSugerido }}">
                                             <span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-400">%</span>
                                         </div>
                                         <button type="button"
-                                            class="btn-aporte px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider transition-colors">
+                                            class="btn-aporte px-2.5 py-1.5 rounded-lg bg-[#b74309] hover:bg-[#8f3207] text-white text-[10px] font-black uppercase tracking-wider transition-colors">
                                             Aplicar
                                         </button>
                                     </div>
@@ -125,7 +124,7 @@
 
                             <td class="py-3 px-3 text-center">
                                 <button type="button"
-                                    class="btn-detalle px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-white/10 text-zinc-700 dark:text-zinc-300 text-[10px] font-black uppercase tracking-wider hover:border-blue-500 hover:text-blue-500 transition-colors whitespace-nowrap">
+                                    class="btn-detalle px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-white/10 text-zinc-700 dark:text-zinc-300 text-[10px] font-black uppercase tracking-wider hover:border-[#b74309] hover:text-[#b74309] transition-colors whitespace-nowrap">
                                     Ver detalles
                                 </button>
                             </td>
@@ -183,8 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const input = fila.querySelector('.input-aporte');
             const etiqueta = fila.querySelector('.monto-aporte');
 
-            // Campo de texto para que el teclado tactil escriba el punto;
-            // se acepta tambien la coma.
             const crudo = (input.value || '').trim().replace(',', '.');
             const porcentaje = crudo === '' ? 0 : parseFloat(crudo);
 
@@ -222,7 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     etiqueta.className = 'monto-aporte text-center text-[11px] font-black mt-1 ' +
                         (data.monto > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400');
 
-                    // La tarjeta del fondo se actualiza sin recargar
                     document.getElementById('fondo-dia-display').textContent =
                         '$' + Number(data.fondo_dia).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 } else {
@@ -278,9 +274,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // Una tarjeta por mesa: encabezado con los totales y, debajo,
-                // el detalle de lo que consumieron. El primero viene abierto y
-                // los demas cerrados, para que con muchas mesas no sea un muro.
                 let html = '<div class="p-4 space-y-3">';
 
                 data.mesas.forEach((m, i) => {
@@ -345,18 +338,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const t = data.totales;
-                html += '<div class="mt-4 rounded-xl bg-zinc-900 dark:bg-black text-white px-4 py-3 flex flex-wrap items-center justify-between gap-2">'
-                    + '<span class="text-[11px] font-black uppercase tracking-wider text-zinc-300">Total del turno</span>'
+                html += '<div class="mt-4 rounded-xl bg-[#b74309] text-white px-4 py-3 flex flex-wrap items-center justify-between gap-2">'
+                    + '<span class="text-[11px] font-black uppercase tracking-wider text-white/80">Total del turno</span>'
                     + '<div class="text-right">'
                     + '<div class="text-lg font-black">' + dinero(t.total) + '</div>'
-                    + '<div class="text-[10px] text-zinc-400">'
+                    + '<div class="text-[10px] text-white/70">'
                     + 'efectivo ' + dinero(t.efectivo) + ' · tarjeta ' + dinero(t.tarjeta) + ' · transf. ' + dinero(t.transferencia)
                     + '</div></div></div>';
 
                 html += '</div>';
                 contenido.innerHTML = html;
 
-                // Desplegar y contraer cada mesa
                 contenido.querySelectorAll('.btn-mesa').forEach(b => {
                     b.addEventListener('click', () => {
                         b.nextElementSibling.classList.toggle('hidden');

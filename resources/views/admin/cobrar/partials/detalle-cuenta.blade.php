@@ -5,52 +5,53 @@
     $tipoDivision = $division['tipo'] ?? null;
     $totalPartes = $division['total_partes'] ?? 1;
 @endphp
-<div class="flex flex-col h-full bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+<div class="flex flex-col h-full transition-colors duration-300" style="background-color: var(--card-color); color: var(--text-color);">
 
     <div class="p-4 pb-2">
         @if($esDividida)
-            <div class="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+            <div class="p-3 rounded-xl border" style="background-color: rgba(183, 67, 9, 0.1); border-color: rgba(183, 67, 9, 0.2);">
                 <div class="flex items-start justify-between gap-3">
                     <div>
-                        <p class="text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-0.5">
+                        <p class="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-0.5 text-[#b74309] dark:text-[#e8946a]">
                             <i class="fas fa-users"></i> Cuenta Dividida
                             · {{ $tipoDivision === 'equitativa' ? 'Partes iguales' : 'Por consumo' }}
                         </p>
-                        <p class="text-zinc-900 dark:text-white text-xs font-bold">Dividida entre {{ $totalPartes }} personas</p>
+                        <p class="text-xs font-bold" style="color: var(--text-color);">Dividida entre {{ $totalPartes }} personas</p>
                     </div>
                     <button type="button" id="btn-cancelar-division"
-                        class="text-[10px] font-black uppercase text-red-500 hover:text-red-600 whitespace-nowrap">
+                        class="text-[10px] font-black uppercase text-rose-500 hover:text-rose-600 whitespace-nowrap cursor-pointer">
                         <i class="fas fa-times"></i> Cancelar división
                     </button>
                 </div>
             </div>
         @else
             <div class="flex items-center justify-between gap-3">
-                <p class="text-zinc-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-widest">
+                <p class="text-xs font-bold uppercase tracking-widest" style="color: var(--text-muted);">
                     Personas: {{ $mesa->capacidad ?? 'N/A' }}
                 </p>
                 <button type="button" id="btn-abrir-division"
-                    class="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-500 flex items-center gap-1.5">
+                    class="text-[10px] font-black uppercase tracking-widest text-[#b74309] dark:text-[#e8946a] hover:opacity-80 flex items-center gap-1.5 cursor-pointer">
                     <i class="fas fa-users"></i> Dividir cuenta
                 </button>
             </div>
 
-            {{-- Panel para configurar la división, oculto hasta que se pulse "Dividir cuenta" --}}
-            <div id="panel-iniciar-division" class="hidden mt-4 p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl space-y-3">
+            {{-- Panel para configurar la división --}}
+            <div id="panel-iniciar-division" class="hidden mt-4 p-4 rounded-2xl border space-y-3" style="background-color: var(--input-bg); border-color: var(--border-color);">
                 <div class="flex gap-2">
-                    <button type="button" data-tipo-division="equitativa" class="tipo-division-btn flex-1 py-2 rounded-xl border-2 border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-300 font-bold text-xs uppercase">
+                    <button type="button" data-tipo-division="equitativa" class="tipo-division-btn flex-1 py-2 rounded-xl border-2 font-bold text-xs uppercase cursor-pointer" style="border-color: #b74309; background-color: rgba(183, 67, 9, 0.1); color: #b74309;">
                         Partes iguales
                     </button>
-                    <button type="button" data-tipo-division="por_producto" class="tipo-division-btn flex-1 py-2 rounded-xl border-2 border-zinc-200 dark:border-white/10 font-bold text-xs uppercase text-zinc-600 dark:text-zinc-300">
+                    <button type="button" data-tipo-division="por_producto" class="tipo-division-btn flex-1 py-2 rounded-xl border-2 font-bold text-xs uppercase cursor-pointer" style="border-color: var(--border-color); color: var(--text-muted);">
                         Por consumo
                     </button>
                 </div>
                 <div class="flex items-center gap-2">
-                    <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400">N.º de personas</label>
+                    <label class="text-xs font-bold" style="color: var(--text-muted);">N.º de personas</label>
                     <input type="number" id="input-numero-personas" min="2" max="20" value="2"
-                        class="w-20 rounded-lg border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-950 p-2 text-center font-bold" />
+                        class="w-20 rounded-lg border p-2 text-center font-bold outline-none focus:border-[#b74309]"
+                        style="background-color: var(--card-color); border-color: var(--border-color); color: var(--text-color);" />
                     <button type="button" id="btn-confirmar-division"
-                        class="ml-auto px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase">
+                        class="ml-auto px-4 py-2 rounded-xl bg-[#b74309] hover:bg-[#8f3207] text-white font-black text-xs uppercase active:scale-95 transition-all shadow-sm cursor-pointer">
                         Dividir
                     </button>
                 </div>
@@ -65,7 +66,8 @@
                     @php $esPagada = $cuenta['estado_orden'] === 'pagada'; @endphp
                     <button
                         type="button"
-                        class="btn-cuenta px-3 py-1.5 rounded-lg font-bold text-[11px] whitespace-nowrap transition-all flex items-center gap-1.5 border-2 {{ $esPagada ? 'bg-emerald-50 dark:bg-emerald-900/50 border-emerald-500 text-emerald-700 dark:text-emerald-200 opacity-70 cursor-not-allowed' : 'bg-zinc-50 dark:bg-zinc-900 border-blue-500 text-zinc-900 dark:text-white hover:bg-blue-500/10' }}"
+                        class="btn-cuenta px-3 py-1.5 rounded-lg font-bold text-[11px] whitespace-nowrap transition-all flex items-center gap-1.5 border-2 cursor-pointer {{ $esPagada ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 opacity-70 cursor-not-allowed' : 'hover:bg-[#b74309]/10' }}"
+                        style="{{ !$esPagada ? 'background-color: var(--input-bg); border-color: #b74309; color: var(--text-color);' : '' }}"
                         data-cuenta-id="{{ $cuenta['id'] }}"
                         data-numero="{{ $cuenta['numero_cuenta'] }}"
                         data-subtotal="{{ number_format($cuenta['subtotal'], 2, '.', '') }}"
@@ -79,11 +81,11 @@
                 @endforeach
             </div>
             @if($tipoDivision === 'por_producto')
-                <p class="text-[9px] text-zinc-400 dark:text-zinc-500 font-bold uppercase">
+                <p class="text-[9px] font-bold uppercase mt-1" style="color: var(--text-muted);">
                     Usa + / − para repartir unidades entre personas.
                 </p>
             @else
-                <p class="text-[9px] text-zinc-400 dark:text-zinc-500 font-bold uppercase">
+                <p class="text-[9px] font-bold uppercase mt-1" style="color: var(--text-muted);">
                     Selecciona una persona para cobrar su parte.
                 </p>
             @endif
@@ -93,18 +95,19 @@
     <div class="px-4 pb-3 space-y-1 flex-1 min-h-0 overflow-y-auto" id="productos-container">
         @foreach($ordenes as $ordenActual)
             @foreach($ordenActual->detalles->where('estado', '!=', 'cancelado') as $detalle)
-                <div class="producto-row py-1.5 px-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors">
+                <div class="producto-row py-1.5 px-2 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5">
                     <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2 min-w-0">
-                            <div class="w-7 h-7 shrink-0 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-black text-[10px] rounded-md flex items-center justify-center border border-blue-500/20">
+                            <div class="w-7 h-7 shrink-0 font-black text-[10px] rounded-md flex items-center justify-center border text-[#b74309] dark:text-[#e8946a]"
+                                 style="background-color: rgba(183, 67, 9, 0.1); border-color: rgba(183, 67, 9, 0.2);">
                                 {{ $detalle->cantidad }}x
                             </div>
                             <div class="min-w-0">
-                                <p class="text-zinc-900 dark:text-white font-bold text-[13px] leading-tight truncate">{{ $detalle->producto->nombre ?? 'Producto sin nombre' }}</p>
-                                <p class="text-[9px] text-zinc-500 dark:text-zinc-400 font-semibold leading-tight">Unit: ${{ number_format($detalle->precio_unitario, 2) }}</p>
+                                <p class="font-bold text-[13px] leading-tight truncate" style="color: var(--text-color);">{{ $detalle->producto->nombre ?? 'Producto sin nombre' }}</p>
+                                <p class="text-[9px] font-semibold leading-tight" style="color: var(--text-muted);">Unit: ${{ number_format($detalle->precio_unitario, 2) }}</p>
 
                                 @if($detalle->notas)
-                                    <p class="text-[9px] text-zinc-400 dark:text-zinc-500 font-bold uppercase italic truncate leading-tight">{{ $detalle->notas }}</p>
+                                    <p class="text-[9px] font-bold uppercase italic truncate leading-tight opacity-75" style="color: var(--text-muted);">{{ $detalle->notas }}</p>
                                 @endif
 
                                 @if($detalle->promocionAplicada)
@@ -118,19 +121,18 @@
                         <div class="text-right shrink-0 flex items-center gap-2">
                             <div>
                                 @if($detalle->promocionAplicada)
-                                    <span class="text-zinc-400 dark:text-zinc-500 text-[9px] line-through block leading-tight">
+                                    <span class="text-[9px] line-through block leading-tight opacity-60" style="color: var(--text-muted);">
                                         ${{ number_format($detalle->precio_unitario * $detalle->cantidad, 2) }}
                                     </span>
                                 @endif
-                                <span class="text-zinc-900 dark:text-white font-black text-[13px]">
+                                <span class="font-black text-[13px]" style="color: var(--text-color);">
                                     ${{ number_format(($detalle->precio_unitario * $detalle->cantidad) - ($detalle->promocionAplicada->monto_descuento ?? 0), 2) }}
                                 </span>
                             </div>
-                            {{-- Botón cancelar producto desde Caja (requiere NIP de Administrador) --}}
                             @if(!$esDividida)
                                 <button type="button"
                                     onclick="cancelarProductoCaja({{ $detalle->id }}, this, {{ $detalle->cantidad }})"
-                                    class="w-7 h-7 rounded-lg text-red-400 bg-red-500/5 border border-red-500/15 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center shadow-sm"
+                                    class="w-7 h-7 rounded-lg text-rose-500 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center shadow-sm cursor-pointer"
                                     title="Cancelar producto">
                                     <i class="fas fa-trash-alt text-[9px]"></i>
                                 </button>
@@ -146,12 +148,13 @@
                             <div class="flex flex-wrap items-center gap-1">
                                 @for($p = 1; $p <= $totalPartes; $p++)
                                     @php $cantidadPersona = $asig['por_persona'][$p] ?? 0; @endphp
-                                    <div class="flex items-center gap-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-md pl-1.5 pr-0.5 py-0.5 stepper-persona"
+                                    <div class="flex items-center gap-0.5 rounded-md pl-1.5 pr-0.5 py-0.5 stepper-persona border"
+                                        style="background-color: var(--input-bg); border-color: var(--border-color);"
                                         data-detalle-id="{{ $detalle->id }}" data-numero="{{ $p }}">
-                                        <span class="text-[8px] font-black text-zinc-500 dark:text-zinc-400">P{{ $p }}</span>
-                                        <button type="button" class="btn-stepper-restar w-4 h-4 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-[10px] font-black leading-none flex items-center justify-center">−</button>
-                                        <span class="stepper-valor w-3 text-center text-[10px] font-black">{{ $cantidadPersona }}</span>
-                                        <button type="button" class="btn-stepper-sumar w-4 h-4 rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-[10px] font-black leading-none flex items-center justify-center">+</button>
+                                        <span class="text-[8px] font-black" style="color: var(--text-muted);">P{{ $p }}</span>
+                                        <button type="button" class="btn-stepper-restar w-4 h-4 rounded border text-[10px] font-black leading-none flex items-center justify-center cursor-pointer" style="background-color: var(--card-color); border-color: var(--border-color); color: var(--text-color);">−</button>
+                                        <span class="stepper-valor w-3 text-center text-[10px] font-black" style="color: var(--text-color);">{{ $cantidadPersona }}</span>
+                                        <button type="button" class="btn-stepper-sumar w-4 h-4 rounded border text-[10px] font-black leading-none flex items-center justify-center cursor-pointer" style="background-color: var(--card-color); border-color: var(--border-color); color: var(--text-color);">+</button>
                                     </div>
                                 @endfor
                                 <span class="sin-asignar-badge text-[8px] font-black uppercase {{ $asig['sin_asignar'] > 0 ? 'text-amber-500' : 'hidden' }}">
@@ -165,12 +168,12 @@
         @endforeach
     </div>
 
-    <div class="mt-auto px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border-t border-zinc-200 dark:border-white/10 shadow-sm">
+    <div class="mt-auto px-4 py-2.5 border-t shadow-sm transition-colors" style="background-color: var(--input-bg); border-color: var(--border-color);">
         <div class="space-y-1">
             <div class="space-y-0.5">
-                <div class="flex justify-between text-zinc-600 dark:text-zinc-400 text-[11px] font-semibold">
+                <div class="flex justify-between text-[11px] font-semibold" style="color: var(--text-muted);">
                     <span>Subtotal</span>
-                    <span class="font-bold text-zinc-900 dark:text-white" id="resumen-subtotal">${{ number_format($subtotalBruto ?? 0, 2) }}</span>
+                    <span class="font-bold" style="color: var(--text-color);" id="resumen-subtotal">${{ number_format($subtotalBruto ?? 0, 2) }}</span>
                 </div>
 
                 @if(($descuentoPromociones ?? 0) > 0)
@@ -179,18 +182,9 @@
                         <span class="font-bold">-${{ number_format($descuentoPromociones, 2) }}</span>
                     </div>
                 @endif
-                @php /* IVA_BLOCK_START — switch_iva_ui
-                <div class="flex justify-between items-center text-zinc-600 dark:text-zinc-400 text-[11px] font-semibold">
-                    <span class="flex items-center gap-2">
-                        IVA (X%)
-                        <label>...</label>
-                    </span>
-                    <span id="resumen-iva">$0.00</span>
-                </div>
-                IVA_BLOCK_END */ @endphp
 
                 @if(($descuentoCaja ?? 0) > 0)
-                    <div class="flex justify-between text-blue-600 dark:text-blue-400 text-[11px] font-semibold">
+                    <div class="flex justify-between text-[11px] font-semibold text-[#b74309] dark:text-[#e8946a]">
                         <span class="flex items-center gap-1.5">
                             <i class="fas fa-percent text-[10px]"></i>
                             Descuento ({{ rtrim(rtrim(number_format($descuentoPorcentaje ?? 0, 2), '0'), '.') }}%)
@@ -207,19 +201,19 @@
                 </div>
 
                 @if($esDelivery ?? false)
-                    <div class="mt-1 p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 space-y-0.5">
-                        <p class="text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                    <div class="mt-1 p-2 rounded-lg space-y-0.5 border" style="background-color: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.2);">
+                        <p class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 text-orange-500">
                             <i class="fas fa-motorcycle"></i> {{ $plataformaNombre ?? 'Delivery' }}
                         </p>
-                        <div class="flex justify-between text-zinc-600 dark:text-zinc-400 text-[11px] font-semibold">
+                        <div class="flex justify-between text-[11px] font-semibold" style="color: var(--text-muted);">
                             <span>Comisión ({{ number_format($comisionPorcentaje ?? 0, 0) }}%)</span>
-                            <span class="font-bold text-zinc-900 dark:text-white">${{ number_format($comisionMonto ?? 0, 2) }}</span>
+                            <span class="font-bold" style="color: var(--text-color);">${{ number_format($comisionMonto ?? 0, 2) }}</span>
                         </div>
-                        <div class="flex justify-between text-zinc-600 dark:text-zinc-400 text-[11px] font-semibold">
+                        <div class="flex justify-between text-[11px] font-semibold" style="color: var(--text-muted);">
                             <span>IVA de la comisión ({{ number_format($comisionIvaPorcentaje ?? 0, 0) }}%)</span>
-                            <span class="font-bold text-zinc-900 dark:text-white">${{ number_format($comisionIvaMonto ?? 0, 2) }}</span>
+                            <span class="font-bold" style="color: var(--text-color);">${{ number_format($comisionIvaMonto ?? 0, 2) }}</span>
                         </div>
-                        <div class="flex justify-between text-orange-600 dark:text-orange-400 text-[11px] font-black pt-0.5 border-t border-orange-500/20">
+                        <div class="flex justify-between text-orange-500 text-[11px] font-black pt-0.5 border-t" style="border-color: rgba(249, 115, 22, 0.2);">
                             <span>Total comisión (se suma al pedido)</span>
                             <span>${{ number_format($comisionTotal ?? 0, 2) }}</span>
                         </div>
@@ -227,73 +221,74 @@
                 @endif
             </div>
 
-            <div class="border-t border-zinc-200 dark:border-white/10 pt-1 flex justify-between items-center">
-                <span class="text-zinc-500 dark:text-zinc-400 font-black uppercase tracking-[0.15em] text-[10px]" id="resumen-total-label">
+            <div class="border-t pt-1 flex justify-between items-center" style="border-color: var(--border-color);">
+                <span class="font-black uppercase tracking-[0.15em] text-[10px]" style="color: var(--text-muted);" id="resumen-total-label">
                     {{ $esDividida ? 'Total mesa' : 'Total' }}
                 </span>
-                <span class="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white tracking-tighter italic" id="resumen-total">
+                <span class="text-xl sm:text-2xl font-black tracking-tighter italic" style="color: var(--text-color);" id="resumen-total">
                     ${{ number_format($totalPagar ?? 0, 2) }}
                 </span>
             </div>
             @if($esDividida)
-                <p class="text-right text-[10px] text-blue-600 dark:text-blue-400 font-bold" id="resumen-persona-seleccionada"></p>
+                <p class="text-right text-[10px] font-bold text-[#b74309] dark:text-[#e8946a]" id="resumen-persona-seleccionada"></p>
             @endif
         </div>
     </div>
 </div>
 
-{{-- ═══════════════════════════════════════════════════════
-     MODAL: Cancelar producto desde Caja
-     Paso 1 (opcional): elegir cuántas unidades
-     Paso 2: NIP del Administrador
-     ════════════════════════════════════════════════════════ --}}
+{{-- MODAL: Cancelar producto desde Caja --}}
 <div id="modal-cancelar-producto" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="cerrarModalCancelarProducto()"></div>
-    <div class="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+    <div class="modal-container relative w-full max-w-sm rounded-3xl shadow-2xl border overflow-hidden"
+         style="background-color: var(--card-color); border-color: var(--border-color);">
 
         {{-- Header --}}
-        <div class="bg-red-50 dark:bg-red-500/10 border-b border-red-100 dark:border-red-500/20 px-6 py-4 flex items-center justify-between">
+        <div class="bg-rose-500/10 border-b border-rose-500/20 px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-red-500/15 border border-red-500/20 flex items-center justify-center">
-                    <i class="fas fa-trash-alt text-red-500 text-sm"></i>
+                <div class="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/20 flex items-center justify-center">
+                    <i class="fas fa-trash-alt text-rose-500 text-sm"></i>
                 </div>
                 <div>
-                    <h3 class="text-sm font-black text-zinc-900 dark:text-white" id="mcp-titulo">Cancelar producto</h3>
-                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400" id="mcp-subtitulo">Requiere autorización</p>
+                    <h3 class="text-sm font-black" style="color: var(--text-color);" id="mcp-titulo">Cancelar producto</h3>
+                    <p class="text-[11px]" style="color: var(--text-muted);" id="mcp-subtitulo">Requiere autorización</p>
                 </div>
             </div>
             <button type="button" onclick="cerrarModalCancelarProducto()"
-                class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center transition-colors">
+                class="w-8 h-8 rounded-xl border flex items-center justify-center transition-colors cursor-pointer"
+                style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">
                 <i class="fas fa-xmark text-xs"></i>
             </button>
         </div>
 
         {{-- Paso 1: Cantidad --}}
         <div id="mcp-paso-cantidad" class="px-6 py-5 space-y-4">
-            <p class="text-sm text-zinc-600 dark:text-zinc-400 text-center">
+            <p class="text-sm text-center" style="color: var(--text-muted);">
                 ¿Cuántas unidades deseas cancelar?
             </p>
             <div class="flex items-center justify-center gap-4">
                 <button type="button" onclick="mcpAjustarCantidad(-1)"
-                    class="w-11 h-11 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-white font-black text-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all">
+                    class="w-11 h-11 rounded-2xl border font-black text-xl active:scale-95 transition-all cursor-pointer"
+                    style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
                     −
                 </button>
                 <div class="flex flex-col items-center">
-                    <span id="mcp-cantidad-display" class="text-4xl font-black text-zinc-900 dark:text-white tabular-nums">1</span>
-                    <span id="mcp-cantidad-max" class="text-[10px] text-zinc-400 font-medium mt-0.5">de 1</span>
+                    <span id="mcp-cantidad-display" class="text-4xl font-black tabular-nums" style="color: var(--text-color);">1</span>
+                    <span id="mcp-cantidad-max" class="text-[10px] font-medium mt-0.5" style="color: var(--text-muted);">de 1</span>
                 </div>
                 <button type="button" onclick="mcpAjustarCantidad(1)"
-                    class="w-11 h-11 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-white font-black text-xl hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all">
+                    class="w-11 h-11 rounded-2xl border font-black text-xl active:scale-95 transition-all cursor-pointer"
+                    style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
                     +
                 </button>
             </div>
             <div class="flex gap-2 pt-1">
                 <button type="button" onclick="cerrarModalCancelarProducto()"
-                    class="flex-1 h-11 rounded-2xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 font-bold text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                    class="flex-1 h-11 rounded-2xl border font-bold text-sm transition-colors cursor-pointer"
+                    style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-muted);">
                     Cancelar
                 </button>
                 <button type="button" onclick="mcpIrANip()"
-                    class="flex-1 h-11 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm active:scale-95 transition-all">
+                    class="flex-1 h-11 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm active:scale-95 transition-all cursor-pointer">
                     Continuar →
                 </button>
             </div>
@@ -301,14 +296,14 @@
 
         {{-- Paso 2: NIP --}}
         <div id="mcp-paso-nip" class="hidden px-6 py-5 space-y-4">
-            <p class="text-sm text-zinc-600 dark:text-zinc-400 text-center">
-                NIP del <span class="font-black text-zinc-900 dark:text-white">Administrador</span>
+            <p class="text-sm text-center" style="color: var(--text-muted);">
+                NIP del <span class="font-black" style="color: var(--text-color);">Administrador</span>
             </p>
 
             {{-- Display NIP --}}
             <div class="flex justify-center gap-3 py-1">
                 @for($i = 0; $i < 4; $i++)
-                    <div class="mcp-nip-dot w-4 h-4 rounded-full border-2 border-zinc-300 dark:border-zinc-600 bg-transparent transition-all duration-150"></div>
+                    <div class="mcp-nip-dot w-4 h-4 rounded-full border-2 bg-transparent transition-all duration-150" style="border-color: var(--border-color);"></div>
                 @endfor
             </div>
 
@@ -316,29 +311,31 @@
             <div class="grid grid-cols-3 gap-2">
                 @foreach(['1','2','3','4','5','6','7','8','9'] as $k)
                     <button type="button" onclick="mcpNipEscribir('{{ $k }}')"
-                        class="h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white font-black text-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all">
+                        class="h-12 rounded-2xl border font-black text-lg active:scale-95 transition-all cursor-pointer"
+                        style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
                         {{ $k }}
                     </button>
                 @endforeach
                 <button type="button" onclick="mcpNipBorrar()"
-                    class="h-12 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-500 font-black hover:bg-red-100 dark:hover:bg-red-500/20 active:scale-95 transition-all flex items-center justify-center">
+                    class="h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 font-black hover:bg-rose-500/20 active:scale-95 transition-all flex items-center justify-center cursor-pointer">
                     <i class="fas fa-delete-left text-base"></i>
                 </button>
                 <button type="button" onclick="mcpNipEscribir('0')"
-                    class="h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white font-black text-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-95 transition-all">
+                    class="h-12 rounded-2xl border font-black text-lg active:scale-95 transition-all cursor-pointer"
+                    style="background-color: var(--input-bg); border-color: var(--border-color); color: var(--text-color);">
                     0
                 </button>
                 <button type="button" id="mcp-btn-confirmar" onclick="mcpConfirmar()"
-                    class="h-12 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-black text-sm active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                    class="h-12 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black text-sm active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md">
                     <i class="fas fa-check text-xs"></i> OK
                 </button>
             </div>
 
             {{-- Error --}}
-            <p id="mcp-error" class="hidden text-center text-xs font-bold text-red-500 bg-red-50 dark:bg-red-500/10 rounded-xl py-2 px-3"></p>
+            <p id="mcp-error" class="hidden text-center text-xs font-bold text-rose-500 bg-rose-500/10 border border-rose-500/20 rounded-xl py-2 px-3"></p>
 
             <button type="button" onclick="mcpVolverCantidad()"
-                class="w-full text-center text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 font-medium transition-colors py-1">
+                class="w-full text-center text-xs font-medium transition-colors py-1 cursor-pointer" style="color: var(--text-muted);">
                 ← Volver
             </button>
         </div>
@@ -364,11 +361,11 @@
     function actualizarDots() {
         dots().forEach((d, i) => {
             if (i < _mcpNip.length) {
-                d.classList.add('bg-zinc-900', 'dark:bg-white', 'border-zinc-900', 'dark:border-white');
-                d.classList.remove('border-zinc-300', 'dark:border-zinc-600');
+                d.style.backgroundColor = 'var(--text-color)';
+                d.style.borderColor = 'var(--text-color)';
             } else {
-                d.classList.remove('bg-zinc-900', 'dark:bg-white', 'border-zinc-900', 'dark:border-white');
-                d.classList.add('border-zinc-300', 'dark:border-zinc-600');
+                d.style.backgroundColor = 'transparent';
+                d.style.borderColor = 'var(--border-color)';
             }
         });
     }
@@ -380,7 +377,6 @@
         _mcpCantSel   = 1;
         _mcpNip       = '';
 
-        // Si solo hay 1 unidad saltamos directo al NIP
         if (cantidadTotal <= 1) {
             pasoCantidad().classList.add('hidden');
             pasoNip().classList.remove('hidden');
@@ -430,7 +426,6 @@
         _mcpNip += digit;
         actualizarDots();
         if (errorEl()) errorEl().classList.add('hidden');
-        // Auto-confirmar al completar 4 dígitos
         if (_mcpNip.length === 4) mcpConfirmar();
     };
 
@@ -482,49 +477,8 @@
         el.classList.remove('hidden');
     }
 
-    // Cerrar con Escape
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') cerrarModalCancelarProducto();
     });
 })();
 </script>
-
-@php /* IVA_BLOCK_START — script_switch_iva
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const ivaSwitch = document.getElementById('ivaSwitch');
-    if (!ivaSwitch) return;
-    ivaSwitch.addEventListener('change', async function (e) {
-        const habilitado = e.target.checked;
-        const url = e.target.dataset.toggleUrl;
-        const csrf = e.target.dataset.csrf;
-
-        ivaSwitch.disabled = true;
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrf,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ habilitado }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Respuesta no exitosa del servidor');
-            }
-
-            window.location.reload();
-
-        } catch (error) {
-            console.error('Error al cambiar el estado del IVA:', error);
-            e.target.checked = !habilitado;
-            ivaSwitch.disabled = false;
-            alert('No se pudo actualizar el IVA. Intenta de nuevo.');
-        }
-    });
-});
-</script>
-IVA_BLOCK_END */ @endphp
