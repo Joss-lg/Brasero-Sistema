@@ -291,13 +291,13 @@
                                 <td class="py-3 sm:py-4 px-2 sm:px-4">
                                     <div class="flex items-center justify-center gap-1.5">
                                         @if($ordenIdReal)
-                                            <a href="{{ route('admin.caja.ticket.imprimir.orden', $ordenIdReal) }}"
-                                               target="_blank"
-                                               class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:text-[#b74309] hover:border-[#b74309]"
+                                            <button type="button"
+                                               class="btn-imprimir-directo w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:text-[#b74309] hover:border-[#b74309] cursor-pointer"
                                                style="border: 1px solid var(--border-color); color: var(--text-muted);"
-                                               title="Reimprimir ticket">
+                                               data-url="{{ route('admin.caja.ticket.imprimir.orden', $ordenIdReal) }}"
+                                               title="Imprimir ticket">
                                                 <i class="fas fa-print text-xs"></i>
-                                            </a>
+                                            </button>
                                         @endif
                                     </div>
                                 </td>
@@ -361,4 +361,40 @@
     </div>
 
 </div>
+
+{{-- Iframe invisible para procesar la impresión directa en la misma ventana --}}
+<iframe id="iframeImpresionDirecta" class="hidden" style="position: fixed; right: 0; bottom: 0; width: 0; height: 0; border: 0;"></iframe>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const iframe = document.getElementById('iframeImpresionDirecta');
+
+    document.querySelectorAll('.btn-imprimir-directo').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const url = btn.dataset.url;
+            if (!url || !iframe) return;
+
+            // Feedback visual temporal en el botón
+            const icono = btn.querySelector('i');
+            const claseOriginal = icono ? icono.className : '';
+            if (icono) icono.className = 'fas fa-spinner fa-spin text-xs';
+            btn.disabled = true;
+
+            iframe.src = url;
+
+            iframe.onload = () => {
+                if (icono) icono.className = claseOriginal;
+                btn.disabled = false;
+
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (e) {
+                    console.error('Error al invocar la impresión:', e);
+                }
+            };
+        });
+    });
+});
+</script>
 @endsection

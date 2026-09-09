@@ -210,13 +210,13 @@
                                                 <i class="fas fa-eye text-xs"></i>
                                             </button>
                                             @if($ordenIdReal)
-                                                <a href="{{ route('admin.caja.ticket.imprimir.orden', $ordenIdReal) }}"
-                                                   target="_blank"
-                                                   class="w-8 h-8 rounded-lg border transition-colors flex items-center justify-center hover:text-amber-500 hover:border-amber-500 cursor-pointer"
+                                                <button type="button"
+                                                   class="btn-imprimir-directo w-8 h-8 rounded-lg border transition-colors flex items-center justify-center hover:text-amber-500 hover:border-amber-500 cursor-pointer"
                                                    style="border-color: var(--border-color); color: var(--text-muted);"
-                                                   title="Reimprimir ticket">
+                                                   data-url="{{ route('admin.caja.ticket.imprimir.orden', $ordenIdReal) }}"
+                                                   title="Imprimir ticket">
                                                     <i class="fas fa-print text-xs"></i>
-                                                </a>
+                                                </button>
                                             @endif
                                         </div>
                                     </td>
@@ -351,8 +351,42 @@
     </div>
 </div>
 
+{{-- Iframe invisible para imprimir directo sin abrir pestañas --}}
+<iframe id="iframeImpresionDirectaFlujo" style="position: fixed; right: 0; bottom: 0; width: 0; height: 0; border: 0;"></iframe>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // --- LÓGICA DE IMPRESIÓN DIRECTA DEL TICKET EN LA MISMA PÁGINA ---
+    const iframe = document.getElementById('iframeImpresionDirectaFlujo');
+
+    document.querySelectorAll('.btn-imprimir-directo').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const url = btn.dataset.url;
+            if (!url || !iframe) return;
+
+            const icono = btn.querySelector('i');
+            const claseOriginal = icono ? icono.className : '';
+            if (icono) icono.className = 'fas fa-spinner fa-spin text-xs';
+            btn.disabled = true;
+
+            iframe.src = url;
+
+            iframe.onload = () => {
+                if (icono) icono.className = claseOriginal;
+                btn.disabled = false;
+
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (err) {
+                    console.error('Error al imprimir ticket:', err);
+                }
+            };
+        });
+    });
+
+    // --- MODAL DETALLE DE VENTA ---
     const modal = document.getElementById('modal-detalle-venta');
     if (!modal) return;
 
@@ -387,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let html = '<div class="p-5 space-y-4">';
 
-               // Quien atendio y quien cobro
+                // Quien atendio y quien cobro
                 html += '<div class="grid grid-cols-2 gap-3">'
                     + '<div class="rounded-xl border p-3" style="border-color: var(--border-color);">'
                     + '<p class="text-[10px] font-black uppercase tracking-wider" style="color: var(--text-muted);">Mesero que atendió</p>'
