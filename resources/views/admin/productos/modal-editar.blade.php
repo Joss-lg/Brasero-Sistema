@@ -40,7 +40,7 @@
                         </div>
 
                         {{-- Toggle por peso --}}
-                        <div class="col-span-1 sm:col-span-2">
+                        <div class="col-span-1 sm:col-span-2" id="contenedor-edit-switch-peso">
                             <label class="flex items-center justify-between gap-3 bg-orange-500/5 border border-orange-500/20 rounded-2xl p-3.5 sm:p-4 cursor-pointer select-none">
                                 <span class="flex items-center gap-2.5">
                                     <i class="fas fa-weight-hanging text-orange-500 text-sm"></i>
@@ -52,6 +52,43 @@
                                     <span class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-5"></span>
                                 </span>
                             </label>
+                        </div>
+
+                        {{-- Toggle Variantes --}}
+                        <div class="col-span-1 sm:col-span-2" id="contenedor-edit-switch-variantes">
+                            <label class="flex items-center justify-between gap-3 bg-orange-500/5 border border-orange-500/20 rounded-2xl p-3.5 sm:p-4 cursor-pointer select-none">
+                                <span class="flex items-center gap-2.5">
+                                    <i class="fas fa-layer-group text-orange-500 text-sm"></i>
+                                    <div>
+                                        <span class="text-xs sm:text-sm font-bold block" style="color: var(--text-color);">Tiene variantes de precio / proteína</span>
+                                        <span class="text-[10px] sm:text-xs block" style="color: var(--text-muted);">Ej: Bistec, Cecina, Pechuga con precios distintos</span>
+                                    </div>
+                                </span>
+                                <span class="relative inline-flex items-center">
+                                    <input type="checkbox" id="edit-tiene_variantes" name="tiene_variantes" class="peer sr-only" onchange="toggleModoVariantes('editar')">
+                                    <span class="w-11 h-6 rounded-full bg-zinc-300 dark:bg-zinc-600 peer-checked:bg-[#b74309] transition-colors"></span>
+                                    <span class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-5"></span>
+                                </span>
+                            </label>
+                        </div>
+
+                        {{-- Bloque dinámico: Variantes en Edición --}}
+                        <div class="col-span-1 sm:col-span-2 hidden" id="grupo-variantes-editar">
+                            <div class="p-4 rounded-2xl border" style="background-color: var(--input-bg); border-color: rgba(249,115,22,0.3);">
+                                <div class="flex items-center justify-between gap-2 mb-3">
+                                    <div>
+                                        <label class="text-[11px] sm:text-xs font-black text-orange-500 uppercase tracking-widest ml-1">Lista de Variantes</label>
+                                        <p class="text-[9px] sm:text-[10px]" style="color: var(--text-muted);">Indica el nombre de la variante y su precio correspondiente.</p>
+                                    </div>
+                                    <button type="button" onclick="agregarFilaVarianteEdicion()" class="inline-flex items-center gap-1.5 bg-[#b74309] hover:bg-[#8f3207] active:scale-95 text-white px-3 py-1.5 rounded-lg font-black transition text-[10px] sm:text-xs tracking-wider shadow-sm">
+                                        <i class="fas fa-plus"></i> AGREGAR VARIANTE
+                                    </button>
+                                </div>
+                                
+                                <div id="contenedor-filas-variantes-editar" class="space-y-2.5">
+                                    {{-- Se renderizan dinámicamente con JS --}}
+                                </div>
+                            </div>
                         </div>
 
                         {{-- Precio fijo --}}
@@ -122,6 +159,8 @@
 </div>
 
 <script>
+    let indiceVariantesEditar = 0;
+
     window.bloquearScrollFondo = function () { document.body.style.overflow = 'hidden'; };
     window.desbloquearScrollFondo = function () { document.body.style.overflow = ''; };
 
@@ -129,40 +168,117 @@
         _cerrarModal('modal-editar-alimento', 'modal-editar-panel');
         desbloquearScrollFondo();
         const form = document.getElementById('formulario-editar-alimento');
-        if (form) form.reset();
+        if (form) {
+            form.reset();
+            document.getElementById('contenedor-filas-variantes-editar').innerHTML = '';
+            document.getElementById('grupo-variantes-editar').classList.add('hidden');
+            document.getElementById('grupo-precio-fijo-editar').classList.remove('hidden');
+            document.getElementById('grupo-precio-peso-editar').classList.add('hidden');
+            document.getElementById('contenedor-edit-switch-peso').classList.remove('hidden');
+            document.getElementById('contenedor-edit-switch-variantes').classList.remove('hidden');
+            document.getElementById('edit-precio').required = true;
+            document.getElementById('edit-precio_por_100g').required = false;
+        }
     }
 
-    function enviarFormularioConImagen(url, formData, btn, textoOriginal, onSuccess) {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-        fetch(url, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
-            body: formData,
-        })
-        .then(async (response) => {
-            const json = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                const mensaje = json.message || 'Ocurrió un error al guardar.';
-                if (typeof mostrarNotificacion === 'function') mostrarNotificacion(mensaje, 'error');
-                else alert(mensaje);
-                btn.textContent = textoOriginal;
-                btn.disabled = false;
-                return;
+    function toggleModoVentaPeso(tipo) {
+        const checkboxPeso  = document.getElementById(tipo === 'crear' ? 'se_vende_por_peso' : 'edit-se_vende_por_peso');
+        const switchVar     = document.getElementById(tipo === 'crear' ? 'contenedor-switch-variantes' : 'contenedor-edit-switch-variantes');
+        const grupoFijo     = document.getElementById(tipo === 'crear' ? 'grupo-precio-fijo-crear' : 'grupo-precio-fijo-editar');
+        const grupoPeso     = document.getElementById(tipo === 'crear' ? 'grupo-precio-peso-crear' : 'grupo-precio-peso-editar');
+        const inputFijo     = document.getElementById(tipo === 'crear' ? 'precio' : 'edit-precio');
+        const inputPeso     = document.getElementById(tipo === 'crear' ? 'precio_por_100g' : 'edit-precio_por_100g');
+        const esPorPeso     = checkboxPeso.checked;
+
+        if (esPorPeso) {
+            if (switchVar) switchVar.classList.add('hidden');
+            const checkVar = document.getElementById(tipo === 'crear' ? 'tiene_variantes' : 'edit-tiene_variantes');
+            if (checkVar) checkVar.checked = false;
+            
+            const contVar = document.getElementById(tipo === 'crear' ? 'grupo-variantes-crear' : 'grupo-variantes-editar');
+            if (contVar) contVar.classList.add('hidden');
+        } else {
+            if (switchVar) switchVar.classList.remove('hidden');
+        }
+
+        grupoFijo.classList.toggle('hidden', esPorPeso);
+        grupoPeso.classList.toggle('hidden', !esPorPeso);
+        inputFijo.required = !esPorPeso;
+        inputPeso.required = esPorPeso;
+        if (esPorPeso) { inputFijo.value = 0; }
+    }
+
+    function toggleModoVariantes(tipo) {
+        const checkboxVar  = document.getElementById(tipo === 'crear' ? 'tiene_variantes' : 'edit-tiene_variantes');
+        const switchPeso   = document.getElementById(tipo === 'crear' ? 'contenedor-switch-peso' : 'contenedor-edit-switch-peso');
+        const grupoVar     = document.getElementById(tipo === 'crear' ? 'grupo-variantes-crear' : 'grupo-variantes-editar');
+        const grupoFijo    = document.getElementById(tipo === 'crear' ? 'grupo-precio-fijo-crear' : 'grupo-precio-fijo-editar');
+        const inputFijo    = document.getElementById(tipo === 'crear' ? 'precio' : 'edit-precio');
+        const tieneVar     = checkboxVar.checked;
+
+        if (tieneVar) {
+            if (switchPeso) switchPeso.classList.add('hidden');
+            const checkPeso = document.getElementById(tipo === 'crear' ? 'se_vende_por_peso' : 'edit-se_vende_por_peso');
+            if (checkPeso) checkPeso.checked = false;
+
+            const grupoPeso = document.getElementById(tipo === 'crear' ? 'grupo-precio-peso-crear' : 'grupo-precio-peso-editar');
+            if (grupoPeso) grupoPeso.classList.add('hidden');
+
+            const inputPeso = document.getElementById(tipo === 'crear' ? 'precio_por_100g' : 'edit-precio_por_100g');
+            if (inputPeso) inputPeso.required = false;
+
+            grupoFijo.classList.add('hidden');
+            inputFijo.required = false;
+            inputFijo.value = 0;
+
+            grupoVar.classList.remove('hidden');
+            const selectorHijos = tipo === 'crear' ? '.fila-variante-item' : '.fila-variante-edit-item';
+            if (document.querySelectorAll(selectorHijos).length === 0) {
+                if (tipo === 'crear') agregarFilaVariante();
+                else agregarFilaVarianteEdicion();
             }
-            if (typeof mostrarNotificacion === 'function') mostrarNotificacion(json.message || 'Guardado correctamente.', 'success');
-            if (typeof onSuccess === 'function') onSuccess();
-            if (typeof cargarProductos === 'function')   cargarProductos();
-            if (typeof cargarEstadisticas === 'function') cargarEstadisticas();
-            btn.textContent = textoOriginal;
-            btn.disabled = false;
-        })
-        .catch((err) => {
-            console.error(err);
-            if (typeof mostrarNotificacion === 'function') mostrarNotificacion('Error de conexión al guardar.', 'error');
-            else alert('Error de conexión al guardar.');
-            btn.textContent = textoOriginal;
-            btn.disabled = false;
-        });
+        } else {
+            if (switchPeso) switchPeso.classList.remove('hidden');
+            grupoVar.classList.add('hidden');
+            grupoFijo.classList.remove('hidden');
+            inputFijo.required = true;
+            inputFijo.value = '';
+        }
+    }
+
+    function agregarFilaVarianteEdicion(nombre = '', precio = '') {
+        const contenedor = document.getElementById('contenedor-filas-variantes-editar');
+        const index = indiceVariantesEditar++;
+
+        const fila = document.createElement('div');
+        fila.className = 'fila-variante-edit-item flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-xl border border-black/5 dark:border-white/5';
+        fila.id = `fila-variante-edit-${index}`;
+        fila.innerHTML = `
+            <div class="flex-1">
+                <input type="text" name="variantes[${index}][nombre]" value="${nombre}" placeholder="Ej: Bistec, Cecina..." required data-teclado="texto" inputmode="none"
+                    class="w-full rounded-xl p-2.5 outline-none text-xs sm:text-sm focus:border-[#b74309] focus:ring-1 focus:ring-[#b74309]"
+                    style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);">
+            </div>
+            <div class="w-28 sm:w-32 flex items-center rounded-xl focus-within:ring-1 focus-within:ring-[#b74309]"
+                style="background-color: var(--input-bg); border: 1px solid var(--border-color);">
+                <span class="pl-2.5 text-xs font-bold" style="color: var(--text-muted);">$</span>
+                <input type="text" name="variantes[${index}][precio]" value="${precio}" placeholder="0.00" pattern="[0-9]*\\.?[0-9]*" required data-teclado="numerico" inputmode="none"
+                    class="w-full p-2.5 pl-1 outline-none text-xs sm:text-sm bg-transparent"
+                    style="color: var(--text-color);">
+            </div>
+            <button type="button" onclick="eliminarFilaVarianteEdicion(${index})" class="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10 active:scale-95 transition shrink-0">
+                <i class="fas fa-trash-alt text-xs sm:text-sm"></i>
+            </button>
+        `;
+        contenedor.appendChild(fila);
+    }
+
+    function eliminarFilaVarianteEdicion(index) {
+        const fila = document.getElementById(`fila-variante-edit-${index}`);
+        if (fila) fila.remove();
+        if (document.querySelectorAll('.fila-variante-edit-item').length === 0) {
+            agregarFilaVarianteEdicion();
+        }
     }
 
     function editarProducto(id) {
@@ -170,21 +286,49 @@
         const producto = estadoGlobal.productosMap[id];
         if (!producto) return;
         estadoGlobal.editandoId = id;
-        document.getElementById('edit-nombre').value              = producto.nombre             ?? '';
-        document.getElementById('edit-precio').value              = producto.precio             ?? '';
-        document.getElementById('edit-precio_por_100g').value     = producto.precio_por_100g    ?? '';
+
+        // Resetear contenedor de variantes
+        document.getElementById('contenedor-filas-variantes-editar').innerHTML = '';
+
+        document.getElementById('edit-nombre').value              = producto.nombre              ?? '';
+        document.getElementById('edit-precio').value              = producto.precio              ?? '';
+        document.getElementById('edit-precio_por_100g').value     = producto.precio_por_100g     ?? '';
         document.getElementById('edit-se_vende_por_peso').checked = !!producto.se_vende_por_peso;
-        document.getElementById('edit-descripcion').value         = producto.descripcion        ?? '';
-        document.getElementById('edit-categoria_nombre').value    = producto.categoria?.nombre  ?? '';
-        document.getElementById('edit-categoria_id').value        = producto.categoria?.id      ?? '';
-        toggleModoVentaPeso('editar');
+        document.getElementById('edit-tiene_variantes').checked   = !!producto.tiene_variantes;
+        document.getElementById('edit-descripcion').value         = producto.descripcion         ?? '';
+        document.getElementById('edit-categoria_nombre').value    = producto.categoria?.nombre   ?? '';
+        document.getElementById('edit-categoria_id').value        = producto.categoria?.id       ?? '';
+
+        // Prioridad visual: Peso o Variantes
+        if (producto.se_vende_por_peso) {
+            toggleModoVentaPeso('editar');
+        } else if (producto.tiene_variantes) {
+            toggleModoVariantes('editar');
+            // Cargar las variantes que trae el modelo
+            if (producto.variantes && producto.variantes.length > 0) {
+                document.getElementById('contenedor-filas-variantes-editar').innerHTML = '';
+                producto.variantes.forEach(v => {
+                    agregarFilaVarianteEdicion(v.nombre, v.precio);
+                });
+            }
+        } else {
+            // Producto estándar con precio unitario fijo
+            document.getElementById('contenedor-edit-switch-peso').classList.remove('hidden');
+            document.getElementById('contenedor-edit-switch-variantes').classList.remove('hidden');
+            document.getElementById('grupo-precio-fijo-editar').classList.remove('hidden');
+            document.getElementById('grupo-precio-peso-editar').classList.add('hidden');
+            document.getElementById('grupo-variantes-editar').classList.add('hidden');
+            document.getElementById('edit-precio').required = true;
+            document.getElementById('edit-precio_por_100g').required = false;
+        }
+
         llenarIngredientesEdicion(producto);
         bloquearScrollFondo();
         const modalEditar = document.getElementById('modal-editar-alimento');
         if (modalEditar && modalEditar.parentElement !== document.body) document.body.appendChild(modalEditar);
         _abrirModal('modal-editar-alimento', 'modal-editar-panel');
     }
- 
+
     function actualizarProducto(event) {
         event.preventDefault();
         if (!tienePermisoEditar) { mostrarNotificacion('Sin autorización para editar', 'error'); return; }
@@ -193,18 +337,36 @@
         const original = btn.textContent;
         btn.textContent = 'ACTUALIZANDO...';
         btn.disabled    = true;
+
         const catNombre = document.getElementById('edit-categoria_nombre').value;
         const catId     = obtenerCategoriaIdPorNombre(catNombre);
         if (!catId) {
             mostrarNotificacion('Selecciona una categoría válida', 'error');
-            btn.textContent = original; btn.disabled = false; return;
+            btn.textContent = original; 
+            btn.disabled = false; 
+            return;
         }
+
+        const tieneVariantes = document.getElementById('edit-tiene_variantes').checked;
+        if (tieneVariantes) {
+            const variantesElems = document.querySelectorAll('.fila-variante-edit-item');
+            if (variantesElems.length === 0) {
+                mostrarNotificacion('Debes agregar al menos una variante con precio', 'error');
+                btn.textContent = original;
+                btn.disabled = false;
+                return;
+            }
+        }
+
         document.getElementById('edit-categoria_id').value = catId;
         const formEl   = document.getElementById('formulario-editar-alimento');
         const formData = new FormData(formEl);
+
         formData.set('categoria_id', catId);
         formData.set('se_vende_por_peso', document.getElementById('edit-se_vende_por_peso').checked ? '1' : '0');
+        formData.set('tiene_variantes', tieneVariantes ? '1' : '0');
         formData.set('_method', 'PUT');
+
         enviarFormularioConImagen(RUTA_API_BASE + estadoGlobal.editandoId, formData, btn, original, closeModalEditar);
     }
 </script>

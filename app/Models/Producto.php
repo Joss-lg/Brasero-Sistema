@@ -5,82 +5,63 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Producto extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'productos';
+
     protected $fillable = [
         'categoria_id',
         'nombre',
         'precio',
+        'tiene_variantes',
         'se_vende_por_peso',
         'precio_por_100g',
         'descripcion',
         'esta_disponible'
     ];
 
-    // 'imagen' e 'imagen_mime_type' NO van en $fillable a propósito:
-    // se asignan manualmente en el controlador porque son binarios, no campos de formulario normales.
-
     protected $casts = [
         'precio' => 'decimal:2',
+        'tiene_variantes' => 'boolean',
         'se_vende_por_peso' => 'boolean',
         'precio_por_100g' => 'decimal:2',
         'tiempo_preparacion' => 'integer',
         'esta_disponible' => 'boolean',
     ];
 
-    // Lógica de imágenes desactivada temporalmente.
-    // protected $hidden = ['imagen'];
-
-    // protected $appends = ['imagen_url'];
+    // Variantes de proteína, tamaño o presentación (ej: Bistec, Cecina, etc.)
+    public function variantes(): HasMany
+    {
+        return $this->hasMany(ProductoVariante::class, 'producto_id');
+    }
 
     // A qué categoría del menú pertenece (Ej: Postres)
-    public function categoria()
+    public function categoria(): BelongsTo
     {
         return $this->belongsTo(Categoria::class);
     }
 
-    // LA MAGIA: Qué ingredientes lleva este platillo
-    // Se conecta a Insumo pasando por la tabla pivote 'recetas'
-    public function insumos()
+    // Qué ingredientes lleva este platillo
+    public function insumos(): BelongsToMany
     {
         return $this->belongsToMany(Insumo::class, 'recetas', 'producto_id', 'insumo_id')
-                    ->withPivot('cantidad_usada') // Trae la columna extra de la tabla pivote
+                    ->withPivot('cantidad_usada')
                     ->withTimestamps();
     }
 
-    public function modificadores()
+    public function modificadores(): BelongsToMany
     {
-        // Conecta el Producto con los Modificadores pasando por tu tabla pivote 'producto_modificadores'
         return $this->belongsToMany(Modificador::class, 'producto_modificadores');
     }
 
-    public function promociones()
+    public function promociones(): BelongsToMany
     {
         return $this->belongsToMany(Promocion::class, 'promocion_productos');
     }
-
-    // Lógica de imágenes desactivada temporalmente.
-    // /**
-    //  * URL para consumir la imagen del producto (o null si no tiene).
-    //  * Funciona tanto si consultaste con selectRaw('imagen IS NOT NULL as tiene_imagen')
-    //  * como si cargaste la columna 'imagen' completa.
-    //  *
-    //  * Incluye ?v={timestamp} para forzar al navegador a pedir la imagen de nuevo
-    //  * cada vez que se actualiza, se reemplaza o se elimina (cache-busting).
-    //  */
-    // public function getImagenUrlAttribute(): ?string
-    // {
-    //     $tieneImagen = $this->attributes['tiene_imagen'] ?? (!empty($this->attributes['imagen'] ?? null));
-    //
-    //     if (!$tieneImagen) {
-    //         return null;
-    //     }
-    //
-    //     $version = $this->updated_at?->timestamp ?? time();
-    //
-    //     return route('admin.productos.api.imagen', $this->id) . '?v=' . $version;
-    // }
 }

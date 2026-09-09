@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Producto;
 use App\Models\Categoria;
 use App\Models\Insumo;
+use App\Models\ProductoVariante;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,10 +18,14 @@ class ProductoController extends Controller
      */
     public function index()
     {
-        $productos = Producto::with(['categoria:id,nombre', 'insumos:id,nombre,unidad_medida'])
+        $productos = Producto::with([
+                                'categoria:id,nombre', 
+                                'insumos:id,nombre,unidad_medida',
+                                'variantes:id,producto_id,nombre,precio,esta_disponible'
+                             ])
                              ->select([
                                  'id', 'categoria_id', 'nombre', 'descripcion', 'precio',
-                                 'se_vende_por_peso', 'precio_por_100g', 'esta_disponible',
+                                 'tiene_variantes', 'se_vende_por_peso', 'precio_por_100g', 'esta_disponible',
                                  'created_at', 'updated_at', 'deleted_at',
                              ])
                              ->orderBy('nombre')
@@ -37,7 +42,7 @@ class ProductoController extends Controller
     }
 
     /**
-     * Registra un nuevo platillo y guarda su receta (ingredientes).
+     * Registra un nuevo platillo y guarda sus variantes o receta.
      */
     public function store(Request $request)
     {
@@ -46,35 +51,61 @@ class ProductoController extends Controller
         ]);
 
         $request->validate([
-            'nombre'            => 'required|string|max:255',
-            'descripcion'       => 'nullable|string',
-            'categoria_id'      => 'required|exists:categorias,id',
-            'precio'            => 'required|numeric|min:0',
-            'se_vende_por_peso' => 'sometimes|boolean',
-            'precio_por_100g'   => 'nullable|required_if:se_vende_por_peso,1|numeric|min:0',
-            'insumos'           => 'nullable|array',
-            'insumos.*'         => 'exists:insumos,id',
-            'cantidades'        => 'nullable|array',
-            'cantidades.*'      => 'required_with:insumos|numeric|min:0.001',
+            'nombre'               => 'required|string|max:255',
+            'descripcion'          => 'nullable|string',
+            'categoria_id'         => 'required|exists:categorias,id',
+            'tiene_variantes'      => 'sometimes|boolean',
+            'se_vende_por_peso'    => 'sometimes|boolean',
+            
+            // El precio base es obligatorio solo si no tiene variantes ni se vende por peso
+            'precio'               => 'nullable|required_unless:tiene_variantes,1|numeric|min:0',
+            'precio_por_100g'      => 'nullable|required_if:se_vende_por_peso,1|numeric|min:0',
+            
+            // Validación de las variantes (Bistec, Cecina, etc.)
+            'variantes'            => 'nullable|required_if:tiene_variantes,1|array',
+            'variantes.*.nombre'   => 'required_with:variantes|string|max:255',
+            'variantes.*.precio'   => 'required_with:variantes|numeric|min:0',
+
+            // Insumos / Receta
+            'insumos'              => 'nullable|array',
+            'insumos.*'            => 'exists:insumos,id',
+            'cantidades'           => 'nullable|array',
+            'cantidades.*'         => 'required_with:insumos|numeric|min:0.001',
         ]);
 
         try {
             DB::beginTransaction();
 
+            $tieneVariantes = $request->boolean('tiene_variantes');
             $sePorPeso = $request->boolean('se_vende_por_peso');
 
             $producto = new Producto([
                 'nombre'            => $request->nombre,
                 'descripcion'       => $request->descripcion,
                 'categoria_id'      => $request->categoria_id,
-                'precio'            => $sePorPeso ? 0 : $request->precio,
+                'precio'            => ($tieneVariantes || $sePorPeso) ? 0 : ($request->precio ?? 0),
+                'tiene_variantes'   => $tieneVariantes,
                 'se_vende_por_peso' => $sePorPeso,
                 'precio_por_100g'   => $sePorPeso ? $request->precio_por_100g : null,
-                'esta_disponible'   => $request->boolean('esta_disponible'),
+                'esta_disponible'   => $request->boolean('esta_disponible', true),
             ]);
 
             $producto->save();
 
+            // Guardar variantes si el switch fue activado
+            if ($tieneVariantes && $request->filled('variantes')) {
+                foreach ($request->variantes as $varianteData) {
+                    if (!empty($varianteData['nombre']) && isset($varianteData['precio'])) {
+                        $producto->variantes()->create([
+                            'nombre'          => trim($varianteData['nombre']),
+                            'precio'          => (float)$varianteData['precio'],
+                            'esta_disponible' => true
+                        ]);
+                    }
+                }
+            }
+
+            // Guardar receta / insumos
             if ($request->filled('insumos') && $request->filled('cantidades')) {
                 $receta = [];
                 foreach ($request->insumos as $index => $insumoId) {
@@ -101,7 +132,7 @@ class ProductoController extends Controller
     }
 
     /**
-     * Actualiza un platillo y modifica su receta estructural.
+     * Actualiza un platillo, sus variantes y su receta.
      */
     public function update(Request $request, $id)
     {
@@ -110,34 +141,57 @@ class ProductoController extends Controller
         ]);
 
         $request->validate([
-            'nombre'            => 'required|string|max:255',
-            'descripcion'       => 'nullable|string',
-            'categoria_id'      => 'required|exists:categorias,id',
-            'precio'            => 'required|numeric|min:0',
-            'se_vende_por_peso' => 'sometimes|boolean',
-            'precio_por_100g'   => 'nullable|required_if:se_vende_por_peso,1|numeric|min:0',
-            'insumos'           => 'nullable|array',
-            'insumos.*'         => 'exists:insumos,id',
-            'cantidades'        => 'nullable|array',
-            'cantidades.*'      => 'required_with:insumos|numeric|min:0.001',
+            'nombre'               => 'required|string|max:255',
+            'descripcion'          => 'nullable|string',
+            'categoria_id'         => 'required|exists:categorias,id',
+            'tiene_variantes'      => 'sometimes|boolean',
+            'se_vende_por_peso'    => 'sometimes|boolean',
+            'precio'               => 'nullable|required_unless:tiene_variantes,1|numeric|min:0',
+            'precio_por_100g'      => 'nullable|required_if:se_vende_por_peso,1|numeric|min:0',
+            
+            'variantes'            => 'nullable|required_if:tiene_variantes,1|array',
+            'variantes.*.nombre'   => 'required_with:variantes|string|max:255',
+            'variantes.*.precio'   => 'required_with:variantes|numeric|min:0',
+
+            'insumos'              => 'nullable|array',
+            'insumos.*'            => 'exists:insumos,id',
+            'cantidades'           => 'nullable|array',
+            'cantidades.*'         => 'required_with:insumos|numeric|min:0.001',
         ]);
 
         try {
             DB::beginTransaction();
 
             $producto = Producto::findOrFail($id);
+            $tieneVariantes = $request->boolean('tiene_variantes');
             $sePorPeso = $request->boolean('se_vende_por_peso');
 
             $producto->update([
                 'nombre'            => $request->nombre,
                 'descripcion'       => $request->descripcion,
                 'categoria_id'      => $request->categoria_id,
-                'precio'            => $sePorPeso ? 0 : $request->precio,
+                'precio'            => ($tieneVariantes || $sePorPeso) ? 0 : ($request->precio ?? 0),
+                'tiene_variantes'   => $tieneVariantes,
                 'se_vende_por_peso' => $sePorPeso,
                 'precio_por_100g'   => $sePorPeso ? $request->precio_por_100g : null,
                 'esta_disponible'   => $request->boolean('esta_disponible'),
             ]);
 
+            // Sincronizar variantes: si se desactivó el switch se limpian; si sigue activo se reconstruyen
+            $producto->variantes()->delete();
+            if ($tieneVariantes && $request->filled('variantes')) {
+                foreach ($request->variantes as $varianteData) {
+                    if (!empty($varianteData['nombre']) && isset($varianteData['precio'])) {
+                        $producto->variantes()->create([
+                            'nombre'          => trim($varianteData['nombre']),
+                            'precio'          => (float)$varianteData['precio'],
+                            'esta_disponible' => true
+                        ]);
+                    }
+                }
+            }
+
+            // Sincronizar receta / insumos
             $receta = [];
             if ($request->filled('insumos') && $request->filled('cantidades')) {
                 foreach ($request->insumos as $index => $insumoId) {
@@ -148,7 +202,6 @@ class ProductoController extends Controller
                     }
                 }
             }
-
             $producto->insumos()->sync($receta);
 
             DB::commit();
@@ -195,10 +248,10 @@ class ProductoController extends Controller
      */
     public function getProductos(): JsonResponse
     {
-        $productos = Producto::with(['categoria', 'insumos', 'modificadores'])
+        $productos = Producto::with(['categoria', 'insumos', 'modificadores', 'variantes'])
             ->select([
                 'id', 'categoria_id', 'nombre', 'descripcion', 'precio',
-                'se_vende_por_peso', 'precio_por_100g', 'esta_disponible',
+                'tiene_variantes', 'se_vende_por_peso', 'precio_por_100g', 'esta_disponible',
                 'updated_at',
             ])
             ->get()

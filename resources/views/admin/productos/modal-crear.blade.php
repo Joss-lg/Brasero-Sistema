@@ -36,11 +36,11 @@
                     <input type="text" id="nombre" name="nombre" data-teclado="texto" inputmode="none"
                         class="w-full rounded-2xl p-3 sm:p-4 mt-1.5 outline-none transition text-base focus:border-[#b74309] focus:ring-2 focus:ring-[#b74309]/20"
                         style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);"
-                        placeholder="Ej: Lasagna de la Casa" required>
+                        placeholder="Ej: Volcanes El Brasero (3 Pzs)" required>
                 </div>
 
                 {{-- Toggle: Se vende por peso --}}
-                <div class="col-span-2">
+                <div class="col-span-2" id="contenedor-switch-peso">
                     <label class="flex items-center justify-between gap-3 bg-orange-500/5 border border-orange-500/20 rounded-2xl p-3.5 sm:p-4 cursor-pointer select-none">
                         <span class="flex items-center gap-2.5">
                             <i class="fas fa-weight-hanging text-orange-500 text-sm"></i>
@@ -52,6 +52,43 @@
                             <span class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-5"></span>
                         </span>
                     </label>
+                </div>
+
+                {{-- Toggle: Tiene variantes (proteínas, tamaños) --}}
+                <div class="col-span-2" id="contenedor-switch-variantes">
+                    <label class="flex items-center justify-between gap-3 bg-orange-500/5 border border-orange-500/20 rounded-2xl p-3.5 sm:p-4 cursor-pointer select-none">
+                        <span class="flex items-center gap-2.5">
+                            <i class="fas fa-layer-group text-orange-500 text-sm"></i>
+                            <div>
+                                <span class="text-xs sm:text-sm font-bold block" style="color: var(--text-color);">Tiene variantes de precio / proteína</span>
+                                <span class="text-[10px] sm:text-xs block" style="color: var(--text-muted);">Ej: Bistec, Cecina, Pechuga con precios distintos</span>
+                            </div>
+                        </span>
+                        <span class="relative inline-flex items-center">
+                            <input type="checkbox" id="tiene_variantes" name="tiene_variantes" class="peer sr-only" onchange="toggleModoVariantes('crear')">
+                            <span class="w-11 h-6 rounded-full bg-zinc-300 dark:bg-zinc-600 peer-checked:bg-[#b74309] transition-colors"></span>
+                            <span class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-5"></span>
+                        </span>
+                    </label>
+                </div>
+
+                {{-- Bloque dinámico: Variantes --}}
+                <div class="col-span-2 hidden" id="grupo-variantes-crear">
+                    <div class="p-4 rounded-2xl border" style="background-color: var(--input-bg); border-color: rgba(249,115,22,0.3);">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <div>
+                                <label class="text-[11px] sm:text-xs font-black text-orange-500 uppercase tracking-widest ml-1">Lista de Variantes</label>
+                                <p class="text-[9px] sm:text-[10px]" style="color: var(--text-muted);">Indica el nombre de la variante y su precio correspondiente.</p>
+                            </div>
+                            <button type="button" onclick="agregarFilaVariante()" class="inline-flex items-center gap-1.5 bg-[#b74309] hover:bg-[#8f3207] active:scale-95 text-white px-3 py-1.5 rounded-lg font-black transition text-[10px] sm:text-xs tracking-wider shadow-sm">
+                                <i class="fas fa-plus"></i> AGREGAR VARIANTE
+                            </button>
+                        </div>
+                        
+                        <div id="contenedor-filas-variantes" class="space-y-2.5">
+                            {{-- Se generan dinámicamente con JS --}}
+                        </div>
+                    </div>
                 </div>
 
                 {{-- Precio fijo --}}
@@ -77,7 +114,7 @@
                 </div>
 
                 {{-- Categoría --}}
-                <div class="col-span-2 sm:col-span-1 relative">
+                <div class="col-span-2 sm:col-span-1 relative" id="grupo-categoria-crear">
                     <label class="text-[11px] sm:text-xs font-black uppercase tracking-widest ml-1" style="color: var(--text-muted);">Categoría</label>
                     <input type="text" id="categoria_nombre" name="categoria_nombre" list="lista-categorias" data-teclado="texto" inputmode="none"
                         class="w-full rounded-2xl p-3 sm:p-4 mt-1.5 outline-none transition text-base focus:border-[#b74309] focus:ring-2 focus:ring-[#b74309]/20"
@@ -128,6 +165,8 @@
 </div>
 
 <script>
+    let indiceVariantes = 0;
+
     window.bloquearScrollFondo = function () { document.body.style.overflow = 'hidden'; };
     window.desbloquearScrollFondo = function () { document.body.style.overflow = ''; };
 
@@ -157,21 +196,108 @@
         }
         desbloquearScrollFondo();
         const form = document.getElementById('formulario-crear-producto');
-        if (form) form.reset();
+        if (form) {
+            form.reset();
+            document.getElementById('contenedor-filas-variantes').innerHTML = '';
+            document.getElementById('grupo-variantes-crear').classList.add('hidden');
+            document.getElementById('grupo-precio-fijo-crear').classList.remove('hidden');
+            document.getElementById('grupo-precio-peso-crear').classList.add('hidden');
+            document.getElementById('contenedor-switch-peso').classList.remove('hidden');
+            document.getElementById('contenedor-switch-variantes').classList.remove('hidden');
+            document.getElementById('precio').required = true;
+            document.getElementById('precio_por_100g').required = false;
+        }
     };
 
     function toggleModoVentaPeso(tipo) {
-        const checkbox  = document.getElementById(tipo === 'crear' ? 'se_vende_por_peso' : 'edit-se_vende_por_peso');
-        const grupoFijo = document.getElementById(tipo === 'crear' ? 'grupo-precio-fijo-crear' : 'grupo-precio-fijo-editar');
-        const grupoPeso = document.getElementById(tipo === 'crear' ? 'grupo-precio-peso-crear' : 'grupo-precio-peso-editar');
-        const inputFijo = document.getElementById(tipo === 'crear' ? 'precio' : 'edit-precio');
-        const inputPeso = document.getElementById(tipo === 'crear' ? 'precio_por_100g' : 'edit-precio_por_100g');
-        const esPorPeso = checkbox.checked;
+        const checkboxPeso  = document.getElementById(tipo === 'crear' ? 'se_vende_por_peso' : 'edit-se_vende_por_peso');
+        const switchVar     = document.getElementById('contenedor-switch-variantes');
+        const grupoFijo     = document.getElementById(tipo === 'crear' ? 'grupo-precio-fijo-crear' : 'grupo-precio-fijo-editar');
+        const grupoPeso     = document.getElementById(tipo === 'crear' ? 'grupo-precio-peso-crear' : 'grupo-precio-peso-editar');
+        const inputFijo     = document.getElementById(tipo === 'crear' ? 'precio' : 'edit-precio');
+        const inputPeso     = document.getElementById(tipo === 'crear' ? 'precio_por_100g' : 'edit-precio_por_100g');
+        const esPorPeso     = checkboxPeso.checked;
+
+        if (esPorPeso) {
+            switchVar.classList.add('hidden');
+            document.getElementById('tiene_variantes').checked = false;
+            document.getElementById('grupo-variantes-crear').classList.add('hidden');
+            document.getElementById('contenedor-filas-variantes').innerHTML = '';
+        } else {
+            switchVar.classList.remove('hidden');
+        }
+
         grupoFijo.classList.toggle('hidden', esPorPeso);
         grupoPeso.classList.toggle('hidden', !esPorPeso);
         inputFijo.required = !esPorPeso;
         inputPeso.required = esPorPeso;
         if (esPorPeso) { inputFijo.value = 0; }
+    }
+
+    function toggleModoVariantes(tipo) {
+        const checkboxVar  = document.getElementById(tipo === 'crear' ? 'tiene_variantes' : 'edit-tiene_variantes');
+        const switchPeso   = document.getElementById('contenedor-switch-peso');
+        const grupoVar     = document.getElementById('grupo-variantes-crear');
+        const grupoFijo    = document.getElementById('grupo-precio-fijo-crear');
+        const inputFijo    = document.getElementById('precio');
+        const tieneVar     = checkboxVar.checked;
+
+        if (tieneVar) {
+            switchPeso.classList.add('hidden');
+            document.getElementById('se_vende_por_peso').checked = false;
+            document.getElementById('grupo-precio-peso-crear').classList.add('hidden');
+            document.getElementById('precio_por_100g').required = false;
+
+            grupoFijo.classList.add('hidden');
+            inputFijo.required = false;
+            inputFijo.value = 0;
+
+            grupoVar.classList.remove('hidden');
+            if (document.querySelectorAll('.fila-variante-item').length === 0) {
+                agregarFilaVariante();
+            }
+        } else {
+            switchPeso.classList.remove('hidden');
+            grupoVar.classList.add('hidden');
+            grupoFijo.classList.remove('hidden');
+            inputFijo.required = true;
+            inputFijo.value = '';
+        }
+    }
+
+    function agregarFilaVariante(nombre = '', precio = '') {
+        const contenedor = document.getElementById('contenedor-filas-variantes');
+        const index = indiceVariantes++;
+
+        const fila = document.createElement('div');
+        fila.className = 'fila-variante-item flex items-center gap-2 bg-black/5 dark:bg-white/5 p-2 rounded-xl border border-black/5 dark:border-white/5';
+        fila.id = `fila-variante-${index}`;
+        fila.innerHTML = `
+            <div class="flex-1">
+                <input type="text" name="variantes[${index}][nombre]" value="${nombre}" placeholder="Ej: Bistec, Cecina..." required data-teclado="texto" inputmode="none"
+                    class="w-full rounded-xl p-2.5 outline-none text-xs sm:text-sm focus:border-[#b74309] focus:ring-1 focus:ring-[#b74309]"
+                    style="background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color);">
+            </div>
+            <div class="w-28 sm:w-32 flex items-center rounded-xl focus-within:ring-1 focus-within:ring-[#b74309]"
+                style="background-color: var(--input-bg); border: 1px solid var(--border-color);">
+                <span class="pl-2.5 text-xs font-bold" style="color: var(--text-muted);">$</span>
+                <input type="text" name="variantes[${index}][precio]" value="${precio}" placeholder="0.00" pattern="[0-9]*\\.?[0-9]*" required data-teclado="numerico" inputmode="none"
+                    class="w-full p-2.5 pl-1 outline-none text-xs sm:text-sm bg-transparent"
+                    style="color: var(--text-color);">
+            </div>
+            <button type="button" onclick="eliminarFilaVariante(${index})" class="w-8 h-8 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10 active:scale-95 transition shrink-0">
+                <i class="fas fa-trash-alt text-xs sm:text-sm"></i>
+            </button>
+        `;
+        contenedor.appendChild(fila);
+    }
+
+    function eliminarFilaVariante(index) {
+        const fila = document.getElementById(`fila-variante-${index}`);
+        if (fila) fila.remove();
+        if (document.querySelectorAll('.fila-variante-item').length === 0) {
+            agregarFilaVariante();
+        }
     }
 
     function enviarFormularioConImagen(url, formData, btn, textoOriginal, onSuccess) {
@@ -214,17 +340,35 @@
         const original = btn.textContent;
         btn.textContent = 'GUARDANDO...';
         btn.disabled    = true;
+
         const catNombre = document.getElementById('categoria_nombre').value;
         const catId     = obtenerCategoriaIdPorNombre(catNombre);
         if (!catId) {
             mostrarNotificacion('Selecciona una categoría válida', 'error');
-            btn.textContent = original; btn.disabled = false; return;
+            btn.textContent = original; 
+            btn.disabled = false; 
+            return;
         }
+
+        const tieneVariantes = document.getElementById('tiene_variantes').checked;
+        if (tieneVariantes) {
+            const variantesElems = document.querySelectorAll('.fila-variante-item');
+            if (variantesElems.length === 0) {
+                mostrarNotificacion('Debes agregar al menos una variante con precio', 'error');
+                btn.textContent = original;
+                btn.disabled = false;
+                return;
+            }
+        }
+
         document.getElementById('categoria_id').value = catId;
         const formEl   = document.getElementById('formulario-crear-producto');
         const formData = new FormData(formEl);
+        
         formData.set('categoria_id', catId);
         formData.set('se_vende_por_peso', document.getElementById('se_vende_por_peso').checked ? '1' : '0');
+        formData.set('tiene_variantes', tieneVariantes ? '1' : '0');
+
         enviarFormularioConImagen(RUTA_STORE, formData, btn, original, closeModalCrear);
     }
 </script>
