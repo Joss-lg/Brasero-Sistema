@@ -85,9 +85,12 @@ class PlanoEspacialMesas {
             .toLowerCase();
     }
 
-    async cargarMesas() {
+       async cargarMesas() {
         try {
-            const response = await fetch(this.config.apiBase, {
+            const zona = this.estado.filtroZona && this.estado.filtroZona !== 'todas'
+                ? `?seccion=${encodeURIComponent(this.estado.filtroZona)}`
+                : '';
+            const response = await fetch(this.config.apiBase + zona, {
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
