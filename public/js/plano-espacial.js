@@ -39,6 +39,12 @@ class PlanoEspacialMesas {
         await this.cargarMesas();
         this.setupEventos();
         this.setupZoom();
+        // Aplicar filtro inicial de zona
+        this.estado.filtroZona = 'entrada';
+        this.renderizar();
+        // Actualizar label visual
+        const label = document.getElementById('labelZonaSeleccionada');
+        if (label) label.textContent = 'Zona: Entrada';
         console.log('✓ PlanoEspacialMesas inicializado');
     }
 
