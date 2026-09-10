@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket {{ $folio }}</title>
+    <title>Ticket {{ $folio ?? '' }}</title>
     <style>
         @page { 
             size: 80mm auto; 
             margin: 0; 
         }
         body {
-            /* Fusionamos el ancho seguro de Agostadero con la tipografía de Pizzetos */
+            /* Ancho seguro para impresión térmica */
             width: 72mm;
             margin: 4mm auto;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
             font-size: 13px; 
             color: #000; 
-            text-transform: uppercase; /* Todo en mayúsculas como en Pizzetos */
+            text-transform: uppercase;
         }
         
-        /* Clases utilitarias estilo Pizzetos */
+        /* Clases utilitarias */
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .font-bold { font-weight: bold; }
@@ -40,7 +40,7 @@
         th, td { text-align: left; vertical-align: top; padding: 3px 0; }
         th { border-bottom: 1px dashed #000; font-weight: bold; padding-bottom: 3px; font-size: 13px;}
         
-        /* Estilos de productos (Letra grande y gruesa de Pizzetos) */
+        /* Estilos de productos */
         .item-principal { font-size: 16px; font-weight: 900; line-height: 1.2; }
         .sub-item { font-size: 13px; font-weight: bold; color: #333; line-height: 1.2; }
         .precio-text { font-size: 15px; font-weight: bold; }
@@ -64,11 +64,11 @@
 </head>
 <body>
 
-    <!-- Encabezado (Estilo Pizzetos) -->
+    <!-- Encabezado -->
     <div class="text-center mb-1">
         
-        <!-- Logo de El brasero -->
-         <img src="{{ asset('images/brasero.webp') }}" alt="El Brasero" class="ticket-logo">
+        <!-- Logo de El Brasero -->
+        <img src="{{ asset('images/brasero.webp') }}" alt="El Brasero" class="ticket-logo">
         
         <div style="font-size: 12px; margin-top: 4px;">TICKET</div>
 
@@ -78,7 +78,7 @@
 
         <div style="font-size: 12px;">{{ $fecha }}{{ !empty($hora) ? ' - '.$hora : '' }}</div>
 
-        @if($mesero) 
+        @if(!empty($mesero)) 
             <div style="font-size: 12px;">ATENDIÓ: {{ $mesero }}</div> 
         @endif
 
@@ -86,9 +86,9 @@
             <div style="font-size: 12px;">CAJERO: {{ $cajero }}</div>
         @endif
         
-        <!-- Bloque central de Mesa/Delivery con bordes superior e inferior -->
+        <!-- Bloque central de Mesa/Delivery -->
         <div class="font-bold text-lg mt-1 mb-1 py-1" style="border-top: 1px dashed #000; border-bottom: 1px dashed #000;">
-            @if($mesa)
+            @if(!empty($mesa))
                 @if($esDelivery ?? false)
                     {{ mb_strtoupper($plataformaNombre ?? 'DELIVERY') }} · {{ mb_strtoupper(preg_replace('/^mesa\s*/i', '', $mesa)) }}
                 @else
@@ -134,7 +134,7 @@
 
     <div class="dashed-line"></div>
 
-    <!-- Totales (Alineados con flex-between estilo Pizzetos) -->
+    <!-- Totales -->
     <div style="padding: 5px 0;">
         <div class="flex-between" style="font-size: 14px; margin-bottom: 3px;">
             <span>SUBTOTAL:</span>
@@ -154,12 +154,6 @@
                 <span>-${{ number_format($descuentoCajaMonto, 2) }}</span>
             </div>
         @endif
-
-        @php /* IVA_BLOCK_START — iva_ticket_display
-        @if ivaHabilitado && iva > 0
-            IVA X% : $X.XX
-        @endif
-        IVA_BLOCK_END */ @endphp
 
         @if(($propina ?? 0) > 0)
             <div class="flex-between" style="font-size: 14px; margin-bottom: 3px;">
@@ -188,68 +182,105 @@
         </div>
     </div>
 
-    <!-- Pagos -->
-    @if(isset($pagos) && collect($pagos)->isNotEmpty())
-        @php
-            $pagosCobrados = collect($pagos)->filter(fn($p) => ($p['monto'] ?? 0) > 0);
-            $esDivision    = $pagosCobrados->contains(fn($p) => !is_null($p['persona'] ?? null));
-        @endphp
-        <div class="dashed-line"></div>
+    <!-- Pagos (Soporte Robusto: Arrays, Modelos Eloquent y Respaldo Directo) -->
+    @php
+        $coleccionPagos = collect($pagos ?? ($orden->pagos ?? []))->map(function($p) {
+            if (is_array($p)) {
+                return [
+                    'metodo'        => $p['metodo'] ?? $p['metodo_pago'] ?? $p['forma_pago'] ?? null,
+                    'monto'         => (float)($p['monto'] ?? $p['total'] ?? 0),
+                    'referencia'    => $p['referencia'] ?? null,
+                    'persona'       => $p['persona'] ?? $p['numero_cuenta'] ?? null,
+                    'totalPersonas' => $p['totalPersonas'] ?? $p['total_personas'] ?? null,
+                ];
+            } elseif (is_object($p)) {
+                return [
+                    'metodo'        => $p->metodo ?? $p->metodo_pago ?? $p->forma_pago ?? null,
+                    'monto'         => (float)($p->monto ?? $p->total ?? 0),
+                    'referencia'    => $p->referencia ?? null,
+                    'persona'       => $p->persona ?? $p->numero_cuenta ?? null,
+                    'totalPersonas' => $p->totalPersonas ?? $p->total_personas ?? null,
+                ];
+            }
+            return null;
+        })->filter(fn($p) => !is_null($p) && !empty($p['metodo']) && ($p['monto'] > 0 || count($pagos ?? []) <= 1));
 
-        @if($esDivision)
-            {{-- Cuenta dividida: agrupar por persona --}}
-            <div class="font-bold text-center" style="font-size: 13px; margin-bottom: 6px;">
-                CUENTA DIVIDIDA ENTRE {{ $pagosCobrados->first()['totalPersonas'] }} PERSONAS
-            </div>
-            @php $pagosPorPersona = $pagosCobrados->groupBy('persona')->sortKeys(); @endphp
-            @foreach($pagosPorPersona as $numPersona => $pagosPersona)
-                <div style="margin-bottom: 6px;">
-                    <div class="font-bold" style="font-size: 12px; border-bottom: 1px dotted #999; margin-bottom: 3px;">
-                        PERSONA {{ $numPersona }} DE {{ $pagosPersona->first()['totalPersonas'] }}
-                    </div>
-                    @foreach($pagosPersona as $pago)
-                        <div class="flex-between" style="font-size: 13px; padding-left: 4px;">
-                            <span>{{ mb_strtoupper($pago['metodo']) }}</span>
-                            <span class="font-bold">${{ number_format($pago['monto'], 2) }}</span>
-                        </div>
-                        @if(!empty($pago['referencia']))
-                            <div style="font-size: 11px; color: #444; padding-left: 4px;">REF: {{ mb_strtoupper($pago['referencia']) }}</div>
-                        @endif
-                    @endforeach
+        // Respaldo directo en caso de que $pagos venga vacío pero exista información en la orden o variables directas
+        if ($coleccionPagos->isEmpty()) {
+            $metodoDirecto = $metodo_pago 
+                ?? ($orden->metodo_pago 
+                ?? ($forma_pago 
+                ?? ($orden->forma_pago 
+                ?? ($orden->metodo 
+                ?? 'EFECTIVO'))));
+
+            $coleccionPagos = collect([[
+                'metodo'        => $metodoDirecto,
+                'monto'         => (float)($total ?? ($orden->total ?? 0)),
+                'referencia'    => $referencia ?? ($orden->referencia ?? null),
+                'persona'       => null,
+                'totalPersonas' => null,
+            ]]);
+        }
+
+        $esDivision = $coleccionPagos->contains(fn($p) => !is_null($p['persona']));
+    @endphp
+
+    <div class="dashed-line"></div>
+
+    @if($esDivision)
+        {{-- Cuenta dividida: agrupar por persona --}}
+        <div class="font-bold text-center" style="font-size: 13px; margin-bottom: 6px;">
+            CUENTA DIVIDIDA ENTRE {{ $coleccionPagos->first()['totalPersonas'] ?? $coleccionPagos->groupBy('persona')->count() }} PERSONAS
+        </div>
+        @php $pagosPorPersona = $coleccionPagos->groupBy('persona')->sortKeys(); @endphp
+        @foreach($pagosPorPersona as $numPersona => $pagosPersona)
+            <div style="margin-bottom: 6px;">
+                <div class="font-bold" style="font-size: 12px; border-bottom: 1px dotted #999; margin-bottom: 3px;">
+                    PERSONA {{ $numPersona }} DE {{ $pagosPersona->first()['totalPersonas'] ?? $pagosPorPersona->count() }}
                 </div>
-            @endforeach
-        @else
-            {{-- Pago normal sin división --}}
-            <div class="font-bold" style="font-size: 13px; margin-bottom: 5px;">FORMA DE PAGO:</div>
-            @foreach($pagosCobrados as $pago)
-                <div style="margin-bottom: 5px;">
-                    <div class="flex-between font-bold" style="font-size: 14px;">
+                @foreach($pagosPersona as $pago)
+                    <div class="flex-between" style="font-size: 13px; padding-left: 4px;">
                         <span>{{ mb_strtoupper($pago['metodo']) }}</span>
-                        <span>${{ number_format($pago['monto'], 2) }}</span>
+                        <span class="font-bold">${{ number_format($pago['monto'], 2) }}</span>
                     </div>
                     @if(!empty($pago['referencia']))
-                        <div style="font-size: 12px; color: #333;">REF: {{ mb_strtoupper($pago['referencia']) }}</div>
+                        <div style="font-size: 11px; color: #444; padding-left: 4px;">REF: {{ mb_strtoupper($pago['referencia']) }}</div>
                     @endif
+                @endforeach
+            </div>
+        @endforeach
+    @else
+        {{-- Pago normal o combinado sin división --}}
+        <div class="font-bold" style="font-size: 13px; margin-bottom: 5px;">FORMA DE PAGO:</div>
+        @foreach($coleccionPagos as $pago)
+            <div style="margin-bottom: 5px;">
+                <div class="flex-between font-bold" style="font-size: 14px;">
+                    <span>{{ mb_strtoupper($pago['metodo']) }}</span>
+                    <span>${{ number_format($pago['monto'], 2) }}</span>
                 </div>
-            @endforeach
-        @endif
+                @if(!empty($pago['referencia']))
+                    <div style="font-size: 12px; color: #333;">REF: {{ mb_strtoupper($pago['referencia']) }}</div>
+                @endif
+            </div>
+        @endforeach
     @endif
 
-    <!-- División de cuenta -->
-    @if(isset($hayDivision) && $hayDivision && $partesDivision->isNotEmpty())
+    <!-- División de cuenta (si viene definida por partes pendientes) -->
+    @if(isset($hayDivision) && $hayDivision && isset($partesDivision) && $partesDivision->isNotEmpty())
         <div class="dashed-line"></div>
         <div class="font-bold text-center" style="font-size: 13px; margin-bottom: 6px;">
-            CUENTA DIVIDIDA ENTRE {{ $totalPartes }} PERSONAS
+            CUENTA DIVIDIDA ENTRE {{ $totalPartes ?? $partesDivision->count() }} PERSONAS
         </div>
         @foreach($partesDivision as $parte)
             <div class="flex-between" style="font-size: 13px; margin-bottom: 4px;">
                 <span>
-                    PERSONA {{ $parte['numero'] }} DE {{ $totalPartes }}
-                    @if($parte['estado'] === 'pagada')
+                    PERSONA {{ $parte['numero'] ?? '' }} DE {{ $totalPartes ?? $partesDivision->count() }}
+                    @if(($parte['estado'] ?? '') === 'pagada')
                         ✓
                     @endif
                 </span>
-                <span class="font-bold">${{ number_format($parte['total'], 2) }}</span>
+                <span class="font-bold">${{ number_format($parte['total'] ?? 0, 2) }}</span>
             </div>
             @if(($parte['propina'] ?? 0) > 0)
                 <div class="flex-between" style="font-size: 12px; margin-bottom: 4px; padding-left: 8px; color: #444;">
@@ -282,10 +313,5 @@
         </button>
     </div>
 
-    <script>
-        // JS original de Agostadero mantenido intencionalmente
-        // El modal que lo muestra dispara la impresión. 
-        // No auto-imprimir ni auto-cerrar.
-    </script>
 </body>
 </html>

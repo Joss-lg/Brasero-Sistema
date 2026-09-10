@@ -67,7 +67,7 @@
         }
     };
 
-    // Punto de entrada para productos con variantes (proteínas/tamaños)
+    // Punto de entrada para productos con variantes (proteínas/tamaños/sabores)
     window.agregarProductoConVariante = function (productoId, variante) {
         cambiarTab('nueva-orden', document.getElementById('btn-tab-nueva-orden'));
 
@@ -82,11 +82,11 @@
             nombreBase = prodEncontrado.nombre;
         } else {
             const btnElement = document.querySelector(`[data-producto-id="${productoId}"]`);
-            nombreBase = btnElement ? btnElement.getAttribute('data-producto-nombre') : 'VOLCANES';
+            nombreBase = btnElement ? btnElement.getAttribute('data-producto-nombre') : 'PRODUCTO';
         }
 
-        // 2. Formato: VOLCANES "EL BRASERO" (3 PZS) DE BISTEC
-        const nombreCompleto = `${nombreBase} DE ${variante.nombre}`;
+        // 2. Formato limpio con barra: AGUA DE FRUTA DE TEMPORADA / JARRA
+        const nombreCompleto = `${nombreBase.trim()} / ${variante.nombre.trim()}`;
 
         _insertarItemEnTicket({
             id: parseInt(productoId, 10),
@@ -284,7 +284,7 @@
         if (cantidad <= 0) { eliminarItemFila(item.querySelector('.btn-control-eliminar')); return; }
         cantidadSpan.innerText = cantidad; item.dataset.cantidad = cantidad;
         item.querySelector('.precio-platillo').innerText = '$' + (precioUnitario * cantidad).toFixed(2);
-        ticketSubtotal -= precioUnitario; actualizarTotales();
+        ticketSubtotal += precioUnitario; actualizarTotales();
     };
 
     window.eliminarItemFila = function (btn) {

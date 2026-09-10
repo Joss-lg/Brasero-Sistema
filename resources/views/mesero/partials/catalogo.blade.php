@@ -53,74 +53,92 @@
                 content-start auto-rows-min">
 
         @forelse($productos ?? [] as $producto)
-        @php
-            $variantesList = $producto->variantes ?? collect();
-            $tieneVariantes = (bool)($producto->tiene_variantes || $variantesList->isNotEmpty());
-            
-            if ($tieneVariantes && $variantesList->isNotEmpty()) {
-                $precioMostrar = $variantesList->min('precio') ?? 0;
-            } else {
-                $precioMostrar = $producto->precio ?? $producto->precio_por_100g ?? 0;
-            }
+            @php
+                $variantesList = $producto->variantes ?? collect();
+                $tieneVariantes = (bool)($producto->tiene_variantes || $variantesList->isNotEmpty());
 
-            $variantesJsonAttr = htmlspecialchars($variantesList->toJson(), ENT_QUOTES, 'UTF-8');
-            $nombreAttr = htmlspecialchars($producto->nombre, ENT_QUOTES, 'UTF-8');
-        @endphp
+                if ($tieneVariantes && $variantesList->isNotEmpty()) {
+                    $precioMostrar = $variantesList->min('precio') ?? 0;
+                } else {
+                    $precioMostrar = $producto->precio ?? $producto->precio_por_100g ?? 0;
+                }
 
-        <button type="button"
-            data-producto-id="{{ $producto->id }}"
-            data-producto-nombre="{{ $nombreAttr }}"
-            data-tiene-variantes="{{ $tieneVariantes ? '1' : '0' }}"
-            data-variantes="{{ $variantesJsonAttr }}"
-            onclick="gestionarClickProducto(this)"
-            class="btn-producto group relative flex flex-col justify-between text-left rounded-[20px] border border-blue-200/60
-                   bg-white p-4 shadow-sm min-h-[130px]
-                   hover:border-blue-500 hover:shadow-md hover:-translate-y-0.5
-                   active:scale-[0.97] active:translate-y-0
-                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60
-                   transition-all duration-150">
+                $variantesJsonAttr = htmlspecialchars($variantesList->toJson(), ENT_QUOTES, 'UTF-8');
+                $nombreAttr = htmlspecialchars($producto->nombre, ENT_QUOTES, 'UTF-8');
 
-            {{-- Nombre del producto y Badge de Variantes --}}
-            <div>
-                <h3 class="text-[14px] sm:text-[15px] font-black text-slate-900 leading-tight uppercase mb-1 pr-2">
-                    {{ $producto->nombre }}
-                </h3>
-                @if($tieneVariantes)
-                    <span class="inline-flex items-center gap-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md uppercase tracking-wider mb-2">
-                        <i class="fas fa-layer-group text-[8px]"></i> Elige proteína
-                    </span>
-                @endif
-            </div>
+                $catTexto = mb_strtolower($producto->categoria->nombre ?? (is_string($producto->categoria) ? $producto->categoria : ''));
+                $prodTexto = mb_strtolower($producto->nombre ?? '');
 
-            {{-- Precio y Botón Agregar --}}
-            <div class="mt-auto flex items-center justify-between gap-2 w-full">
+                if (str_contains($prodTexto, 'cubeta') || str_contains($prodTexto, 'cerveza') || str_contains($catTexto, 'cerveza')) {
+                    $etiquetaVariante = 'Elige cerveza';
+                    $iconoVariante = 'fa-beer-mug-empty';
+                } elseif (str_contains($prodTexto, 'agua') || str_contains($catTexto, 'agua') || str_contains($prodTexto, 'jarra') || str_contains($prodTexto, 'vaso')) {
+                    $etiquetaVariante = 'Elige tamaño';
+                    $iconoVariante = 'fa-glass-water';
+                } elseif (str_contains($catTexto, 'taco') || str_contains($catTexto, 'quesadilla') || str_contains($prodTexto, 'volcan') || str_contains($prodTexto, 'taco')) {
+                    $etiquetaVariante = 'Elige proteína';
+                    $iconoVariante = 'fa-drumstick-bite';
+                } else {
+                    $etiquetaVariante = 'Elige opción';
+                    $iconoVariante = 'fa-layer-group';
+                }
+            @endphp
+
+            <button type="button"
+                data-producto-id="{{ $producto->id }}"
+                data-producto-nombre="{{ $nombreAttr }}"
+                data-tiene-variantes="{{ $tieneVariantes ? '1' : '0' }}"
+                data-variantes="{{ $variantesJsonAttr }}"
+                data-etiqueta-variante="{{ $etiquetaVariante }}"
+                onclick="gestionarClickProducto(this)"
+                class="btn-producto group relative flex flex-col justify-between text-left rounded-[20px] border border-blue-200/60
+                       bg-white p-4 shadow-sm min-h-[130px]
+                       hover:border-blue-500 hover:shadow-md hover:-translate-y-0.5
+                       active:scale-[0.97] active:translate-y-0
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60
+                       transition-all duration-150">
+
+                {{-- Nombre del producto y Badge de Variantes --}}
                 <div>
+                    <h3 class="text-[14px] sm:text-[15px] font-black text-slate-900 leading-tight uppercase mb-1 pr-2">
+                        {{ $producto->nombre }}
+                    </h3>
                     @if($tieneVariantes)
-                        <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Desde</span>
+                        <span class="inline-flex items-center gap-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md uppercase tracking-wider mb-2">
+                            <i class="fas {{ $iconoVariante }} text-[8px]"></i> {{ $etiquetaVariante }}
+                        </span>
                     @endif
-                    <p class="text-[16px] sm:text-[18px] font-black text-slate-900 leading-none tracking-tight">
-                        ${{ number_format($precioMostrar, 2) }}
-                    </p>
                 </div>
 
-                <span class="flex-shrink-0 w-9 h-9 rounded-full bg-[#3b82f6] text-white
-                             flex items-center justify-center text-sm font-bold
-                             shadow-sm group-hover:bg-blue-600 group-active:scale-90
-                             transition-all duration-150">
-                    <i class="fas {{ $tieneVariantes ? 'fa-list-ul' : 'fa-plus' }}"></i>
-                </span>
-            </div>
-        </button>
+                {{-- Precio y Botón Agregar --}}
+                <div class="mt-auto flex items-center justify-between gap-2 w-full">
+                    <div>
+                        @if($tieneVariantes)
+                            <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Desde</span>
+                        @endif
+                        <p class="text-[16px] sm:text-[18px] font-black text-slate-900 leading-none tracking-tight">
+                            ${{ number_format($precioMostrar, 2) }}
+                        </p>
+                    </div>
+
+                    <span class="flex-shrink-0 w-9 h-9 rounded-full bg-[#3b82f6] text-white
+                                 flex items-center justify-center text-sm font-bold
+                                 shadow-sm group-hover:bg-blue-600 group-active:scale-90
+                                 transition-all duration-150">
+                        <i class="fas {{ $tieneVariantes ? 'fa-list-ul' : 'fa-plus' }}"></i>
+                    </span>
+                </div>
+            </button>
         @empty
-        <div class="col-span-full flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <span class="w-14 h-14 rounded-full bg-[var(--bg-panel)] border border-[var(--border-color)] flex items-center justify-center">
-                <i class="fas fa-box-open text-xl text-[var(--text-muted)]"></i>
-            </span>
-            <div>
-                <p class="text-sm font-bold text-[var(--text-main)]">Sin productos en esta categoría</p>
-                <p class="text-xs text-[var(--text-muted)] mt-1">Prueba con otra categoría del menú superior.</p>
+            <div class="col-span-full flex flex-col items-center justify-center gap-3 py-16 text-center">
+                <span class="w-14 h-14 rounded-full bg-[var(--bg-panel)] border border-[var(--border-color)] flex items-center justify-center">
+                    <i class="fas fa-box-open text-xl text-[var(--text-muted)]"></i>
+                </span>
+                <div>
+                    <p class="text-sm font-bold text-[var(--text-main)]">Sin productos en esta categoría</p>
+                    <p class="text-xs text-[var(--text-muted)] mt-1">Prueba con otra categoría del menú superior.</p>
+                </div>
             </div>
-        </div>
         @endforelse
     </div>
 
@@ -299,9 +317,10 @@
 // LÓGICA DE DETECCIÓN Y SELECCIÓN DE VARIANTES EN COMANDAS
 // ============================================================
 function gestionarClickProducto(btn) {
-    const productoId     = btn.getAttribute('data-producto-id');
-    const productoNombre = btn.getAttribute('data-producto-nombre');
-    const variantesRaw   = btn.getAttribute('data-variantes');
+    const productoId        = btn.getAttribute('data-producto-id');
+    const productoNombre    = btn.getAttribute('data-producto-nombre');
+    const variantesRaw      = btn.getAttribute('data-variantes');
+    const etiquetaVariante  = btn.getAttribute('data-etiqueta-variante') || 'Elige opción';
 
     let variantes = [];
     try {
@@ -313,7 +332,7 @@ function gestionarClickProducto(btn) {
     const tieneVariantes = btn.getAttribute('data-tiene-variantes') === '1' || variantes.length > 0;
 
     if (tieneVariantes && variantes.length > 0) {
-        abrirModalVariante(productoId, productoNombre, variantes);
+        abrirModalVariante(productoId, productoNombre, variantes, etiquetaVariante);
     } else {
         if (typeof window.seleccionarItemCatalogo === 'function') {
             window.seleccionarItemCatalogo(parseInt(productoId, 10));
@@ -323,14 +342,16 @@ function gestionarClickProducto(btn) {
     }
 }
 
-function abrirModalVariante(productoId, nombrePlatillo, variantes) {
+function abrirModalVariante(productoId, nombrePlatillo, variantes, etiquetaVariante = 'Elige opción') {
     const modal = document.getElementById('modalVariantesProducto');
     if (!modal) return;
 
-    const titulo = modal.querySelector('#modalVariantesTitulo');
-    const lista  = modal.querySelector('#modalVariantesLista');
+    const titulo    = modal.querySelector('#modalVariantesTitulo');
+    const subtitulo = modal.querySelector('#modalVariantesSubtitulo') || modal.querySelector('p.text-xs, p.text-sm');
+    const lista     = modal.querySelector('#modalVariantesLista');
 
     if (titulo) titulo.textContent = nombrePlatillo;
+    if (subtitulo) subtitulo.textContent = `${etiquetaVariante} deseada para este producto:`;
     if (!lista) return;
 
     lista.innerHTML = '';

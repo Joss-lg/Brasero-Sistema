@@ -5,12 +5,43 @@
  * comanda-core.js) y expone la interacción con variantes y tickets.
  */
 (function () {
+    function obtenerDetalleVariante(nombreProducto = '', nombreCategoria = '') {
+        const catTexto = nombreCategoria.toLowerCase();
+        const prodTexto = nombreProducto.toLowerCase();
+
+        if (prodTexto.includes('cubeta') || prodTexto.includes('cerveza') || catTexto.includes('cerveza')) {
+            return {
+                texto: 'Elige cerveza',
+                icono: 'fa-beer-mug-empty'
+            };
+        }
+
+        if (prodTexto.includes('agua') || catTexto.includes('agua') || prodTexto.includes('jarra') || prodTexto.includes('vaso')) {
+            return {
+                texto: 'Elige tamaño',
+                icono: 'fa-glass-water'
+            };
+        }
+
+        if (catTexto.includes('taco') || catTexto.includes('quesadilla') || prodTexto.includes('volcan') || prodTexto.includes('taco')) {
+            return {
+                texto: 'Elige proteína',
+                icono: 'fa-drumstick-bite'
+            };
+        }
+
+        return {
+            texto: 'Elige opción',
+            icono: 'fa-layer-group'
+        };
+    }
+
     function renderizarMenu() {
         const menuCat = document.getElementById('menuCategorias');
         const gridProd = document.getElementById('gridProductos');
 
         if (!menuCat || !gridProd) {
-            return; 
+            return;
         }
 
         menuCat.innerHTML = `<button type="button" onclick="filtrarCategoria('Todos', this)" class="cat-btn px-6 py-2.5 rounded-full bg-[#b74309] text-white text-[11px] font-bold tracking-wide shadow-sm hover:bg-[#8f3207] transition-all outline-none border border-transparent">Todos</button>`;
@@ -47,9 +78,11 @@
                     etiquetaPrecio = `<span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Desde</span>$${precioMin.toFixed(2)}`;
                 }
 
+                const { texto: textoVariante, icono: iconoVariante } = obtenerDetalleVariante(prod.nombre, catNombre);
+
                 const badgeVariante = tieneVariantes
                     ? `<span class="inline-flex items-center gap-1 text-[9px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md uppercase tracking-wider mb-2">
-                           <i class="fas fa-layer-group text-[8px]"></i> Elige proteína
+                           <i class="fas ${iconoVariante} text-[8px]"></i> ${textoVariante}
                        </span>`
                     : '';
 
@@ -102,8 +135,11 @@
         const tieneVariantes = Boolean(prod.tiene_variantes || (prod.variantes && prod.variantes.length > 0));
 
         if (tieneVariantes && prod.variantes && prod.variantes.length > 0) {
+            const catNombre = prod.categoria ? prod.categoria.nombre : '';
+            const { texto: etiquetaVariante } = obtenerDetalleVariante(prod.nombre, catNombre);
+
             if (typeof window.abrirModalVariante === 'function') {
-                window.abrirModalVariante(prod.id, prod.nombre, prod.variantes);
+                window.abrirModalVariante(prod.id, prod.nombre, prod.variantes, etiquetaVariante);
             }
         } else {
             const catNombre = prod.categoria ? prod.categoria.nombre : '';
@@ -165,7 +201,7 @@
         categoriaActiva = nombreCat;
         aplicarFiltrosCatalogo();
     };
-    
+
     // --- BUSCADOR ---
     document.addEventListener('DOMContentLoaded', () => {
         const buscador = document.getElementById('buscadorProductos');
@@ -184,7 +220,10 @@
         buscador.addEventListener('focus', () => {
             let previo = buscador.value;
             vigilante = setInterval(() => {
-                if (buscador.value !== previo) { previo = buscador.value; buscar(); }
+                if (buscador.value !== previo) {
+                    previo = buscador.value;
+                    buscar();
+                }
             }, 250);
         });
         buscador.addEventListener('blur', () => clearInterval(vigilante));
