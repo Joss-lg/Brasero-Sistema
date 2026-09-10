@@ -185,22 +185,30 @@ class PlanoEspacialMesas {
         return div;
     }
 
-    iniciarArrastre(e, elemento, mesa) {
+      iniciarArrastre(e, elemento, mesa) {
+        e.preventDefault();
+        e.stopPropagation();
+
         this.estado.arrastrando = mesa;
         this.estado.originX = parseInt(elemento.style.left, 10) || 0;
         this.estado.originY = parseInt(elemento.style.top, 10) || 0;
-        this.estado.startX = e.clientX;
-        this.estado.startY = e.clientY;
+
+        const lienzoRect = this.elementos.lienzo.getBoundingClientRect();
+        this.estado.startX = (e.clientX - lienzoRect.left) / (this.estado.zoom || 1);
+        this.estado.startY = (e.clientY - lienzoRect.top) / (this.estado.zoom || 1);
 
         elemento.setPointerCapture(e.pointerId);
 
         const onMove = (evt) => {
             if (!this.estado.arrastrando) return;
-            const deltaX = (evt.clientX - this.estado.startX) / (this.estado.zoom || 1);
-            const deltaY = (evt.clientY - this.estado.startY) / (this.estado.zoom || 1);
+            evt.preventDefault();
 
-            const x = Math.max(0, Math.round(this.estado.originX + deltaX));
-            const y = Math.max(0, Math.round(this.estado.originY + deltaY));
+            const rect = this.elementos.lienzo.getBoundingClientRect();
+            const curX = (evt.clientX - rect.left) / (this.estado.zoom || 1);
+            const curY = (evt.clientY - rect.top) / (this.estado.zoom || 1);
+
+            const x = Math.max(0, Math.round(this.estado.originX + (curX - this.estado.startX)));
+            const y = Math.max(0, Math.round(this.estado.originY + (curY - this.estado.startY)));
 
             elemento.style.left = `${x}px`;
             elemento.style.top = `${y}px`;

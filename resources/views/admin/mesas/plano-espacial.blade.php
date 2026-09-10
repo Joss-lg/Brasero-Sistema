@@ -137,17 +137,12 @@
                             id="btnDropdownZona"
                             class="px-3 py-2 rounded-lg bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs sm:text-sm font-semibold transition hover:border-[#b74309] hover:text-[#b74309] flex items-center gap-2 shadow-sm cursor-pointer outline-none active:scale-95">
                         <i class="fas fa-layer-group text-[#b74309]"></i>
-                        <span id="labelZonaSeleccionada">Zona: Todas</span>
+                            <span id="labelZonaSeleccionada">Zona: Entrada</span>
                         <i class="fas fa-chevron-down text-[10px] opacity-60"></i>
                     </button>
 
                     <div id="menuDropdownZona" 
                          class="hidden absolute left-0 mt-1.5 w-44 rounded-xl bg-[var(--card-color)] border border-[var(--border-color)] shadow-2xl z-50 p-1.5 backdrop-blur">
-                        <button type="button" onclick="seleccionarZonaDropdown('todas', 'Todas')" 
-                                class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-[var(--text-color)] hover:bg-[#b74309]/10 hover:text-[#b74309] transition-colors flex items-center justify-between cursor-pointer">
-                            <span>Todas las zonas</span>
-                            <i class="fas fa-check text-[10px] text-[#b74309] check-zona" data-val="todas"></i>
-                        </button>
                         <button type="button" onclick="seleccionarZonaDropdown('Entrada', 'Entrada')" 
                                 class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-[var(--text-color)] hover:bg-[#b74309]/10 hover:text-[#b74309] transition-colors flex items-center justify-between cursor-pointer">
                             <span>Entrada</span>
@@ -681,8 +676,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // Eventos de ratón
+                // Eventos de ratón
         contenedor.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.mesa-item, .mesa-elemento') && document.body.classList.contains('modo-edicion')) return;
+            const elBajo = document.elementFromPoint(e.clientX, e.clientY);
+            if (elBajo?.closest('.mesa-elemento') || elBajo?.closest('.mesa-item') || elBajo?.closest('[data-id]')) return;
+            if (e.target.closest('.mesa-item, .mesa-elemento, [data-id]')) return;
             onStart(e.pageX, e.pageY);
         });
         window.addEventListener('mousemove', (e) => onMove(e.pageX, e.pageY));
@@ -691,14 +689,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Eventos táctiles (Móviles / Tablets)
         contenedor.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
-                if (e.target.closest('.mesa-item, .mesa-elemento') && document.body.classList.contains('modo-edicion')) return;
-                onStart(e.touches[0].pageX, e.touches[0].pageY);
+                const t = e.touches[0];
+                const elBajo = document.elementFromPoint(t.clientX, t.clientY);
+                if (elBajo?.closest('.mesa-elemento') || elBajo?.closest('.mesa-item') || elBajo?.closest('[data-id]')) return;
+                if (e.target.closest('.mesa-item, .mesa-elemento, [data-id]')) return;
+                onStart(t.pageX, t.pageY);
             }
         }, { passive: true });
 
         contenedor.addEventListener('touchmove', (e) => {
             if (e.touches.length === 1 && isDown) {
-                onMove(e.touches[0].pageX, e.touches[0].pageY);
+                const t = e.touches[0];
+                const elBajo = document.elementFromPoint(t.clientX, t.clientY);
+                if (elBajo?.closest('.mesa-elemento') || elBajo?.closest('.mesa-item')) return;
+                onMove(t.pageX, t.pageY);
             }
         }, { passive: true });
 
