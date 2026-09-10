@@ -10,6 +10,16 @@
         </div>
         <div class="grid gap-4">
             <label class="block">
+                <span class="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Zona / Sección</span>
+                <select id="nuevaMesaSeccion"
+                        class="mt-1.5 w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] px-4 py-3 text-sm font-bold text-[var(--text-color)] outline-none focus:border-emerald-500 transition-colors cursor-pointer">
+                    <option value="Entrada">Entrada</option>
+                    <option value="Salón">Salón</option>
+                    <option value="2do Piso">2do Piso</option>
+                </select>
+            </label>
+
+            <label class="block">
                 <span class="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Nombre / Número</span>
                 <input id="nuevaMesaNumero" type="text"
                     data-teclado="texto"
@@ -17,6 +27,7 @@
                     data-teclado-max="10"
                     class="mt-1.5 w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] px-4 py-3 text-sm font-bold text-[var(--text-color)] outline-none focus:border-emerald-500 transition-colors">
             </label>
+
             <label class="block">
                 <span class="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Capacidad (Personas)</span>
                 <input id="nuevaMesaCapacidad" type="text" inputmode="numeric"
@@ -46,6 +57,16 @@
         <input type="hidden" id="editarMesaId">
         <div class="grid gap-4">
             <label class="block">
+                <span class="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Zona / Sección</span>
+                <select id="editarMesaSeccion"
+                        class="mt-1.5 w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] px-4 py-3 text-sm font-bold text-[var(--text-color)] outline-none focus:border-[#b74309] transition-colors cursor-pointer">
+                    <option value="Entrada">Entrada</option>
+                    <option value="Salón">Salón</option>
+                    <option value="2do Piso">2do Piso</option>
+                </select>
+            </label>
+
+            <label class="block">
                 <span class="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Nombre / Número</span>
                 <input id="editarMesaNumero" type="text"
                     data-teclado="texto"
@@ -53,6 +74,7 @@
                     data-teclado-max="10"
                     class="mt-1.5 w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg-color)] px-4 py-3 text-sm font-bold text-[var(--text-color)] outline-none focus:border-[#b74309] transition-colors">
             </label>
+
             <label class="block">
                 <span class="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Capacidad (Personas)</span>
                 <input id="editarMesaCapacidad" type="text" inputmode="numeric"
@@ -90,6 +112,189 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Conectar la sección activa al abrir el modal de crear mesa
+    window.abrirModalNuevaMesa = function() {
+        const modal = document.getElementById('modalNuevaMesa');
+        if (!modal) return;
+
+        const selectSeccion = document.getElementById('nuevaMesaSeccion');
+        if (selectSeccion && window.seccionFiltroActiva && window.seccionFiltroActiva !== 'todas') {
+            selectSeccion.value = window.seccionFiltroActiva;
+        }
+
+        document.getElementById('nuevaMesaNumero').value = '';
+        document.getElementById('nuevaMesaCapacidad').value = '';
+
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform')?.classList.remove('scale-95');
+        }, 10);
+    };
+
+    window.cerrarModalNuevaMesa = function() {
+        const modal = document.getElementById('modalNuevaMesa');
+        if (!modal) return;
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform')?.classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    };
+
+    window.crearNuevaMesa = function() {
+        const seccion = document.getElementById('nuevaMesaSeccion')?.value || 'Entrada';
+        const numero = document.getElementById('nuevaMesaNumero')?.value?.trim();
+        const capacidad = parseInt(document.getElementById('nuevaMesaCapacidad')?.value, 10);
+
+        if (!numero) {
+            alert('Ingresa el número o nombre de la mesa.');
+            return;
+        }
+        if (!capacidad || capacidad <= 0) {
+            alert('Ingresa una capacidad válida.');
+            return;
+        }
+
+        fetch("/plano-espacial/api/crear", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                numero: numero,
+                capacidad: capacidad,
+                seccion: seccion,
+                estado: 'disponible'
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success || data.mesa) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Ocurrió un error al crear la mesa.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error al procesar la solicitud.');
+        });
+    };
+
+    window.abrirModalEditarMesa = function(id, numero, capacidad, seccion = 'Entrada') {
+        const modal = document.getElementById('modalEditarMesa');
+        if (!modal) return;
+
+        document.getElementById('editarMesaId').value = id;
+        document.getElementById('editarMesaNumero').value = numero;
+        document.getElementById('editarMesaCapacidad').value = capacidad;
+        
+        const selectSeccion = document.getElementById('editarMesaSeccion');
+        if (selectSeccion) {
+            selectSeccion.value = seccion || 'Entrada';
+        }
+
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform')?.classList.remove('scale-95');
+        }, 10);
+    };
+
+    window.cerrarModalEditarMesa = function() {
+        const modal = document.getElementById('modalEditarMesa');
+        if (!modal) return;
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform')?.classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    };
+
+    window.guardarMesaEditada = function() {
+        const id = document.getElementById('editarMesaId')?.value;
+        const seccion = document.getElementById('editarMesaSeccion')?.value || 'Entrada';
+        const numero = document.getElementById('editarMesaNumero')?.value?.trim();
+        const capacidad = parseInt(document.getElementById('editarMesaCapacidad')?.value, 10);
+
+        if (!id || !numero) {
+            alert('Ingresa los datos requeridos.');
+            return;
+        }
+
+        fetch(`/plano-espacial/api/actualizar/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                numero: numero,
+                capacidad: capacidad,
+                seccion: seccion
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Error al actualizar la mesa.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error al guardar la mesa.');
+        });
+    };
+
+    window.abrirModalEliminarMesa = function(id, numero) {
+        const modal = document.getElementById('modalEliminarMesa');
+        if (!modal) return;
+
+        document.getElementById('eliminarMesaId').value = id;
+        document.getElementById('eliminarMesaNumero').textContent = numero;
+
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform')?.classList.remove('scale-95');
+        }, 10);
+    };
+
+    window.cerrarModalEliminarMesa = function() {
+        const modal = document.getElementById('modalEliminarMesa');
+        if (!modal) return;
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform')?.classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    };
+
+    window.confirmarEliminarMesa = function() {
+        const id = document.getElementById('eliminarMesaId')?.value;
+        if (!id) return;
+
+        fetch(`/plano-espacial/api/eliminar/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Error al eliminar.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error al eliminar la mesa.');
+        });
+    };
+</script>
 
 {{-- Teclado virtual: se incluye aquí para que quede junto a los modales que lo usan --}}
 @include('partials.teclado-virtual')

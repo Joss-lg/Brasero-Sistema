@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    
     public function up(): void
     {
         Schema::create('mesas', function (Blueprint $table) {
@@ -14,14 +13,13 @@ return new class extends Migration
             $table->string('numero')->unique();
             $table->integer('capacidad');
             $table->enum('estado', ['disponible', 'ocupada', 'reservada', 'limpieza'])->default('disponible');
-            $table->string('seccion')->nullable();
+            $table->string('seccion', 50)->default('Salón');
             $table->integer('posicion_x')->nullable();
             $table->integer('posicion_y')->nullable();
             $table->timestamps();
         });
     }
 
-    
     public function down(): void
     {
         Schema::dropIfExists('mesas');

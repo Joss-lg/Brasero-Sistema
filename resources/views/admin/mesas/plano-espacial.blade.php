@@ -63,7 +63,7 @@
                     <p class="text-sm sm:text-base text-[var(--text-muted)] mt-1">Gestiona el layout y posición de mesas interactivamente</p>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     {{-- MIS MESAS --}}
                     <button type="button" id="btnMisMesas"
                         class="flex-1 sm:flex-none justify-center px-4 py-2 rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] text-sm font-semibold transition hover:border-[#b74309] hover:text-[#b74309] flex items-center gap-2 shadow-sm cursor-pointer">
@@ -123,9 +123,78 @@
                 </div>
             </div>
 
-            <div class="mt-4 flex flex-wrap gap-3 items-center">
-                <div class="flex items-center gap-2">
-                    <span id="totalMesas" class="text-sm font-semibold text-[var(--text-color)] bg-[var(--input-bg)] border border-[var(--border-color)] px-3 py-2 rounded-lg shadow-sm">Mesas: 0</span>
+            {{-- FILA INFERIOR: CONTADOR DE MESAS Y DROPDOWNS DE ZONA Y ESTADO --}}
+            <div class="mt-4 flex flex-wrap gap-2.5 items-center">
+                {{-- Contador Mesas --}}
+                <span id="totalMesas" class="text-xs sm:text-sm font-semibold text-[var(--text-color)] bg-[var(--input-bg)] border border-[var(--border-color)] px-3 py-2 rounded-lg shadow-sm">
+                    Mesas: 0
+                </span>
+
+                {{-- DROPDOWN: FILTRAR POR ZONA (Entrada, Salón, 2do Piso) --}}
+                <div class="relative inline-block text-left" id="dropdownZonaWrapper">
+                    <button type="button" 
+                            onclick="toggleDropdownZona()" 
+                            id="btnDropdownZona"
+                            class="px-3 py-2 rounded-lg bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs sm:text-sm font-semibold transition hover:border-[#b74309] hover:text-[#b74309] flex items-center gap-2 shadow-sm cursor-pointer outline-none active:scale-95">
+                        <i class="fas fa-layer-group text-[#b74309]"></i>
+                        <span id="labelZonaSeleccionada">Zona: Todas</span>
+                        <i class="fas fa-chevron-down text-[10px] opacity-60"></i>
+                    </button>
+
+                    <div id="menuDropdownZona" 
+                         class="hidden absolute left-0 mt-1.5 w-44 rounded-xl bg-[var(--card-color)] border border-[var(--border-color)] shadow-2xl z-50 p-1.5 backdrop-blur">
+                        <button type="button" onclick="seleccionarZonaDropdown('todas', 'Todas')" 
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-[var(--text-color)] hover:bg-[#b74309]/10 hover:text-[#b74309] transition-colors flex items-center justify-between cursor-pointer">
+                            <span>Todas las zonas</span>
+                            <i class="fas fa-check text-[10px] text-[#b74309] check-zona" data-val="todas"></i>
+                        </button>
+                        <button type="button" onclick="seleccionarZonaDropdown('Entrada', 'Entrada')" 
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-[var(--text-color)] hover:bg-[#b74309]/10 hover:text-[#b74309] transition-colors flex items-center justify-between cursor-pointer">
+                            <span>Entrada</span>
+                            <i class="fas fa-check text-[10px] text-[#b74309] check-zona hidden" data-val="Entrada"></i>
+                        </button>
+                        <button type="button" onclick="seleccionarZonaDropdown('Salón', 'Salón')" 
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-[var(--text-color)] hover:bg-[#b74309]/10 hover:text-[#b74309] transition-colors flex items-center justify-between cursor-pointer">
+                            <span>Salón</span>
+                            <i class="fas fa-check text-[10px] text-[#b74309] check-zona hidden" data-val="Salón"></i>
+                        </button>
+                        <button type="button" onclick="seleccionarZonaDropdown('2do Piso', '2do Piso')" 
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-[var(--text-color)] hover:bg-[#b74309]/10 hover:text-[#b74309] transition-colors flex items-center justify-between cursor-pointer">
+                            <span>2do Piso</span>
+                            <i class="fas fa-check text-[10px] text-[#b74309] check-zona hidden" data-val="2do Piso"></i>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- DROPDOWN: FILTRAR POR ESTADO --}}
+                <div class="relative inline-block text-left" id="dropdownEstadoWrapper">
+                    <button type="button" 
+                            onclick="toggleDropdownEstado()" 
+                            id="btnDropdownEstado"
+                            class="px-3 py-2 rounded-lg bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs sm:text-sm font-semibold transition hover:border-[#b74309] hover:text-[#b74309] flex items-center gap-2 shadow-sm cursor-pointer outline-none active:scale-95">
+                        <i class="fas fa-filter text-[#b74309]"></i>
+                        <span id="labelEstadoSeleccionado">Estado: Todos</span>
+                        <i class="fas fa-chevron-down text-[10px] opacity-60"></i>
+                    </button>
+
+                    <div id="menuDropdownEstado" 
+                         class="hidden absolute left-0 mt-1.5 w-44 rounded-xl bg-[var(--card-color)] border border-[var(--border-color)] shadow-2xl z-50 p-1.5 backdrop-blur">
+                        <button type="button" onclick="seleccionarEstadoDropdown('todos', 'Todos')" 
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-[var(--text-color)] hover:bg-[#b74309]/10 hover:text-[#b74309] transition-colors flex items-center justify-between cursor-pointer">
+                            <span>Todos los estados</span>
+                            <i class="fas fa-check text-[10px] text-[#b74309] check-estado" data-val="todos"></i>
+                        </button>
+                        <button type="button" onclick="seleccionarEstadoDropdown('libre', 'Libres')" 
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-[var(--text-color)] hover:bg-[#b74309]/10 hover:text-[#b74309] transition-colors flex items-center justify-between cursor-pointer">
+                            <span>Libres</span>
+                            <i class="fas fa-check text-[10px] text-[#b74309] check-estado hidden" data-val="libre"></i>
+                        </button>
+                        <button type="button" onclick="seleccionarEstadoDropdown('ocupada', 'Ocupadas')" 
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs font-bold text-[var(--text-color)] hover:bg-[#b74309]/10 hover:text-[#b74309] transition-colors flex items-center justify-between cursor-pointer">
+                            <span>Ocupadas</span>
+                            <i class="fas fa-check text-[10px] text-[#b74309] check-estado hidden" data-val="ocupada"></i>
+                        </button>
+                    </div>
                 </div>
 
                 @if($puedeCrearMesa)
@@ -236,6 +305,16 @@
 
                         <div id="formularioMesa" class="hidden space-y-4 mt-2">
                             <div>
+                                <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">Zona / Sección</label>
+                                <select id="propSeccion"
+                                    class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] text-sm focus:outline-none focus:ring-2 focus:ring-[#b74309] shadow-inner transition-colors cursor-pointer">
+                                    <option value="Entrada">Entrada</option>
+                                    <option value="Salón">Salón</option>
+                                    <option value="2do Piso">2do Piso</option>
+                                </select>
+                            </div>
+
+                            <div>
                                 <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">Número</label>
                                 <input type="text" id="propNumero"
                                     autocomplete="off"
@@ -281,7 +360,7 @@
     @if($puedeCrearMesa)
     <div id="modalCrearMesa" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[60] p-4 backdrop-blur-sm transition-all duration-300">
 
-        <div id="modalCrearMesaContent" class="bg-[var(--card-color)] rounded-xl shadow-2xl max-w-md w-full border border-[var(--border-color)] overflow-hidden max-h-[90vh] flex flex-col transition-all duration-200">
+        <div id="modalCrearMesaContent" class="bg-[var(--card-color)] rounded-xl shadow-2xl max-w-md w-full border border-[var(--border-color)] max-h-[90vh] flex flex-col transition-all duration-200">
 
             {{-- HEADER --}}
             <div class="px-6 py-4 border-b border-[var(--border-color)] flex justify-between items-center bg-[var(--bg-color)]/50 shrink-0">
@@ -294,7 +373,48 @@
             </div>
 
             {{-- BODY --}}
-            <div class="px-6 py-5 space-y-4 overflow-y-auto">
+            <div class="px-6 py-5 space-y-4 overflow-y-visible">
+                {{-- DROPDOWN ZONA / SECCIÓN (Vanilla JS) --}}
+                <div class="relative text-left" id="dropdownNewSeccionWrapper">
+                    <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">
+                        Zona / Sección <span class="text-rose-500">*</span>
+                    </label>
+                    
+                    {{-- Input oculto que lee mesas.js --}}
+                    <input type="hidden" id="newSeccion" value="Entrada">
+
+                    <button type="button" 
+                            onclick="toggleDropdownNewSeccion(event)" 
+                            id="btnNewSeccion"
+                            class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] flex items-center justify-between text-sm font-medium outline-none transition-all focus:border-[#b74309] cursor-pointer">
+                        <span id="labelNewSeccion">Entrada</span>
+                        <i id="iconoNewSeccion" class="fas fa-chevron-down text-xs transition-transform duration-200" style="color: var(--text-muted);"></i>
+                    </button>
+
+                    <div id="menuNewSeccion" 
+                         class="hidden absolute z-[90] w-full mt-1.5 rounded-lg shadow-2xl py-1.5 border"
+                         style="background-color: var(--card-color); border-color: var(--border-color);">
+                        <div onclick="seleccionarNewSeccion('Entrada', 'Entrada')"
+                             class="item-seccion-option px-3 py-2 text-sm font-medium cursor-pointer transition-colors bg-[#b74309]/15 text-[#b74309] font-bold"
+                             data-val="Entrada"
+                             style="color: var(--text-color);">
+                            <span>Entrada</span>
+                        </div>
+                        <div onclick="seleccionarNewSeccion('Salón', 'Salón')"
+                             class="item-seccion-option px-3 py-2 text-sm font-medium cursor-pointer transition-colors hover:bg-[#b74309]/10"
+                             data-val="Salón"
+                             style="color: var(--text-color);">
+                            <span>Salón</span>
+                        </div>
+                        <div onclick="seleccionarNewSeccion('2do Piso', '2do Piso')"
+                             class="item-seccion-option px-3 py-2 text-sm font-medium cursor-pointer transition-colors hover:bg-[#b74309]/10"
+                             data-val="2do Piso"
+                             style="color: var(--text-color);">
+                            <span>2do Piso</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">Número de Mesa <span class="text-rose-500">*</span></label>
                     <input type="text" id="newNumero"
@@ -316,49 +436,29 @@
                         class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] focus:outline-none focus:ring-2 focus:ring-[#b74309] shadow-inner transition-all" placeholder="4" required>
                 </div>
 
-                {{-- Dropdown Personalizado: Estado Inicial --}}
-                <div x-data="{
-                    open: false,
-                    selected: 'disponible',
-                    selectedLabel: 'Disponible',
-                    options: [
-                        { value: 'disponible', label: 'Disponible' },
-                        { value: 'reservada', label: 'Reservada' },
-                        { value: 'limpieza', label: 'Limpieza' }
-                    ],
-                    select(opt) {
-                        this.selected = opt.value;
-                        this.selectedLabel = opt.label;
-                        this.open = false;
-                        const el = document.getElementById('newEstado');
-                        if (el) {
-                            el.value = opt.value;
-                            el.dispatchEvent(new Event('change'));
-                        }
-                    }
-                }">
+                {{-- DROPDOWN ESTADO INICIAL (Vanilla JS sin Alpine) --}}
+                <div class="relative text-left" id="dropdownNewEstadoWrapper">
                     <label class="block text-sm font-semibold text-[var(--text-color)] mb-1">Estado Inicial</label>
                     
-                    <input type="hidden" id="newEstado" :value="selected" value="disponible">
+                    {{-- Input oculto que lee mesas.js --}}
+                    <input type="hidden" id="newEstado" value="disponible">
 
-                    <div class="relative">
-                        <button type="button" @click="open = !open"
+                    <button type="button" 
+                            onclick="toggleDropdownNewEstado(event)" 
+                            id="btnNewEstado"
                             class="w-full px-3 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-lg text-[var(--text-color)] flex items-center justify-between text-sm font-medium outline-none transition-all focus:border-[#b74309] cursor-pointer">
-                            <span x-text="selectedLabel">Disponible</span>
-                            <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }" style="color: var(--text-muted);"></i>
-                        </button>
+                        <span id="labelNewEstado">Disponible</span>
+                        <i id="iconoNewEstado" class="fas fa-chevron-down text-xs transition-transform duration-200" style="color: var(--text-muted);"></i>
+                    </button>
 
-                        <div x-show="open" @click.outside="open = false" x-transition
-                            class="absolute z-50 w-full mt-1.5 rounded-lg shadow-2xl py-1.5 border overflow-hidden"
-                            style="background-color: var(--card-color); border-color: var(--border-color); display: none;">
-                            <template x-for="opt in options" :key="opt.value">
-                                <div @click="select(opt)"
-                                    class="px-3 py-2 text-sm font-medium cursor-pointer transition-colors hover:bg-[#b74309]/10"
-                                    :class="{ 'bg-[#b74309]/15 text-[#b74309] font-bold': selected === opt.value }"
-                                    style="color: var(--text-color);">
-                                    <span x-text="opt.label"></span>
-                                </div>
-                            </template>
+                    <div id="menuNewEstado" 
+                         class="hidden absolute z-[80] w-full mt-1.5 rounded-lg shadow-2xl py-1.5 border"
+                         style="background-color: var(--card-color); border-color: var(--border-color);">
+                        <div onclick="seleccionarNewEstado('disponible', 'Disponible')"
+                             class="item-estado-option px-3 py-2 text-sm font-medium cursor-pointer transition-colors bg-[#b74309]/15 text-[#b74309] font-bold"
+                             data-val="disponible"
+                             style="color: var(--text-color);">
+                            <span>Disponible</span>
                         </div>
                     </div>
                 </div>
@@ -403,6 +503,152 @@
 </div>
 
 <script>
+// Control del Dropdown Zona / Sección en el Modal de Crear Mesa (Vanilla JS)
+function toggleDropdownNewSeccion(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('menuNewSeccion');
+    const icono = document.getElementById('iconoNewSeccion');
+    
+    // Cierra el de estado si está abierto
+    document.getElementById('menuNewEstado')?.classList.add('hidden');
+    document.getElementById('iconoNewEstado')?.classList.remove('rotate-180');
+
+    if (!menu) return;
+    const estaOculto = menu.classList.toggle('hidden');
+    if (icono) icono.classList.toggle('rotate-180', !estaOculto);
+}
+
+function seleccionarNewSeccion(valor, etiqueta) {
+    const input = document.getElementById('newSeccion');
+    const label = document.getElementById('labelNewSeccion');
+    const menu = document.getElementById('menuNewSeccion');
+    const icono = document.getElementById('iconoNewSeccion');
+
+    if (input) {
+        input.value = valor;
+        input.dispatchEvent(new Event('change'));
+    }
+    if (label) label.textContent = etiqueta;
+    if (menu) menu.classList.add('hidden');
+    if (icono) icono.classList.remove('rotate-180');
+
+    document.querySelectorAll('.item-seccion-option').forEach(item => {
+        const coincide = item.getAttribute('data-val') === valor;
+        if (coincide) {
+            item.className = "item-seccion-option px-3 py-2 text-sm font-medium cursor-pointer transition-colors bg-[#b74309]/15 text-[#b74309] font-bold";
+        } else {
+            item.className = "item-seccion-option px-3 py-2 text-sm font-medium cursor-pointer transition-colors hover:bg-[#b74309]/10";
+        }
+    });
+}
+
+// Control del Dropdown Estado Inicial en el Modal de Crear Mesa (Vanilla JS)
+function toggleDropdownNewEstado(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('menuNewEstado');
+    const icono = document.getElementById('iconoNewEstado');
+    
+    // Cierra el de sección si está abierto
+    document.getElementById('menuNewSeccion')?.classList.add('hidden');
+    document.getElementById('iconoNewSeccion')?.classList.remove('rotate-180');
+
+    if (!menu) return;
+    const estaOculto = menu.classList.toggle('hidden');
+    if (icono) icono.classList.toggle('rotate-180', !estaOculto);
+}
+
+function seleccionarNewEstado(valor, etiqueta) {
+    const input = document.getElementById('newEstado');
+    const label = document.getElementById('labelNewEstado');
+    const menu = document.getElementById('menuNewEstado');
+    const icono = document.getElementById('iconoNewEstado');
+
+    if (input) {
+        input.value = valor;
+        input.dispatchEvent(new Event('change'));
+    }
+    if (label) label.textContent = etiqueta;
+    if (menu) menu.classList.add('hidden');
+    if (icono) icono.classList.remove('rotate-180');
+
+    document.querySelectorAll('.item-estado-option').forEach(item => {
+        const coincide = item.getAttribute('data-val') === valor;
+        if (coincide) {
+            item.className = "item-estado-option px-3 py-2 text-sm font-medium cursor-pointer transition-colors bg-[#b74309]/15 text-[#b74309] font-bold";
+        } else {
+            item.className = "item-estado-option px-3 py-2 text-sm font-medium cursor-pointer transition-colors hover:bg-[#b74309]/10";
+        }
+    });
+}
+
+// Control de apertura y cierre de Dropdowns en cabecera
+function toggleDropdownZona() {
+    const menu = document.getElementById('menuDropdownZona');
+    const menuEstado = document.getElementById('menuDropdownEstado');
+    if (menuEstado) menuEstado.classList.add('hidden');
+    if (menu) menu.classList.toggle('hidden');
+}
+
+function toggleDropdownEstado() {
+    const menu = document.getElementById('menuDropdownEstado');
+    const menuZona = document.getElementById('menuDropdownZona');
+    if (menuZona) menuZona.classList.add('hidden');
+    if (menu) menu.classList.toggle('hidden');
+}
+
+// Cerrar cualquier dropdown al hacer click fuera
+document.addEventListener('click', (e) => {
+    const dropZona = document.getElementById('dropdownZonaWrapper');
+    const dropEstado = document.getElementById('dropdownEstadoWrapper');
+    const dropNewSeccion = document.getElementById('dropdownNewSeccionWrapper');
+    const dropNewEstado = document.getElementById('dropdownNewEstadoWrapper');
+
+    if (dropZona && !dropZona.contains(e.target)) {
+        document.getElementById('menuDropdownZona')?.classList.add('hidden');
+    }
+    if (dropEstado && !dropEstado.contains(e.target)) {
+        document.getElementById('menuDropdownEstado')?.classList.add('hidden');
+    }
+    if (dropNewSeccion && !dropNewSeccion.contains(e.target)) {
+        document.getElementById('menuNewSeccion')?.classList.add('hidden');
+        document.getElementById('iconoNewSeccion')?.classList.remove('rotate-180');
+    }
+    if (dropNewEstado && !dropNewEstado.contains(e.target)) {
+        document.getElementById('menuNewEstado')?.classList.add('hidden');
+        document.getElementById('iconoNewEstado')?.classList.remove('rotate-180');
+    }
+});
+
+// Selección de Zona
+function seleccionarZonaDropdown(valor, etiqueta) {
+    const label = document.getElementById('labelZonaSeleccionada');
+    if (label) label.textContent = `Zona: ${etiqueta}`;
+    document.getElementById('menuDropdownZona')?.classList.add('hidden');
+
+    document.querySelectorAll('.check-zona').forEach(el => {
+        el.classList.toggle('hidden', el.getAttribute('data-val') !== valor);
+    });
+
+    if (typeof window.filtrarPorSeccion === 'function') {
+        window.filtrarPorSeccion(valor, null);
+    }
+}
+
+// Selección de Estado
+function seleccionarEstadoDropdown(valor, etiqueta) {
+    const label = document.getElementById('labelEstadoSeleccionado');
+    if (label) label.textContent = `Estado: ${etiqueta}`;
+    document.getElementById('menuDropdownEstado')?.classList.add('hidden');
+
+    document.querySelectorAll('.check-estado').forEach(el => {
+        el.classList.toggle('hidden', el.getAttribute('data-val') !== valor);
+    });
+
+    if (typeof window.filtrarMesasPorEstado === 'function') {
+        window.filtrarMesasPorEstado(valor, null);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONTROL DE ARRASTRE BIDIRECCIONAL EN EL PLANO (PANNING) ---
     const contenedor = document.getElementById('planoContenedor');
@@ -436,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Eventos de ratón
         contenedor.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.mesa-item') && document.body.classList.contains('modo-edicion')) return;
+            if (e.target.closest('.mesa-item, .mesa-elemento') && document.body.classList.contains('modo-edicion')) return;
             onStart(e.pageX, e.pageY);
         });
         window.addEventListener('mousemove', (e) => onMove(e.pageX, e.pageY));
@@ -445,7 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Eventos táctiles (Móviles / Tablets)
         contenedor.addEventListener('touchstart', (e) => {
             if (e.touches.length === 1) {
-                if (e.target.closest('.mesa-item') && document.body.classList.contains('modo-edicion')) return;
+                if (e.target.closest('.mesa-item, .mesa-elemento') && document.body.classList.contains('modo-edicion')) return;
                 onStart(e.touches[0].pageX, e.touches[0].pageY);
             }
         }, { passive: true });
@@ -609,7 +855,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 {{-- SCRIPTS --}}
 @push('scripts')
-    @vite(['resources/js/mesas.js'])
+   @vite(['resources/js/mesas.js'])
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof TecladoVirtual !== 'undefined') {

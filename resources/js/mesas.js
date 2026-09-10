@@ -1,14 +1,14 @@
 // Id del usuario en sesion. Lo publica el blade en <body data-usuario-id>.
-// Sirve para pintar de amarillo las mesas propias y de rosa las de otros.
 const USUARIO_ACTUAL_ID = parseInt(document.body?.dataset?.usuarioId || '0', 10) || null;
 
 /**
- * mesas.js - Sistema centralizado de gestión de mesas (Ajustado para Plano Espacial)
+ * mesas.js - Sistema centralizado de gestión de mesas
  */
 
 let estadoGlobal = {
     mesas: [],
     filtroActual: 'todos',
+    seccionFiltro: 'todas',
     vista: 'mapa',
     modoEdicion: false,
     modoFusion: false,
@@ -33,6 +33,16 @@ let dragState = {
     startY: 0,
     contenedor: null
 };
+
+// Función para normalizar texto (ignora mayúsculas, minúsculas y acentos)
+function normalizar(str) {
+    return (str || '')
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase();
+}
 
 // --- INICIALIZACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -74,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- DESPLAZAMIENTO DEL PLANO (DRAG-TO-SCROLL) ---
-// --- DESPLAZAMIENTO DEL PLANO (DRAG-TO-SCROLL) ---
 function inicializarArrastrePlano() {
     const contenedor = document.getElementById('planoContenedor');
     if (!contenedor) return;
@@ -84,14 +93,12 @@ function inicializarArrastrePlano() {
     let startY = 0;
     let initialScrollLeft = 0;
     let initialScrollTop = 0;
-    let seHaDesplazado = false;
 
     contenedor.addEventListener('pointerdown', (e) => {
-        // Si se hace clic sobre una mesa, NO iniciar el paneo del fondo
-        if (e.target.closest('.mesa-elemento')) return;
+        // Bloquear completamente el paneo si se toca una mesa o cualquier elemento interactivo
+        if (e.target.closest('.mesa-elemento, .mesa-item, .mesa-ui, input, select, button')) return;
 
         isPanning = true;
-        seHaDesplazado = false;
         startX = e.clientX;
         startY = e.clientY;
         initialScrollLeft = contenedor.scrollLeft;
@@ -103,9 +110,7 @@ function inicializarArrastrePlano() {
         const deltaX = e.clientX - startX;
         const deltaY = e.clientY - startY;
 
-        // Si se mueve más de 3px, se considera arrastre
-        if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
-            seHaDesplazado = true;
+        if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
             contenedor.style.cursor = 'grabbing';
             e.preventDefault();
             contenedor.scrollLeft = initialScrollLeft - deltaX;
@@ -136,7 +141,6 @@ function aplicarZoom() {
     const label = document.getElementById('zoomLabel');
     if (lienzo) {
         lienzo.style.transform = `scale(${estadoGlobal.zoom})`;
-        // Asegura que el contenedor considere el tamaño real escalado
         lienzo.style.transformOrigin = 'top left';
     }
     if (label) label.innerText = `${Math.round(estadoGlobal.zoom * 100)}%`;
@@ -146,13 +150,27 @@ function aplicarZoom() {
 async function cargarMesas() {
     try {
         const res = await fetch('/plano-espacial/api/mesas');
-        if (!res.ok) throw new Error('Error en API');
+        if (!res.ok) {
+            console.error('Error HTTP al consultar API:', res.status);
+            return;
+        }
 
         const response = await res.json();
-        estadoGlobal.mesas = response.data || [];
+        
+        // Soporta { data: [...] }, { success: true, data: [...] } o [...] directamente
+        if (Array.isArray(response)) {
+            estadoGlobal.mesas = response;
+        } else if (Array.isArray(response.data)) {
+            estadoGlobal.mesas = response.data;
+        } else if (Array.isArray(response.mesas)) {
+            estadoGlobal.mesas = response.mesas;
+        } else {
+            estadoGlobal.mesas = [];
+        }
+
         renderizarMapaMesas();
     } catch (e) {
-        console.error(e);
+        console.error('Error al cargar mesas:', e);
     }
 }
 
@@ -162,9 +180,29 @@ function renderizarMapaMesas() {
 
     lienzo.querySelectorAll('.mesa-elemento').forEach(el => el.remove());
 
-    const mesasFiltradas = estadoGlobal.mesas;
-    const planoVacio = document.getElementById('planoVacio');
+    const fSec = normalizar(estadoGlobal.seccionFiltro);
+    const fEst = normalizar(estadoGlobal.filtroActual);
 
+    // Filtrar con validación robusta
+    const mesasFiltradas = estadoGlobal.mesas.filter(mesa => {
+        const seccionMesa = normalizar(mesa.seccion || mesa.zona || '');
+        const estadoMesa = normalizar(mesa.estado || '');
+
+        // 1. Filtro Sección
+        const coincideSeccion = (fSec === 'todas' || fSec === '' || seccionMesa === fSec);
+
+        // 2. Filtro Estado
+        let coincideEstado = true;
+        if (fEst === 'libre') {
+            coincideEstado = (estadoMesa === 'disponible' || estadoMesa === 'libre');
+        } else if (fEst !== 'todos' && fEst !== '') {
+            coincideEstado = (estadoMesa === fEst);
+        }
+
+        return coincideSeccion && coincideEstado;
+    });
+
+    const planoVacio = document.getElementById('planoVacio');
     if (mesasFiltradas.length === 0) {
         planoVacio?.classList.remove('hidden');
     } else {
@@ -181,21 +219,28 @@ function renderizarMapaMesas() {
                 : 'mesa-de-otro';
         }
 
-        div.className = `mesa-elemento mesa-ui absolute rounded-lg flex items-center justify-center font-bold border-2 text-[var(--text-color)] border-[var(--text-color)] mesa-${mesa.estado} ${clasePropiedad} select-none transition-shadow duration-150`;
+        div.className = `mesa-elemento mesa-item mesa-ui absolute rounded-lg flex flex-col items-center justify-center font-bold border-2 text-[var(--text-color)] border-[var(--text-color)] mesa-${mesa.estado} ${clasePropiedad} select-none transition-shadow duration-150`;
 
         div.dataset.id = mesa.id;
-        div.style.left = (mesa.posicion_x || 50) + 'px';
-        div.style.top = (mesa.posicion_y || 50) + 'px';
-        div.style.width = (mesa.ancho || 80) + 'px';
-        div.style.height = (mesa.alto || 80) + 'px';
+        div.dataset.seccion = mesa.seccion || mesa.zona || 'Entrada';
+        div.dataset.estado = mesa.estado || 'disponible';
+        
+        div.style.left = (mesa.posicion_x !== null ? mesa.posicion_x : 50) + 'px';
+        div.style.top = (mesa.posicion_y !== null ? mesa.posicion_y : 50) + 'px';
+        div.style.width = (mesa.ancho || 60) + 'px';
+        div.style.height = (mesa.alto || 60) + 'px';
         div.style.cursor = estadoGlobal.modoEdicion ? 'move' : 'pointer';
         div.style.touchAction = 'none';
-        div.innerHTML = mesa.numero;
+        
+        const etiquetaSeccion = (mesa.seccion) 
+            ? `<span class="text-[8px] opacity-75 leading-none mt-0.5 tracking-tight">${mesa.seccion}</span>` 
+            : '';
 
+        div.innerHTML = `<span>${mesa.numero}</span>${etiquetaSeccion}`;
+
+        // Evento Pointerdown: detener propagación para que el plano no se mueva
         div.addEventListener('pointerdown', (e) => {
-            // Evita que el contenedor del plano capture el evento
             e.stopPropagation();
-
             if (estadoGlobal.modoEdicion && permisosMesas.editar) {
                 iniciarArrastre(e, div, mesa);
             }
@@ -210,21 +255,23 @@ function renderizarMapaMesas() {
             }
         });
 
-        div.addEventListener('click', (e) => {
-            if (estadoGlobal.modoEdicion) {
-                e.stopPropagation();
-                seleccionarMesa(mesa);
-            } else {
-                window.location.href = `/mesero/comanda/${mesa.id}`;
-            }
-        });
-
         lienzo.appendChild(div);
     });
 
     const total = document.getElementById('totalMesas');
     if (total) total.innerText = `Mesas: ${mesasFiltradas.length}`;
 }
+
+// --- FUNCIONES GLOBALES DE FILTRADO ---
+window.filtrarPorSeccion = function (seccion, btn) {
+    estadoGlobal.seccionFiltro = seccion || 'todas';
+    renderizarMapaMesas();
+};
+
+window.filtrarMesasPorEstado = function (estado, btn) {
+    estadoGlobal.filtroActual = estado || 'todos';
+    renderizarMapaMesas();
+};
 
 // --- LÓGICA DE ARRASTRE DE MESAS ---
 function iniciarArrastre(e, el, mesa) {
@@ -270,7 +317,6 @@ function detenerArrastre(e) {
     dragState.activo = false;
 }
 
-// Limpia la mesa seleccionada y devuelve el panel al estado vacío
 function deseleccionarMesa() {
     estadoGlobal.mesaSeleccionada = null;
     document.getElementById('formularioMesa')?.classList.add('hidden');
@@ -287,15 +333,49 @@ window.toggleModoEdicion = () => {
         el.style.cursor = estadoGlobal.modoEdicion ? 'move' : 'pointer';
     });
 
-    // Si salimos del modo edición, reseteamos a "Selecciona una mesa"
     if (!estadoGlobal.modoEdicion) {
         deseleccionarMesa();
         cerrarPanelPropiedadesMovil();
     }
 };
 
-window.abrirModalNuevaMesa = () => document.getElementById('modalCrearMesa').classList.remove('hidden');
-window.cerrarModalNuevaMesa = () => document.getElementById('modalCrearMesa').classList.add('hidden');
+window.abrirModalNuevaMesa = () => {
+    const modal = document.getElementById('modalCrearMesa') || document.getElementById('modalNuevaMesa');
+    if (!modal) return;
+
+    const seccionInicial = (estadoGlobal.seccionFiltro && normalizar(estadoGlobal.seccionFiltro) !== 'todas') 
+        ? estadoGlobal.seccionFiltro 
+        : 'Entrada';
+
+    if (typeof window.seleccionarNewSeccion === 'function') {
+        window.seleccionarNewSeccion(seccionInicial, seccionInicial);
+    } else {
+        const inputSeccion = document.getElementById('newSeccion');
+        if (inputSeccion) inputSeccion.value = seccionInicial;
+    }
+
+    const inputNumero = document.getElementById('newNumero');
+    const inputCapacidad = document.getElementById('newCapacidad');
+    if (inputNumero) inputNumero.value = '';
+    if (inputCapacidad) inputCapacidad.value = '';
+
+    if (typeof window.seleccionarNewEstado === 'function') {
+        window.seleccionarNewEstado('disponible', 'Disponible');
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.remove('opacity-0');
+};
+
+window.cerrarModalNuevaMesa = () => {
+    const modal = document.getElementById('modalCrearMesa') || document.getElementById('modalNuevaMesa');
+    if (modal) modal.classList.add('hidden');
+
+    document.getElementById('menuNewSeccion')?.classList.add('hidden');
+    document.getElementById('iconoNewSeccion')?.classList.remove('rotate-180');
+    document.getElementById('menuNewEstado')?.classList.add('hidden');
+    document.getElementById('iconoNewEstado')?.classList.remove('rotate-180');
+};
 
 window.crearNuevaMesa = async () => {
     if (!permisosMesas.crear) {
@@ -303,11 +383,30 @@ window.crearNuevaMesa = async () => {
         return;
     }
 
-    const estadoRaw = document.getElementById('newEstado')?.value || 'disponible';
+    const estadoElemento = document.getElementById('newEstado');
+    const estadoRaw = estadoElemento?.value || 'disponible';
+
+    const inputSeccion = document.getElementById('newSeccion');
+    let seccionRaw = inputSeccion?.value?.trim();
+
+    if (!seccionRaw) {
+        seccionRaw = (estadoGlobal.seccionFiltro && normalizar(estadoGlobal.seccionFiltro) !== 'todas') 
+            ? estadoGlobal.seccionFiltro 
+            : 'Entrada';
+    }
+
+    const numero = document.getElementById('newNumero')?.value?.trim();
+    const capacidad = parseInt(document.getElementById('newCapacidad')?.value, 10) || 1;
+
+    if (!numero) {
+        showToast('Ingresa el número de mesa', 'error');
+        return;
+    }
 
     const data = {
-        numero: document.getElementById('newNumero')?.value?.trim(),
-        capacidad: parseInt(document.getElementById('newCapacidad')?.value, 10) || 1,
+        numero: numero,
+        capacidad: capacidad,
+        seccion: seccionRaw,
         estado: estadoRaw.toLowerCase()
     };
 
@@ -324,11 +423,10 @@ window.crearNuevaMesa = async () => {
         if (res.ok) {
             window.cerrarModalNuevaMesa();
             cargarMesas();
-            showToast('Mesa creada correctamente', 'success');
+            showToast(`Mesa creada en ${seccionRaw}`, 'success');
         } else {
             const errorData = await res.json().catch(() => null);
-            const msg = errorData?.message || 'Error al crear la mesa';
-            showToast(msg, 'error');
+            showToast(errorData?.message || 'Error al crear la mesa', 'error');
         }
     } catch (e) {
         console.error('Error al crear mesa:', e);
@@ -340,8 +438,15 @@ function seleccionarMesa(mesa) {
     estadoGlobal.mesaSeleccionada = mesa;
     document.getElementById('panelVacio')?.classList.add('hidden');
     document.getElementById('formularioMesa')?.classList.remove('hidden');
-    document.getElementById('propNumero').value = mesa.numero;
-    document.getElementById('propCapacidad').value = mesa.capacidad;
+
+    const inputNumero = document.getElementById('propNumero');
+    const inputCapacidad = document.getElementById('propCapacidad');
+    const selectSeccion = document.getElementById('propSeccion');
+
+    if (inputNumero) inputNumero.value = mesa.numero;
+    if (inputCapacidad) inputCapacidad.value = mesa.capacidad;
+    if (selectSeccion) selectSeccion.value = mesa.seccion || 'Entrada';
+
     document.getElementById('btnActualizar')?.classList.remove('hidden');
     document.getElementById('btnEliminar')?.classList.remove('hidden');
     abrirPanelPropiedadesMovil();
@@ -415,8 +520,9 @@ window.actualizarPropiedadesMesa = async () => {
     }
 
     const data = {
-        numero: document.getElementById('propNumero').value,
-        capacidad: document.getElementById('propCapacidad').value
+        numero: document.getElementById('propNumero')?.value,
+        capacidad: document.getElementById('propCapacidad')?.value,
+        seccion: document.getElementById('propSeccion')?.value || 'Entrada'
     };
 
     try {

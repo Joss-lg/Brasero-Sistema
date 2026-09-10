@@ -12,11 +12,16 @@
                 <i class="fas fa-fire mr-2"></i>Cocina
             </a>
             <a href="{{ route('admin.cocina.index', ['area' => 'barra']) }}" 
-               class="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all {{ $areaSeleccionada === 'Barra' ? 'bg-[#b74309] text-white shadow-lg shadow-[#b74309]/25' : 'hover:opacity-100 opacity-70' }}"
-               style="{{ $areaSeleccionada !== 'Barra' ? 'color: var(--text-color);' : '' }}">
-                <i class="fas fa-glass-martini-alt mr-2"></i>Barra
-            </a>
-        </div>
+   class="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all {{ $areaSeleccionada === 'Barra' ? 'bg-[#b74309] text-white shadow-lg shadow-[#b74309]/25' : 'hover:opacity-100 opacity-70' }}"
+   style="{{ $areaSeleccionada !== 'Barra' ? 'color: var(--text-color);' : '' }}">
+    <i class="fas fa-glass-martini-alt mr-2"></i>Barra
+</a>
+<a href="{{ route('admin.cocina.index', ['area' => 'parrilla']) }}" 
+class="px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all {{ $areaSeleccionada === 'Parrilla' ? 'bg-[#b74309] text-white shadow-lg shadow-[#b74309]/25' : 'hover:opacity-100 opacity-70' }}"
+style="{{ $areaSeleccionada !== 'Parrilla' ? 'color: var(--text-color);' : '' }}">
+<i class="fas fa-drumstick-bite mr-2"></i>Parrilla
+ </a>
+</div>
 
         <div class="flex items-center gap-2 text-xs font-bold text-emerald-500">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> EN VIVO

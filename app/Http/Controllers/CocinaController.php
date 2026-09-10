@@ -66,11 +66,14 @@ public function actualizarEstado(Request $request, $id)
     $request->validate([
         'estado' => 'required|in:pendiente,en proceso,servida',
         'lote'   => 'required|string',
-        'area'   => 'required|in:cocina,barra',
-    ]);
+       'area'   => 'required|in:cocina,barra,parrilla',
+]);
 
-    $areaObjetivo = $request->area === 'barra' ? 'Barra' : 'Cocina';
-
+   $areaObjetivo = match(strtolower($request->area)) {
+    'barra'    => 'Barra',
+    'parrilla' => 'Parrilla',
+    default    => 'Cocina',
+};
     $orden = Orden::with('detalles.producto.categoria')->findOrFail($id);
 
     // 1. Buscamos y actualizamos solo los detalles del lote y área seleccionada
@@ -126,21 +129,29 @@ public function actualizarEstado(Request $request, $id)
      * Lee el área seleccionada desde el query param ?area=, con 'cocina'
      * como valor por defecto.
      */
-    private function resolverAreaSeleccionada(Request $request): string
-    {
-        return strtolower($request->query('area', 'cocina')) === 'barra' ? 'Barra' : 'Cocina';
-    }
+   private function resolverAreaSeleccionada(Request $request): string
+{
+    return match(strtolower($request->query('area', 'cocina'))) {
+        'barra'    => 'Barra',
+        'parrilla' => 'Parrilla',
+        default    => 'Cocina',
+    };
+}
 
     /**
      * Resuelve el área de un DetalleOrden exactamente igual que
      * ComandaService::procesarEnvio, para que ambos lugares siempre
      * coincidan.
      */
-    private function resolverAreaDetalle(DetalleOrden $detalle): string
-    {
-        $area = $detalle->producto->categoria->area_impresion ?? 'Cocina';
-        return $area !== 'Barra' ? 'Cocina' : 'Barra';
-    }
+private function resolverAreaDetalle(DetalleOrden $detalle): string
+{
+    $area = $detalle->producto->categoria->area_impresion ?? 'Cocina';
+    return match($area) {
+        'Barra'    => 'Barra',
+        'Parrilla' => 'Parrilla',
+        default    => 'Cocina',
+    };
+}
 
         
    private function construirComandas(string $areaSeleccionada): array
@@ -214,15 +225,16 @@ public function actualizarEstado(Request $request, $id)
         $servidas = DetalleOrden::where('estado_preparacion', 'servida')
             ->whereDate('updated_at', now()->toDateString())
             ->whereHas('producto.categoria', function ($q) use ($areaSeleccionada) {
-                if ($areaSeleccionada === 'Barra') {
-                    $q->where('area_impresion', 'Barra');
-                } else {
-                    $q->where(function ($sub) {
-                        $sub->where('area_impresion', '!=', 'Barra')->orWhereNull('area_impresion');
-                    });
-                }
-            })
-            ->count();
+    if (in_array($areaSeleccionada, ['Barra', 'Parrilla'])) {
+        $q->where('area_impresion', $areaSeleccionada);
+    } else {
+        $q->where(function ($sub) {
+            $sub->whereNotIn('area_impresion', ['Barra', 'Parrilla'])
+                ->orWhereNull('area_impresion');
+        });
+    }
+})
+->count();
 
         $ordenesActivasEnArea = $comandas->pluck('orden_id')->unique()->count();
 
@@ -295,14 +307,14 @@ public function actualizarEstado(Request $request, $id)
         $query = \App\Models\PrintJob::with('orden.mesero')
             ->orderByDesc('created_at');
 
-        // Filtra por area: Cocina ve sus comandas, Barra ve las suyas.
-        if ($area === 'Barra') {
-            $query->where('area', 'Barra');
-        } else {
-            $query->where(function ($q) {
-                $q->where('area', '!=', 'Barra')->orWhereNull('area');
-            });
-        }
+        // Filtra por area: cada estación ve solo sus comandas.
+if (in_array($area, ['Barra', 'Parrilla'])) {
+    $query->where('area', $area);
+} else {
+    $query->where(function ($q) {
+        $q->whereNotIn('area', ['Barra', 'Parrilla'])->orWhereNull('area');
+    });
+}
 
         // Solo los del turno activo / ultimo turno del dia
         if ($cajaMovimiento) {

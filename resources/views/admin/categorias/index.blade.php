@@ -146,9 +146,10 @@
                                 @if($categoria->area_impresion)
                                     @php
                                         $areaColor = match(strtolower($categoria->area_impresion)) {
-                                            'cocina'  => 'text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20',
-                                            'barra'   => 'text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/20',
-                                            default   => 'text-[#b74309] dark:text-[#e8946a] bg-[#b74309]/10 border-[#b74309]/20',
+                                            'cocina'    => 'text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20',
+                                            'barra'     => 'text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/20',
+                                            'parrilla'  => 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+                                            default     => 'text-[#b74309] dark:text-[#e8946a] bg-[#b74309]/10 border-[#b74309]/20',
                                         };
                                     @endphp
                                     <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border {{ $areaColor }}">

@@ -1,18 +1,17 @@
 /**
  * Plano Espacial - Sistema de Gestión Interactivo de Mesas
  * Integra formulario modal, AJAX, y drag & drop en tiempo real
- * 
- * @author Ollintem Pro
- * @version 1.0.0
+ * Compatible con Secciones / Zonas y Dropdowns nativos
  */
 
 class PlanoEspacialMesas {
     constructor(config = {}) {
         this.config = {
-            apiBase: config.apiBase || '/admin/plano-espacial/api/mesas',
-            apiGuardar: config.apiGuardar || '/admin/plano-espacial/api/guardar',
-            apiStore: config.apiStore || '/admin/plano-espacial/api/store',
-            apiEliminar: config.apiEliminar || '/admin/plano-espacial/api/eliminar',
+            apiBase: config.apiBase || '/plano-espacial/api/mesas',
+            apiGuardar: config.apiGuardar || '/plano-espacial/api/guardar',
+            apiStore: config.apiStore || '/plano-espacial/api/crear',
+            apiActualizar: config.apiActualizar || '/plano-espacial/api/actualizar',
+            apiEliminar: config.apiEliminar || '/plano-espacial/api/eliminar',
             csrfToken: config.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content,
             ...config,
         };
@@ -22,37 +21,32 @@ class PlanoEspacialMesas {
             mesaSeleccionada: null,
             mesasOriginales: [],
             mesasActuales: [],
+            filtroZona: 'todas',
+            filtroEstado: 'todos',
             arrastrando: null,
-            offsetX: 0,
-            offsetY: 0,
+            startX: 0,
+            startY: 0,
+            originX: 0,
+            originY: 0,
+            zoom: 1
         };
 
-        this.elementos = {
-            contenedor: null,
-            btnEditar: null,
-            btnGuardar: null,
-            btnCancelar: null,
-            btnAgregar: null,
-            modal: null,
-        };
+        this.elementos = {};
     }
 
-    /**
-     * Inicializar el sistema
-     */
     async init() {
         this.cacheElementos();
         await this.cargarMesas();
         this.setupEventos();
+        this.setupZoom();
         console.log('✓ PlanoEspacialMesas inicializado');
     }
 
-    /**
-     * Cachear referencias a elementos DOM
-     */
     cacheElementos() {
         this.elementos = {
             contenedor: document.getElementById('planoContenedor'),
+            lienzo: document.getElementById('planoLienzo'),
+            planoVacio: document.getElementById('planoVacio'),
             btnEditar: document.getElementById('btnEditar'),
             btnGuardar: document.getElementById('btnGuardar'),
             btnCancelar: document.getElementById('btnCancelar'),
@@ -60,278 +54,287 @@ class PlanoEspacialMesas {
             modal: document.getElementById('modalCrearMesa'),
             inputNumero: document.getElementById('newNumero'),
             inputCapacidad: document.getElementById('newCapacidad'),
-            selectEstado: document.getElementById('newEstado'),
+            inputSeccion: document.getElementById('newSeccion'),
+            inputEstado: document.getElementById('newEstado'),
             btnConfirmar: document.getElementById('btnConfirmarNueva'),
-            filtroZona: document.getElementById('filtroZona'),
             panelVacio: document.getElementById('panelVacio'),
             formularioPropiedades: document.getElementById('formularioMesa'),
+            propNumero: document.getElementById('propNumero'),
+            propCapacidad: document.getElementById('propCapacidad'),
+            propSeccion: document.getElementById('propSeccion'),
+            btnActualizar: document.getElementById('btnActualizar'),
+            btnEliminar: document.getElementById('btnEliminar'),
             totalMesas: document.getElementById('totalMesas'),
+            panelPropiedades: document.getElementById('panelPropiedades'),
+            panelBackdrop: document.getElementById('panelBackdrop')
         };
     }
 
-    /**
-     * Cargar mesas desde el servidor
-     */
-    async cargarMesas(zona = '') {
-        try {
-            const url = zona ? `${this.config.apiBase}?zona=${zona}` : this.config.apiBase;
-            const response = await fetch(url);
-            const data = await response.json();
+    normalizar(str) {
+        return (str || '')
+            .toString()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toLowerCase();
+    }
 
-            if (data.success) {
-                this.estado.mesasActuales = data.data;
-                this.estado.mesasOriginales = JSON.parse(JSON.stringify(data.data));
-                this.renderizar();
-            }
+    async cargarMesas() {
+        try {
+            const response = await fetch(this.config.apiBase, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            const lista = Array.isArray(data) ? data : (data.data || []);
+
+            this.estado.mesasActuales = lista;
+            this.estado.mesasOriginales = JSON.parse(JSON.stringify(lista));
+            this.renderizar();
         } catch (error) {
             console.error('Error al cargar mesas:', error);
-            this.notificar('Error al cargar las mesas', 'error');
+            this.notificar('Error al cargar las mesas del plano', 'error');
         }
     }
 
-    /**
-     * Renderizar todas las mesas en el lienzo
-     */
     renderizar() {
-        this.elementos.contenedor.innerHTML = '';
-        this.estado.mesasActuales.forEach(mesa => {
-            const elemento = this.crearElementoMesa(mesa);
-            this.elementos.contenedor.appendChild(elemento);
+        if (!this.elementos.lienzo) return;
+
+        // Limpiar solo los elementos de mesa previos
+        this.elementos.lienzo.querySelectorAll('.mesa-elemento').forEach(el => el.remove());
+
+        const fZona = this.normalizar(this.estado.filtroZona);
+        const fEstado = this.normalizar(this.estado.filtroEstado);
+
+        const mesasFiltradas = this.estado.mesasActuales.filter(mesa => {
+            const zonaMesa = this.normalizar(mesa.seccion || mesa.zona || '');
+            const estadoMesa = this.normalizar(mesa.estado || '');
+
+            const coincideZona = (fZona === 'todas' || fZona === '' || zonaMesa === fZona);
+
+            let coincideEstado = true;
+            if (fEstado === 'libre') {
+                coincideEstado = (estadoMesa === 'disponible' || estadoMesa === 'libre');
+            } else if (fEstado !== 'todos' && fEstado !== '') {
+                coincideEstado = (estadoMesa === fEstado);
+            }
+
+            return coincideZona && coincideEstado;
         });
-        this.actualizarConteo();
+
+        if (this.elementos.planoVacio) {
+            this.elementos.planoVacio.classList.toggle('hidden', mesasFiltradas.length > 0);
+        }
+
+        mesasFiltradas.forEach(mesa => {
+            const elemento = this.crearElementoMesa(mesa);
+            this.elementos.lienzo.appendChild(elemento);
+        });
+
+        this.actualizarConteo(mesasFiltradas.length);
     }
 
-    /**
-     * Crear elemento DOM para una mesa
-     */
     crearElementoMesa(mesa) {
         const div = document.createElement('div');
-        div.className = 'mesa-elemento absolute cursor-move transition-all';
+        const usuarioActualId = parseInt(document.body?.dataset?.usuarioId || '0', 10) || null;
+
+        let clasePropiedad = '';
+        if (mesa.estado === 'ocupada') {
+            clasePropiedad = (usuarioActualId && mesa.mesero_id === usuarioActualId)
+                ? 'mesa-mia'
+                : 'mesa-de-otro';
+        }
+
+        div.className = `mesa-elemento mesa-item mesa-ui absolute rounded-lg flex flex-col items-center justify-center font-bold border-2 text-[var(--text-color)] border-[var(--text-color)] mesa-${mesa.estado} ${clasePropiedad} select-none transition-shadow duration-150`;
         div.dataset.id = mesa.id;
-        div.dataset.numero = mesa.numero;
+        div.style.left = (mesa.posicion_x ?? 50) + 'px';
+        div.style.top = (mesa.posicion_y ?? 50) + 'px';
+        div.style.width = (mesa.ancho || 60) + 'px';
+        div.style.height = (mesa.alto || 60) + 'px';
+        div.style.cursor = this.estado.modoEdicion ? 'move' : 'pointer';
+        div.style.touchAction = 'none';
 
-        const coloresEstado = {
-            'blue': 'bg-blue-500 hover:bg-blue-600',
-            'yellow': 'bg-yellow-500 hover:bg-yellow-600',
-            'red': 'bg-red-500 hover:bg-red-600',
-        };
+        const seccionTexto = mesa.seccion || mesa.zona || '';
+        const etiquetaSub = (this.estado.filtroZona === 'todas' && seccionTexto)
+            ? `<span class="text-[8px] opacity-75 leading-none mt-0.5 tracking-tight pointer-events-none">${seccionTexto}</span>`
+            : '';
 
-        const colorClase = coloresEstado[mesa.estadoVisual] || 'bg-blue-500 hover:bg-blue-600';
-        const borderRadius = mesa.forma === 'redonda' ? '50%' : '8px';
+        div.innerHTML = `<span class="pointer-events-none">${mesa.numero}</span>${etiquetaSub}`;
 
-        div.style.left = mesa.posicion_x + 'px';
-        div.style.top = mesa.posicion_y + 'px';
-        div.style.width = mesa.ancho + 'px';
-        div.style.height = mesa.alto + 'px';
-        div.style.borderRadius = borderRadius;
+        div.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            if (this.estado.modoEdicion) {
+                this.iniciarArrastre(e, div, mesa);
+            }
+        });
 
-        div.innerHTML = `
-            <div class="w-full h-full ${colorClase} flex items-center justify-center rounded-inherit border-2 border-slate-900 shadow-lg">
-                <div class="text-center text-white font-bold text-sm pointer-events-none">
-                    <div class="text-lg">${mesa.numero}</div>
-                    <div class="text-xs opacity-75">${mesa.capacidad} pax</div>
-                </div>
-            </div>
-        `;
-
-        div.addEventListener('mousedown', (e) => this.iniciarArrastre(e, mesa));
         div.addEventListener('click', (e) => {
-            if (!this.estado.arrastrando && this.estado.modoEdicion) {
-                e.stopPropagation();
+            e.stopPropagation();
+            if (this.estado.modoEdicion) {
                 this.seleccionar(mesa);
+            } else {
+                window.location.href = `/mesero/comanda/${mesa.id}`;
             }
         });
 
         return div;
     }
 
-    /**
-     * Iniciar arrastre de una mesa
-     */
-    iniciarArrastre(e, mesa) {
-        if (!this.estado.modoEdicion) return;
-
+    iniciarArrastre(e, elemento, mesa) {
         this.estado.arrastrando = mesa;
-        this.estado.offsetX = e.clientX - e.target.getBoundingClientRect().left;
-        this.estado.offsetY = e.clientY - e.target.getBoundingClientRect().top;
+        this.estado.originX = parseInt(elemento.style.left, 10) || 0;
+        this.estado.originY = parseInt(elemento.style.top, 10) || 0;
+        this.estado.startX = e.clientX;
+        this.estado.startY = e.clientY;
 
-        document.addEventListener('mousemove', (evt) => this.moverMesa(evt));
-        document.addEventListener('mouseup', () => this.terminarArrastre());
+        elemento.setPointerCapture(e.pointerId);
+
+        const onMove = (evt) => {
+            if (!this.estado.arrastrando) return;
+            const deltaX = (evt.clientX - this.estado.startX) / (this.estado.zoom || 1);
+            const deltaY = (evt.clientY - this.estado.startY) / (this.estado.zoom || 1);
+
+            const x = Math.max(0, Math.round(this.estado.originX + deltaX));
+            const y = Math.max(0, Math.round(this.estado.originY + deltaY));
+
+            elemento.style.left = `${x}px`;
+            elemento.style.top = `${y}px`;
+
+            mesa.posicion_x = x;
+            mesa.posicion_y = y;
+        };
+
+        const onUp = (evt) => {
+            elemento.removeEventListener('pointermove', onMove);
+            elemento.removeEventListener('pointerup', onUp);
+            elemento.removeEventListener('pointercancel', onUp);
+            try { elemento.releasePointerCapture(evt.pointerId); } catch (_) {}
+            this.estado.arrastrando = null;
+        };
+
+        elemento.addEventListener('pointermove', onMove);
+        elemento.addEventListener('pointerup', onUp);
+        elemento.addEventListener('pointercancel', onUp);
     }
 
-    /**
-     * Mover mesa durante el arrastre
-     */
-    moverMesa(e) {
-        if (!this.estado.arrastrando) return;
-
-        const rect = this.elementos.contenedor.getBoundingClientRect();
-        let x = e.clientX - rect.left - this.estado.offsetX;
-        let y = e.clientY - rect.top - this.estado.offsetY;
-
-        x = Math.max(0, Math.min(x, rect.width - this.estado.arrastrando.ancho));
-        y = Math.max(0, Math.min(y, rect.height - this.estado.arrastrando.alto));
-
-        this.estado.arrastrando.posicion_x = Math.round(x);
-        this.estado.arrastrando.posicion_y = Math.round(y);
-
-        const elemento = document.querySelector(`[data-id="${this.estado.arrastrando.id}"]`);
-        if (elemento) {
-            elemento.style.left = x + 'px';
-            elemento.style.top = y + 'px';
-        }
-    }
-
-    /**
-     * Terminar arrastre de mesa
-     */
-    terminarArrastre() {
-        if (this.estado.arrastrando?.id === this.estado.mesaSeleccionada?.id) {
-            this.actualizarPropiedades();
-        }
-        this.estado.arrastrando = null;
-    }
-
-    /**
-     * Seleccionar una mesa
-     */
     seleccionar(mesa) {
+        this.estado.mesaSeleccionada = mesa;
+
         document.querySelectorAll('.mesa-elemento').forEach(el => {
-            el.classList.remove('ring-4', 'ring-white');
+            el.classList.remove('ring-4', 'ring-[#b74309]');
         });
 
-        this.estado.mesaSeleccionada = mesa;
-        const elemento = document.querySelector(`[data-id="${mesa.id}"]`);
-        if (elemento) {
-            elemento.classList.add('ring-4', 'ring-white');
-        }
+        const elemento = document.querySelector(`.mesa-elemento[data-id="${mesa.id}"]`);
+        if (elemento) elemento.classList.add('ring-4', 'ring-[#b74309]');
 
-        this.mostrarPropiedades(mesa);
+        if (this.elementos.panelVacio) this.elementos.panelVacio.classList.add('hidden');
+        if (this.elementos.formularioPropiedades) this.elementos.formularioPropiedades.classList.remove('hidden');
+
+        if (this.elementos.propNumero) this.elementos.propNumero.value = mesa.numero;
+        if (this.elementos.propCapacidad) this.elementos.propCapacidad.value = mesa.capacidad;
+        if (this.elementos.propSeccion) this.elementos.propSeccion.value = mesa.seccion || mesa.zona || 'Entrada';
+
+        this.abrirPanelPropiedadesMovil();
     }
 
-    /**
-     * Mostrar propiedades de mesa seleccionada
-     */
-    mostrarPropiedades(mesa) {
-        this.elementos.panelVacio.classList.add('hidden');
-        this.elementos.formularioPropiedades.classList.remove('hidden');
-
-        document.getElementById('propNumero').value = mesa.numero;
-        document.getElementById('propCapacidad').value = mesa.capacidad;
-        document.getElementById('propZona').value = mesa.zona || 'salon';
-        document.getElementById('propForma').value = mesa.forma || 'redonda';
-        document.getElementById('propAncho').value = mesa.ancho || 60;
-        document.getElementById('propAlto').value = mesa.alto || 60;
-
-        const botonesAccion = document.getElementById('botonesAccion');
-        const btnActualizar = document.getElementById('btnActualizar');
-
-        if (!this.estado.modoEdicion) {
-            ['propCapacidad', 'propZona', 'propForma', 'propAncho', 'propAlto'].forEach(id => {
-                document.getElementById(id).disabled = true;
-            });
-            botonesAccion.classList.add('hidden');
-        } else {
-            ['propCapacidad', 'propZona', 'propForma', 'propAncho', 'propAlto'].forEach(id => {
-                document.getElementById(id).disabled = false;
-            });
-            botonesAccion.classList.remove('hidden');
-            btnActualizar.classList.add('hidden');
-        }
+    limpiarSeleccion() {
+        this.estado.mesaSeleccionada = null;
+        document.querySelectorAll('.mesa-elemento').forEach(el => {
+            el.classList.remove('ring-4', 'ring-[#b74309]');
+        });
+        if (this.elementos.formularioPropiedades) this.elementos.formularioPropiedades.classList.add('hidden');
+        if (this.elementos.panelVacio) this.elementos.panelVacio.classList.remove('hidden');
+        this.cerrarPanelPropiedadesMovil();
     }
 
-    /**
-     * Actualizar propiedades de mesa
-     */
-    actualizarPropiedades() {
-        if (!this.estado.mesaSeleccionada) return;
-
-        this.estado.mesaSeleccionada.capacidad = parseInt(document.getElementById('propCapacidad').value);
-        this.estado.mesaSeleccionada.zona = document.getElementById('propZona').value;
-        this.estado.mesaSeleccionada.forma = document.getElementById('propForma').value;
-        this.estado.mesaSeleccionada.ancho = parseInt(document.getElementById('propAncho').value);
-        this.estado.mesaSeleccionada.alto = parseInt(document.getElementById('propAlto').value);
-
-        this.renderizar();
-        this.seleccionar(this.estado.mesaSeleccionada);
-    }
-
-    /**
-     * Activar modo edición
-     */
     activarEdicion() {
         this.estado.modoEdicion = true;
-        this.elementos.btnEditar.classList.add('hidden');
-        this.elementos.btnGuardar.classList.remove('hidden');
-        this.elementos.btnCancelar.classList.remove('hidden');
-        document.getElementById('modosEdicion').classList.remove('hidden');
-        this.elementos.contenedor.style.cursor = 'grab';
+        this.elementos.btnEditar?.classList.add('hidden');
+        this.elementos.btnGuardar?.classList.remove('hidden');
+        this.elementos.btnCancelar?.classList.remove('hidden');
+        document.getElementById('modosEdicion')?.classList.remove('hidden');
 
-        if (this.estado.mesaSeleccionada) {
-            this.mostrarPropiedades(this.estado.mesaSeleccionada);
-        }
+        document.querySelectorAll('.mesa-elemento').forEach(el => {
+            el.style.cursor = 'move';
+        });
     }
 
-    /**
-     * Desactivar modo edición
-     */
-    desactivarEdicion() {
+    desactivarEdicion(restaurar = false) {
         this.estado.modoEdicion = false;
-        this.elementos.btnEditar.classList.remove('hidden');
-        this.elementos.btnGuardar.classList.add('hidden');
-        this.elementos.btnCancelar.classList.add('hidden');
-        document.getElementById('modosEdicion').classList.add('hidden');
-        this.elementos.contenedor.style.cursor = 'default';
+        this.elementos.btnEditar?.classList.remove('hidden');
+        this.elementos.btnGuardar?.classList.add('hidden');
+        this.elementos.btnCancelar?.classList.add('hidden');
+        document.getElementById('modosEdicion')?.classList.add('hidden');
 
-        this.estado.mesasActuales = JSON.parse(JSON.stringify(this.estado.mesasOriginales));
-        this.renderizar();
+        document.querySelectorAll('.mesa-elemento').forEach(el => {
+            el.style.cursor = 'pointer';
+        });
+
+        if (restaurar) {
+            this.estado.mesasActuales = JSON.parse(JSON.stringify(this.estado.mesasOriginales));
+            this.renderizar();
+        }
+
         this.limpiarSeleccion();
     }
 
-    /**
-     * Guardar plano
-     */
     async guardar() {
         try {
+            const payload = {
+                mesas: this.estado.mesasActuales.map(m => ({
+                    id: m.id,
+                    posicion_x: m.posicion_x,
+                    posicion_y: m.posicion_y,
+                    ancho: m.ancho,
+                    alto: m.alto,
+                    seccion: m.seccion || m.zona || 'Entrada',
+                    zona: m.zona || m.seccion || 'Entrada'
+                }))
+            };
+
             const response = await fetch(this.config.apiGuardar, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': this.config.csrfToken,
+                    'Accept': 'application/json'
                 },
-                body: JSON.stringify({ mesas: this.estado.mesasActuales }),
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
 
-            if (data.success) {
+            if (response.ok && data.success) {
                 this.notificar('✓ Plano guardado correctamente', 'success');
                 this.estado.mesasOriginales = JSON.parse(JSON.stringify(this.estado.mesasActuales));
-                this.desactivarEdicion();
+                this.desactivarEdicion(false);
             } else {
-                this.notificar(data.message || 'Error al guardar', 'error');
+                this.notificar(data.message || 'Error al guardar posiciones', 'error');
             }
         } catch (error) {
-            console.error('Error:', error);
-            this.notificar('Error al guardar el plano', 'error');
+            console.error('Error al guardar:', error);
+            this.notificar('Error de conexión al guardar el plano', 'error');
         }
     }
 
-    /**
-     * Crear nueva mesa desde modal
-     */
     async crearMesa() {
-        const numero = this.elementos.inputNumero.value.trim();
-        const capacidad = parseInt(this.elementos.inputCapacidad.value);
-        const estado = this.elementos.selectEstado.value || 'disponible';
+        const numero = this.elementos.inputNumero?.value?.trim();
+        const capacidad = parseInt(this.elementos.inputCapacidad?.value, 10);
+        const estado = this.elementos.inputEstado?.value || 'disponible';
+        const seccion = this.elementos.inputSeccion?.value || 'Entrada';
 
         if (!numero) {
-            this.notificar('Por favor ingresa un número de mesa', 'error');
+            this.notificar('Ingresa el número de mesa', 'error');
             return;
         }
 
         if (isNaN(capacidad) || capacidad < 1) {
-            this.notificar('Capacidad debe ser un número válido', 'error');
+            this.notificar('Capacidad inválida', 'error');
             return;
         }
 
@@ -341,199 +344,241 @@ class PlanoEspacialMesas {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': this.config.csrfToken,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     numero,
                     capacidad,
                     estado,
-                    zona: 'salon',
-                    forma: 'redonda',
-                    posicion_x: 20,
-                    posicion_y: 20,
-                }),
+                    seccion,
+                    zona: seccion
+                })
             });
 
             const data = await response.json();
 
-            if (data.success) {
+            if (response.ok && data.success) {
                 const nuevaMesa = data.data;
-
                 this.estado.mesasActuales.push(nuevaMesa);
                 this.estado.mesasOriginales.push(JSON.parse(JSON.stringify(nuevaMesa)));
-
-                const elemento = this.crearElementoMesa(nuevaMesa);
-                this.elementos.contenedor.appendChild(elemento);
-
-                this.seleccionar(nuevaMesa);
-                this.actualizarConteo();
+                this.renderizar();
                 this.cerrarModal();
-                this.notificar('✓ Mesa creada exitosamente', 'success');
-
-                if (this.estado.modoEdicion) {
-                    this.elementos.inputNumero.focus();
-                }
+                this.notificar(`✓ Mesa creada en ${seccion}`, 'success');
             } else {
-                const errorMsg = data.errors?.numero?.[0] || data.message || 'Error al crear';
-                this.notificar(errorMsg, 'error');
+                this.notificar(data.message || 'No se pudo crear la mesa', 'error');
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error al crear:', error);
             this.notificar('Error al crear la mesa', 'error');
         }
     }
 
-    /**
-     * Eliminar mesa del plano
-     */
-    async eliminarMesa() {
+    async actualizarPropiedades() {
         if (!this.estado.mesaSeleccionada) return;
 
-        if (!confirm('¿Estás seguro de que deseas eliminar esta mesa del plano?')) return;
+        const id = this.estado.mesaSeleccionada.id;
+        const payload = {
+            numero: this.elementos.propNumero?.value?.trim(),
+            capacidad: parseInt(this.elementos.propCapacidad?.value, 10) || 1,
+            seccion: this.elementos.propSeccion?.value || 'Entrada',
+            zona: this.elementos.propSeccion?.value || 'Entrada'
+        };
 
         try {
-            const url = this.config.apiEliminar.replace('ID', this.estado.mesaSeleccionada.id);
-            const response = await fetch(url, {
-                method: 'DELETE',
+            const response = await fetch(`${this.config.apiActualizar}/${id}`, {
+                method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': this.config.csrfToken,
+                    'Accept': 'application/json'
                 },
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
 
-            if (data.success) {
-                this.estado.mesasActuales = this.estado.mesasActuales.filter(
-                    m => m.id !== this.estado.mesaSeleccionada.id
-                );
+            if (response.ok && data.success) {
+                Object.assign(this.estado.mesaSeleccionada, payload);
                 this.renderizar();
-                this.limpiarSeleccion();
-                this.notificar('Mesa eliminada del plano', 'success');
+                this.seleccionar(this.estado.mesaSeleccionada);
+                this.notificar('Propiedades actualizadas', 'success');
+            } else {
+                this.notificar(data.message || 'Error al actualizar', 'error');
             }
         } catch (error) {
-            this.notificar('Error al eliminar', 'error');
+            console.error('Error al actualizar:', error);
+            this.notificar('Error al actualizar la mesa', 'error');
         }
     }
 
-    /**
-     * Abrir modal
-     */
+    async eliminarMesa() {
+        if (!this.estado.mesaSeleccionada) return;
+        const mesa = this.estado.mesaSeleccionada;
+
+        if (!confirm(`¿Eliminar la Mesa ${mesa.numero} del plano?`)) return;
+
+        try {
+            const response = await fetch(`${this.config.apiEliminar}/${mesa.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': this.config.csrfToken,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                this.estado.mesasActuales = this.estado.mesasActuales.filter(m => m.id !== mesa.id);
+                this.estado.mesasOriginales = this.estado.mesasOriginales.filter(m => m.id !== mesa.id);
+                this.limpiarSeleccion();
+                this.renderizar();
+                this.notificar('Mesa eliminada correctamente', 'success');
+            } else {
+                this.notificar(data.message || 'No se pudo eliminar la mesa', 'error');
+            }
+        } catch (error) {
+            console.error('Error al eliminar:', error);
+            this.notificar('Error al eliminar la mesa', 'error');
+        }
+    }
+
     abrirModal() {
+        if (!this.elementos.modal) return;
+
+        const seccionInicial = (this.estado.filtroZona && this.normalizar(this.estado.filtroZona) !== 'todas')
+            ? this.estado.filtroZona
+            : 'Entrada';
+
+        if (typeof window.seleccionarNewSeccion === 'function') {
+            window.seleccionarNewSeccion(seccionInicial, seccionInicial);
+        } else if (this.elementos.inputSeccion) {
+            this.elementos.inputSeccion.value = seccionInicial;
+        }
+
+        if (this.elementos.inputNumero) this.elementos.inputNumero.value = '';
+        if (this.elementos.inputCapacidad) this.elementos.inputCapacidad.value = '4';
+
+        if (typeof window.seleccionarNewEstado === 'function') {
+            window.seleccionarNewEstado('disponible', 'Disponible');
+        }
+
         this.elementos.modal.classList.remove('hidden');
-        this.elementos.inputNumero.focus();
+        this.elementos.inputNumero?.focus();
     }
 
-    /**
-     * Cerrar modal
-     */
     cerrarModal() {
+        if (!this.elementos.modal) return;
         this.elementos.modal.classList.add('hidden');
-        this.elementos.inputNumero.value = '';
-        this.elementos.inputCapacidad.value = '4';
-        this.elementos.selectEstado.value = 'disponible';
+        document.getElementById('menuNewSeccion')?.classList.add('hidden');
+        document.getElementById('iconoNewSeccion')?.classList.remove('rotate-180');
+        document.getElementById('menuNewEstado')?.classList.add('hidden');
+        document.getElementById('iconoNewEstado')?.classList.remove('rotate-180');
     }
 
-    /**
-     * Limpiar selección
-     */
-    limpiarSeleccion() {
-        this.estado.mesaSeleccionada = null;
-        document.querySelectorAll('.mesa-elemento').forEach(el => {
-            el.classList.remove('ring-4', 'ring-white');
+    abrirPanelPropiedadesMovil() {
+        this.elementos.panelPropiedades?.classList.remove('translate-y-full');
+        this.elementos.panelPropiedades?.classList.add('translate-y-0');
+        this.elementos.panelBackdrop?.classList.remove('hidden');
+    }
+
+    cerrarPanelPropiedadesMovil() {
+        this.elementos.panelPropiedades?.classList.add('translate-y-full');
+        this.elementos.panelPropiedades?.classList.remove('translate-y-0');
+        this.elementos.panelBackdrop?.classList.add('hidden');
+    }
+
+    actualizarConteo(total) {
+        if (this.elementos.totalMesas) {
+            this.elementos.totalMesas.textContent = `Mesas: ${total}`;
+        }
+    }
+
+    setupZoom() {
+        const aplicar = () => {
+            if (this.elementos.lienzo) {
+                this.elementos.lienzo.style.transform = `scale(${this.estado.zoom})`;
+                this.elementos.lienzo.style.transformOrigin = 'top left';
+            }
+            const label = document.getElementById('zoomLabel');
+            if (label) label.innerText = `${Math.round(this.estado.zoom * 100)}%`;
+        };
+
+        if (window.innerWidth < 640) this.estado.zoom = 0.6;
+        aplicar();
+
+        document.getElementById('btnZoomIn')?.addEventListener('click', () => {
+            this.estado.zoom = Math.min(1.5, Math.round((this.estado.zoom + 0.15) * 100) / 100);
+            aplicar();
         });
-        this.elementos.formularioPropiedades.classList.add('hidden');
-        this.elementos.panelVacio.classList.remove('hidden');
+
+        document.getElementById('btnZoomOut')?.addEventListener('click', () => {
+            this.estado.zoom = Math.max(0.4, Math.round((this.estado.zoom - 0.15) * 100) / 100);
+            aplicar();
+        });
+
+        document.getElementById('btnZoomReset')?.addEventListener('click', () => {
+            this.estado.zoom = window.innerWidth < 640 ? 0.6 : 1;
+            aplicar();
+        });
     }
 
-    /**
-     * Actualizar conteo de mesas
-     */
-    actualizarConteo() {
-        this.elementos.totalMesas.textContent = `Mesas: ${this.estado.mesasActuales.length}`;
-    }
-
-    /**
-     * Mostrar notificación
-     */
     notificar(mensaje, tipo = 'info') {
         const notif = document.getElementById('notificacion');
+        if (!notif) return;
+
         notif.textContent = mensaje;
         const clases = {
-            'success': 'bg-green-600',
-            'error': 'bg-red-600',
-            'info': 'bg-blue-600',
+            'success': 'bg-emerald-600',
+            'error': 'bg-rose-600',
+            'info': 'bg-[#b74309]',
         };
-        notif.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg text-white text-sm font-semibold z-50 transition-all ${clases[tipo] || clases.info}`;
+        notif.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg text-white text-sm font-semibold z-50 transition-all shadow-xl ${clases[tipo] || clases.info}`;
         notif.classList.remove('hidden');
 
-        setTimeout(() => {
-            notif.classList.add('hidden');
-        }, 3000);
+        clearTimeout(this._timeoutNotif);
+        this._timeoutNotif = setTimeout(() => notif.classList.add('hidden'), 3000);
     }
 
-    /**
-     * Setup de eventos
-     */
     setupEventos() {
-        // Botones principales
         this.elementos.btnEditar?.addEventListener('click', () => this.activarEdicion());
         this.elementos.btnGuardar?.addEventListener('click', () => this.guardar());
-        this.elementos.btnCancelar?.addEventListener('click', () => this.desactivarEdicion());
+        this.elementos.btnCancelar?.addEventListener('click', () => this.desactivarEdicion(true));
         this.elementos.btnAgregar?.addEventListener('click', () => this.abrirModal());
-
-        // Modal
         this.elementos.btnConfirmar?.addEventListener('click', () => this.crearMesa());
 
-        // Cerrar modal
         document.querySelectorAll('.btnCerrarModal').forEach(btn => {
             btn.addEventListener('click', () => this.cerrarModal());
         });
 
-        // Tecla Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !this.elementos.modal.classList.contains('hidden')) {
-                this.cerrarModal();
+        document.getElementById('btnCerrarPanelMovil')?.addEventListener('click', () => this.cerrarPanelPropiedadesMovil());
+        this.elementos.panelBackdrop?.addEventListener('click', () => this.cerrarPanelPropiedadesMovil());
+
+        this.elementos.btnActualizar?.addEventListener('click', () => this.actualizarPropiedades());
+        this.elementos.btnEliminar?.addEventListener('click', () => this.eliminarMesa());
+
+        // Conectar funciones de filtrado con los dropdowns del Blade
+        window.filtrarPorSeccion = (zona) => {
+            this.estado.filtroZona = zona || 'todas';
+            this.renderizar();
+        };
+
+        window.filtrarMesasPorEstado = (estado) => {
+            this.estado.filtroEstado = estado || 'todos';
+            this.renderizar();
+        };
+
+        // Polling en tiempo real (cada 5s si no está editando)
+        setInterval(() => {
+            if (!this.estado.modoEdicion && !this.estado.arrastrando) {
+                this.cargarMesas();
             }
-        });
-
-        // Enter en inputs del modal
-        ['newNumero', 'newCapacidad', 'newEstado'].forEach(id => {
-            document.getElementById(id)?.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    this.crearMesa();
-                }
-            });
-        });
-
-        // Cerrar modal al hacer click fuera
-        this.elementos.modal?.addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                this.cerrarModal();
-            }
-        });
-
-        // Filtro zona
-        this.elementos.filtroZona?.addEventListener('change', (e) => {
-            this.cargarMesas(e.target.value);
-        });
-
-        // Propiedades en tiempo real
-        ['propCapacidad', 'propZona', 'propForma', 'propAncho', 'propAlto'].forEach(id => {
-            document.getElementById(id)?.addEventListener('change', () => this.actualizarPropiedades());
-        });
-
-        // Botón eliminar
-        document.getElementById('btnEliminar')?.addEventListener('click', () => this.eliminarMesa());
-
-        // Click en lienzo para deseleccionar
-        this.elementos.contenedor?.addEventListener('click', (e) => {
-            if (e.target === e.currentTarget && this.estado.modoEdicion) {
-                this.limpiarSeleccion();
-            }
-        });
-
-        console.log('✓ Eventos configurados');
+        }, 5000);
     }
 }
 
-// Exportar para uso en HTML
-window.PlanoEspacialMesas = PlanoEspacialMesas;
+// Inicialización automática
+document.addEventListener('DOMContentLoaded', () => {
+    window.gestorPlano = new PlanoEspacialMesas();
+    window.gestorPlano.init();
+});

@@ -40,7 +40,7 @@ class MesaController extends Controller
         return view('admin.mesas.index', compact('mesas', 'plataformasDelivery', 'cajaAbierta'));
     }
 
-   public function show($mesaId)
+    public function show($mesaId)
     {
         $mesa = Mesa::with('plataformaDelivery')->findOrFail($mesaId);
         $usuario = auth()->user();
@@ -349,32 +349,52 @@ class MesaController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // Admite 'seccion' o 'zona' para evitar discrepancias con el frontend
+        if (!$request->filled('seccion') && $request->filled('zona')) {
+            $request->merge(['seccion' => $request->zona]);
+        }
+
         $validated = $request->validate([
-            'numero' => 'required|string|max:20|unique:mesas,numero',
+            'numero'    => 'required|string|max:20|unique:mesas,numero',
             'capacidad' => 'required|integer|min:1',
-            'estado' => 'nullable|string|in:disponible,ocupada,reservada',
-            'zona' => 'nullable|string|in:salon,terraza,vip',
-            'forma' => 'nullable|string|in:redonda,cuadrada'
+            'estado'    => 'nullable|string|in:disponible,ocupada,reservada,limpieza',
+            'seccion'   => 'nullable|string|max:50',
+            'forma'     => 'nullable|string|in:redonda,cuadrada'
         ]);
 
+        if (empty($validated['seccion'])) {
+            $validated['seccion'] = 'Salón';
+        }
+
         $mesa = Mesa::create(array_merge($validated, [
-            'posicion_x' => 20, 'posicion_y' => 20, 'ancho' => 60, 'alto' => 60
+            'posicion_x' => $request->input('posicion_x', 20),
+            'posicion_y' => $request->input('posicion_y', 20),
+            'ancho'      => 60,
+            'alto'       => 60
         ]));
 
         return response()->json(['success' => true, 'message' => 'Mesa creada', 'mesa' => $mesa], 201);
     }
 
-   public function update(Request $request, $id)
+    public function update(Request $request, $id)
     {
         $mesa = Mesa::findOrFail($id);
-        $mesa->update($request->validate([
-            'numero' => 'sometimes|string|max:20',
-            'capacidad' => 'sometimes|integer|min:1',
-            'zona' => 'sometimes|string',
-            'forma' => 'sometimes|string',
+
+        if (!$request->filled('seccion') && $request->filled('zona')) {
+            $request->merge(['seccion' => $request->zona]);
+        }
+
+        $validated = $request->validate([
+            'numero'     => 'sometimes|string|max:20|unique:mesas,numero,' . $mesa->id,
+            'capacidad'  => 'sometimes|integer|min:1',
+            'seccion'    => 'sometimes|string|max:50',
+            'estado'     => 'sometimes|string|in:disponible,ocupada,reservada,limpieza',
+            'forma'      => 'sometimes|string',
             'posicion_x' => 'sometimes|integer',
             'posicion_y' => 'sometimes|integer',
-        ]));
+        ]);
+
+        $mesa->update($validated);
         return response()->json(['success' => true, 'mesa' => $mesa]);
     }
 
