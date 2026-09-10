@@ -8,7 +8,7 @@ const USUARIO_ACTUAL_ID = parseInt(document.body?.dataset?.usuarioId || '0', 10)
 let estadoGlobal = {
     mesas: [],
     filtroActual: 'todos',
-    seccionFiltro: 'todas',
+    seccionFiltro: 'Entrada',
     vista: 'mapa',
     modoEdicion: false,
     modoFusion: false,
@@ -149,7 +149,10 @@ function aplicarZoom() {
 // --- CARGA Y RENDERIZADO ---
 async function cargarMesas() {
     try {
-        const res = await fetch('/plano-espacial/api/mesas');
+                const seccion = estadoGlobal.seccionFiltro && estadoGlobal.seccionFiltro !== 'todas'
+            ? `?seccion=${encodeURIComponent(estadoGlobal.seccionFiltro)}`
+            : '';
+        const res = await fetch('/plano-espacial/api/mesas' + seccion);
         if (!res.ok) {
             console.error('Error HTTP al consultar API:', res.status);
             return;
