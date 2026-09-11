@@ -213,40 +213,40 @@
             <div class="lg:col-span-3">
                 <div class="relative bg-[var(--card-color)] border border-[var(--border-color)] rounded-xl overflow-hidden shadow-lg">
 
-                    {{-- Barra de zoom --}}
+                                      {{-- Barra de zoom --}}
                     <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-[var(--border-color)] bg-[var(--input-bg)]">
                         <span class="text-xs font-semibold text-[var(--text-muted)] hidden sm:inline">Toca y arrastra para mover el plano</span>
-                        <span class="text-xs font-semibold text-[var(--text-muted)] sm:hidden">Desliza para mover el plano</span>
+
+                        {{-- SIMBOLOGÍA inline en la barra --}}
+                        <div class="relative select-none" id="wrapperSimbologia">
+                            <button type="button" id="btnSimbologia"
+                                class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-color)] transition-colors cursor-pointer">
+                                <i class="fas fa-palette"></i>
+                                <span class="hidden sm:inline">Simbología</span>
+                                <i id="iconoSimbologia" class="fas fa-chevron-down text-[9px]"></i>
+                            </button>
+                            <div id="listaSimbologia"
+                                class="hidden absolute left-0 top-full mt-1 bg-[var(--card-color)] border border-[var(--border-color)] rounded-xl px-3 py-2.5 space-y-2 shadow-xl z-50 min-w-[140px]">
+                                <div class="flex items-center gap-2 whitespace-nowrap">
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0 border border-black/10"></span>
+                                    <span class="text-[11px] font-semibold text-[var(--text-color)]">Disponible</span>
+                                </div>
+                                <div class="flex items-center gap-2 whitespace-nowrap">
+                                    <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0 border border-black/10"></span>
+                                    <span class="text-[11px] font-semibold text-[var(--text-color)]">Mis mesas</span>
+                                </div>
+                                <div class="flex items-center gap-2 whitespace-nowrap">
+                                    <span class="w-3 h-3 rounded-full bg-rose-500 shrink-0 border border-black/10"></span>
+                                    <span class="text-[11px] font-semibold text-[var(--text-color)]">De otro mesero</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="flex items-center gap-1 ml-auto">
                             <button type="button" id="btnZoomOut" class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] active:scale-95 transition font-bold text-lg cursor-pointer">−</button>
                             <span id="zoomLabel" class="text-xs font-semibold text-[var(--text-color)] w-12 text-center select-none">100%</span>
                             <button type="button" id="btnZoomIn" class="w-11 h-11 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] active:scale-95 transition font-bold text-lg cursor-pointer">+</button>
                             <button type="button" id="btnZoomReset" class="h-11 sm:h-9 px-3 flex items-center justify-center rounded-lg bg-[var(--card-color)] border border-[var(--border-color)] text-[var(--text-color)] active:scale-95 transition text-xs font-semibold cursor-pointer">Ajustar</button>
-                        </div>
-                    </div>
-
-                    {{-- SIMBOLOGIA --}}
-                    <div class="absolute top-14 right-3 z-20 select-none">
-                        <button type="button" id="btnSimbologia"
-                            class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-t-lg bg-[var(--card-color)]/95 backdrop-blur border border-[var(--border-color)] text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-color)] transition-colors cursor-pointer">
-                            <span><i class="fas fa-palette mr-1"></i> Simbología</span>
-                            <i id="iconoSimbologia" class="fas fa-chevron-up text-[9px]"></i>
-                        </button>
-
-                        <div id="listaSimbologia"
-                             class="bg-[var(--card-color)]/95 backdrop-blur border border-t-0 border-[var(--border-color)] rounded-b-lg px-2.5 py-2 space-y-1.5 shadow-lg">
-                            <div class="flex items-center gap-2 whitespace-nowrap">
-                                <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0 border border-black/10"></span>
-                                <span class="text-[11px] font-semibold text-[var(--text-color)]">Disponible</span>
-                            </div>
-                            <div class="flex items-center gap-2 whitespace-nowrap">
-                                <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0 border border-black/10"></span>
-                                <span class="text-[11px] font-semibold text-[var(--text-color)]">Mis mesas</span>
-                            </div>
-                            <div class="flex items-center gap-2 whitespace-nowrap">
-                                <span class="w-3 h-3 rounded-full bg-rose-500 shrink-0 border border-black/10"></span>
-                                <span class="text-[11px] font-semibold text-[var(--text-color)]">De otro mesero</span>
-                            </div>
                         </div>
                     </div>
 
