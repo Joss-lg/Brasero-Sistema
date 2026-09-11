@@ -326,7 +326,7 @@
         const display   = document.getElementById('delete_nombre_display');
 
         if (display) display.innerText = nombre;
-        if (form)    form.action = `/admin/categorias/${id}`;
+        if (form)    form.action = `/categorias/${id}`;
 
         modal.classList.remove('hidden');
         if (container) {
