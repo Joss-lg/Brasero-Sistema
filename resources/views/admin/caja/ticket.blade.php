@@ -56,6 +56,27 @@
             filter: grayscale(100%) contrast(1.2);
         }
 
+        /* ── QR de encuesta ── */
+        .qr-encuesta {
+            margin: 12px auto 0 auto;
+            text-align: center;
+        }
+        .qr-encuesta img {
+            width: 130px;
+            height: 130px;
+            display: block;
+            margin: 0 auto 6px auto;
+            /* Asegura buen contraste en térmica */
+            filter: grayscale(100%) contrast(1.4);
+        }
+        .qr-encuesta .qr-texto {
+            font-size: 12px;
+            font-weight: bold;
+            line-height: 1.4;
+            letter-spacing: 0.3px;
+        }
+        /* ────────────────── */
+
         @media print { 
             .no-print { display: none !important; } 
             body { margin: 0 auto; }
@@ -297,6 +318,19 @@
     <div class="text-center mt-1 pt-1" style="margin-top: 15px; font-size: 13px; font-weight: bold;">
         ¡GRACIAS POR SU COMPRA!
     </div>
+
+    {{-- ═══════════════════════════════════════════
+         BLOQUE QR — ENCUESTA DE SATISFACCIÓN
+         Coloca el archivo qr.png en: public/images/qr-encuesta.png
+    ════════════════════════════════════════════ --}}
+    <div class="dashed-line" style="margin-top: 12px;"></div>
+    <div class="qr-encuesta">
+        <img src="{{ asset('images/qr-encuesta.png') }}" alt="QR Encuesta">
+        <div class="qr-texto">
+            ¡AYÚDANOS CON ESTA<br>BREVE ENCUESTA!
+        </div>
+    </div>
+    {{-- ═══════════════════════════════════════════ --}}
 
     <!-- Leyenda promocional del software -->
     <div class="dashed-line" style="margin-top: 15px;"></div>
