@@ -364,6 +364,23 @@
 
         <p class="text-[12px] text-[var(--text-muted)] mb-3">Ingresa el NIP del Administrador para autorizar la cancelación de este producto.</p>
 
+            {{-- Motivo obligatorio --}}
+            <div class="mb-4">
+                <label class="block text-[11px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-1.5">
+                    Motivo <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="motivoCancelacionInput"
+                       maxlength="255" autocomplete="off"
+                       placeholder="Ej: Cliente ya no lo quiso, error de captura…"
+                       class="w-full rounded-xl border border-[var(--border-color)] bg-[var(--input-bg)] px-4 py-3 text-sm text-[var(--text-main)] outline-none focus:border-[#b74309] focus:ring-4 focus:ring-[#b74309]/10 transition-all duration-200 placeholder:text-[var(--text-muted)]">
+                <p id="motivoCancelacionError" class="hidden mt-1.5 text-[11px] text-red-500 font-semibold">
+                    <i class="fas fa-circle-exclamation mr-1"></i>El motivo es obligatorio para autorizar la cancelación.
+                </p>
+            </div>
+
+            <label class="block text-[11px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-1.5">
+                NIP Administrador <span class="text-red-500">*</span>
+            </label>
         <input type="password" id="nipCancelacionInput" data-solo-numeros="true" data-teclado-virtual="true"
                maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6)"

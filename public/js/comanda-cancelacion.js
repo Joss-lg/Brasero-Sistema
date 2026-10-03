@@ -52,15 +52,23 @@
 
         if (!detalleIdPendiente) return;
 
-        const input = document.getElementById('nipCancelacionInput');
-        if (input) input.value = '';
+        // Limpiar campos del modal de NIP
+        const inputNip = document.getElementById('nipCancelacionInput');
+        if (inputNip) inputNip.value = '';
+
+        const inputMotivo = document.getElementById('motivoCancelacionInput');
+        if (inputMotivo) inputMotivo.value = '';
+
+        const errorMotivo = document.getElementById('motivoCancelacionError');
+        if (errorMotivo) errorMotivo.classList.add('hidden');
 
         const modalNip = document.getElementById('modalNipCancelacion');
         if (modalNip) {
             modalNip.classList.remove('hidden');
             modalNip.classList.add('flex');
         }
-        setTimeout(() => { if (input) input.focus(); }, 100);
+        // Enfocar el motivo primero (es lo que hay que llenar antes del NIP)
+        setTimeout(() => { if (inputMotivo) inputMotivo.focus(); }, 100);
     };
 
     window.cerrarModalCancelacion = function () {
@@ -69,6 +77,11 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
+        // Limpiar campos
+        const inputMotivo = document.getElementById('motivoCancelacionInput');
+        if (inputMotivo) inputMotivo.value = '';
+        const errorMotivo = document.getElementById('motivoCancelacionError');
+        if (errorMotivo) errorMotivo.classList.add('hidden');
         detalleIdPendiente = null;
         botonPendiente = null;
     };
@@ -87,6 +100,18 @@
     });
 
     window.confirmarNipCancelacion = function () {
+        // Validar motivo obligatorio antes de proceder
+        const inputMotivo = document.getElementById('motivoCancelacionInput');
+        const motivo = inputMotivo ? inputMotivo.value.trim() : '';
+        const errorMotivo = document.getElementById('motivoCancelacionError');
+
+        if (!motivo || motivo.length < 3) {
+            if (errorMotivo) errorMotivo.classList.remove('hidden');
+            if (inputMotivo) inputMotivo.focus();
+            return;
+        }
+        if (errorMotivo) errorMotivo.classList.add('hidden');
+
         const input = document.getElementById('nipCancelacionInput');
         const nip = input ? input.value.trim() : '';
 
@@ -108,7 +133,7 @@
                 'X-CSRF-TOKEN': csrfToken(),
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ nip: nip })
+            body: JSON.stringify({ nip: nip, motivo: motivo })
         })
         .then(res => res.json())
         .then(data => {
