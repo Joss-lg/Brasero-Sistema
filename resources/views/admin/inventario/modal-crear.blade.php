@@ -90,7 +90,7 @@
                         </button>
                         <div id="unidad-inv-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 rounded-xl shadow-2xl z-50 overflow-hidden"
                             style="background-color: var(--card-color); border: 1px solid var(--border-color);">
-                            @foreach(['g' => 'Gramos (g)', 'ml' => 'Mililitros (ml)', 'pz' => 'Piezas (pz)'] as $val => $label)
+                        @foreach(['g' => 'Gramos (g)', 'ml' => 'Mililitros (ml)', 'Lt' => 'Litros (Lt)', 'pz' => 'Piezas (pz)'] as $val => $label)
                             <button type="button" onclick="seleccionarInvDropdown('unidad', '{{ $val }}', '{{ $label }}')"
                                 class="w-full px-4 py-2.5 transition-colors text-left hover:bg-[#b74309]/5 text-sm font-semibold" style="color: var(--text-color);">
                                 {{ $label }}

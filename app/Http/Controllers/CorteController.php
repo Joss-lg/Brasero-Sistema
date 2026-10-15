@@ -53,28 +53,37 @@ class CorteController extends Controller
         return $pdf->download("ventas{$sufijo}_{$fechaInicio}_al_{$fechaFin}.pdf");
     }
 
-    private function obtenerDatosCorte($fechaInicio, $fechaFin)
-    {
-        $resultados = DB::table('detalles_orden')
-            ->join('ordenes', 'detalles_orden.orden_id', '=', 'ordenes.id')
-            ->join('productos', 'detalles_orden.producto_id', '=', 'productos.id')
-            ->join('categorias', 'productos.categoria_id', '=', 'categorias.id')
-            ->whereDate('ordenes.created_at', '>=', $fechaInicio)
-            ->whereDate('ordenes.created_at', '<=', $fechaFin)
-            ->where('detalles_orden.estado', '!=', 'cancelado')
-            ->whereIn('ordenes.estado', ['pagada', 'servida', 'en proceso', 'pendiente'])
-            ->select(
-                'productos.nombre as producto',
-                'categorias.nombre as categoria',
-                'categorias.area_impresion as area',
-                DB::raw('SUM(detalles_orden.cantidad) as total_vendido'),
-                DB::raw('SUM(detalles_orden.cantidad * detalles_orden.precio_unitario) as total_monto')
-            )
-            ->groupBy('productos.id', 'productos.nombre', 'categorias.id', 'categorias.nombre', 'categorias.area_impresion')
-            ->get();
+private function obtenerDatosCorte($fechaInicio, $fechaFin)
+{
+    $resultados = DB::table('detalles_orden')
+        ->join('ordenes', 'detalles_orden.orden_id', '=', 'ordenes.id')
+        ->join('productos', 'detalles_orden.producto_id', '=', 'productos.id')
+        ->join('categorias', 'productos.categoria_id', '=', 'categorias.id')
+        ->leftJoin('producto_variantes', 'detalles_orden.producto_variante_id', '=', 'producto_variantes.id')  // ← NUEVO
+        ->whereDate('ordenes.created_at', '>=', $fechaInicio)
+        ->whereDate('ordenes.created_at', '<=', $fechaFin)
+        ->where('detalles_orden.estado', '!=', 'cancelado')
+        ->whereIn('ordenes.estado', ['pagada', 'servida', 'en proceso', 'pendiente'])
+        ->select(
+            DB::raw("CONCAT(productos.nombre, IFNULL(CONCAT(' · ', producto_variantes.nombre), '')) as producto"),  // ← NUEVO
+            'categorias.nombre as categoria',
+            'categorias.area_impresion as area',
+            DB::raw('SUM(detalles_orden.cantidad) as total_vendido'),
+            DB::raw('SUM(detalles_orden.cantidad * detalles_orden.precio_unitario) as total_monto')
+        )
+        ->groupBy(
+            'productos.id',
+            'productos.nombre',
+            'categorias.id',
+            'categorias.nombre',
+            'categorias.area_impresion',
+            'detalles_orden.producto_variante_id',  // ← NUEVO
+            'producto_variantes.nombre'              // ← NUEVO
+        )
+        ->get();
 
-        return $resultados->groupBy('area');
-    }
+    return $resultados->groupBy('area');
+}
 
     public function obtenerResumenPorArea($fechaInicio, $fechaFin)
     {
